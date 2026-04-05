@@ -1,0 +1,14 @@
+class CreateTransactions < ActiveRecord::Migration[8.1]
+  def change
+    create_table :transactions do |t|
+      t.bigint :amount
+      t.string :currency
+      t.integer :status
+      t.string :idempotency_key
+      t.string :provider_reference
+      t.jsonb :metadata
+
+      t.timestamps
+    end
+  end
+end
