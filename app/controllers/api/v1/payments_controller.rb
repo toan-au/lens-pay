@@ -1,33 +1,36 @@
 class Api::V1::PaymentsController < ApplicationController
-    def create 
-        params.require([:amount, :currency, :idempotency_key])
+  wrap_parameters false
 
-        unless ["JPY", "USD", "EUR"].include?(transaction_params[:currency])
-            return render json: { error: "Invalid currency" }, status: :bad_request
-        end
+  rescue_from PaymentError::InvalidCurrency do |e|
+    render json: { error: e.message }, status: :bad_request
+  end
 
-        existing = Transaction.find_by(idempotency_key: transaction_params[:idempotency_key])
-        return render json: existing, status: :ok if existing
+  rescue_from PaymentError::ValidationFailed do |e|
+    render json: { errors: e.messages }, status: :unprocessable_entity
+  end
 
-        @transaction = Transaction.new(transaction_params)
+  def create
+    params.require([:amount, :currency, :idempotency_key])
 
-        if @transaction.save
-            render json: @transaction, status: :created
-        else
-            render json: { errors: @transaction.errors.full_messages }, status: :unprocessable_entity
-        end
-    end
+    result = Payments::CreateService.call(transaction_params)
 
-    def show 
-        render json: {}, status: 200
-    end
+    render json: result.transaction, status: result.status
+  end
 
-    def update
+  def show
+    params.require(:idempotency_key)
 
-    end
+    result = Payments::FindService.call(params[:idempotency_key])
 
-    private
-        def transaction_params
-            params.permit(:amount, :currency, :idempotency_key)
-        end
+    render json: {}, status: :ok
+  end
+
+  def update
+  end
+
+  private
+
+  def transaction_params
+    params.permit(:amount, :currency, :idempotency_key)
+  end
 end
