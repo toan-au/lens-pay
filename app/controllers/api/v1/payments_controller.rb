@@ -9,6 +9,10 @@ class Api::V1::PaymentsController < ApplicationController
     render json: { errors: e.messages }, status: :unprocessable_entity
   end
 
+  rescue_from PaymentError::NotFound do |e|
+    render json: { error: e.message }, status: :not_found
+  end
+
   def create
     params.require([:amount, :currency, :idempotency_key])
 
@@ -18,11 +22,9 @@ class Api::V1::PaymentsController < ApplicationController
   end
 
   def show
-    params.require(:idempotency_key)
-
     result = Payments::FindService.call(params[:idempotency_key])
 
-    render json: {}, status: :ok
+    render json: result.transaction, status: result.status
   end
 
   def update
