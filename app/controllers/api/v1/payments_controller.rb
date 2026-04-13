@@ -22,7 +22,7 @@ class Api::V1::PaymentsController < ApplicationController
   end
 
   def show
-    result = Payments::FindService.call(params[:idempotency_key])
+    result = Payments::FindService.call(params[:uid])
 
     render json: result.transaction, status: result.status
   end
@@ -33,6 +33,6 @@ class Api::V1::PaymentsController < ApplicationController
   private
 
   def transaction_params
-    params.permit(:amount, :currency, :idempotency_key)
+    params.permit(:amount, :currency, :idempotency_key, :merchant_id)
   end
 end

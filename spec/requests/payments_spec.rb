@@ -1,11 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe "Payments API", type: :request do
+    let(:merchant) { Merchant.create!(name: "Test Merchant") }
+
     it "should create a Transaction when inputs are valid" do
         post "/api/v1/payments", params: {
             amount: 1000,
             currency: "JPY",
-            idempotency_key: "test_key_1"
+            idempotency_key: "test_key_1",
+            merchant_id: merchant.id
         }
 
         expect(response).to have_http_status(:created)
@@ -17,7 +20,8 @@ RSpec.describe "Payments API", type: :request do
         post "/api/v1/payments", params: {
             amount: -1000,
             currency: "JPY",
-            idempotency_key: "test_key_1"
+            idempotency_key: "test_key_1",
+            merchant_id: merchant.id
         }
 
         expect(response).to have_http_status(:unprocessable_entity)
@@ -37,7 +41,8 @@ RSpec.describe "Payments API", type: :request do
         post "/api/v1/payments", params: {
             amount: 1000,
             currency: "ABC",
-            idempotency_key: "test_key_1"
+            idempotency_key: "test_key_1",
+            merchant_id: merchant.id
         }
 
         expect(response).to have_http_status(:bad_request)
@@ -45,18 +50,19 @@ RSpec.describe "Payments API", type: :request do
     end
 
     it "should respond with a Not Found when the payment does not exist" do
-        get "/api/v1/payments/nonexistent_key"
+        get "/api/v1/payments/nonexistent_uid"
 
         expect(response).to have_http_status(:not_found)
     end
 
     it "should return the existing transaction when the same idempotency key is used" do
-        Transaction.create!(amount: 1000, currency: "JPY", idempotency_key: "test_key_1")
+        Transaction.create!(amount: 1000, currency: "JPY", idempotency_key: "test_key_1", merchant: merchant)
 
         post "/api/v1/payments", params: {
             amount: 1000,
             currency: "JPY",
-            idempotency_key: "test_key_1"
+            idempotency_key: "test_key_1",
+            merchant_id: merchant.id
         }
 
         expect(response).to have_http_status(:ok)
@@ -64,7 +70,7 @@ RSpec.describe "Payments API", type: :request do
     end
 
     it "should return a transaction by uid" do
-        transaction = Transaction.create!(amount: 1000, currency: "JPY", idempotency_key: "test_key_1")
+        transaction = Transaction.create!(amount: 1000, currency: "JPY", idempotency_key: "test_key_1", merchant: merchant)
 
         get "/api/v1/payments/#{transaction.uid}"
 

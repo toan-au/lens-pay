@@ -10,30 +10,34 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_13_041010) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_13_070345) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "merchants", force: :cascade do |t|
     t.string "api_key_digest", null: false
     t.datetime "created_at", null: false
-    t.string "name"
-    t.string "uid"
+    t.string "name", null: false
+    t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["uid"], name: "index_merchants_on_uid", unique: true
   end
 
   create_table "transactions", force: :cascade do |t|
-    t.bigint "amount"
+    t.bigint "amount", null: false
     t.datetime "created_at", null: false
-    t.string "currency"
-    t.string "idempotency_key"
-    t.jsonb "metadata"
+    t.string "currency", limit: 3, null: false
+    t.string "idempotency_key", null: false
+    t.bigint "merchant_id", null: false
+    t.jsonb "metadata", default: {}, null: false
     t.string "provider_reference"
-    t.integer "status"
-    t.string "uid"
+    t.integer "status", default: 0, null: false
+    t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["idempotency_key"], name: "index_transactions_on_idempotency_key", unique: true
+    t.index ["merchant_id"], name: "index_transactions_on_merchant_id"
     t.index ["uid"], name: "index_transactions_on_uid", unique: true
   end
+
+  add_foreign_key "transactions", "merchants"
 end

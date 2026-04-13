@@ -1,4 +1,5 @@
 class Merchant < ApplicationRecord
+    has_many :transactions, dependent: :destroy
     has_secure_password :api_key, validations: false
 
     before_create :setup_merchant
