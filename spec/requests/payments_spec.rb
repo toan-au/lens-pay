@@ -9,7 +9,6 @@ RSpec.describe "Payments API", type: :request do
         }
 
         expect(response).to have_http_status(:created)
-        
         expect(Transaction.count).to eq(1)
         expect(Transaction.last.amount).to eq(1000)
     end
@@ -64,10 +63,10 @@ RSpec.describe "Payments API", type: :request do
         expect(Transaction.count).to eq(1)
     end
 
-    it "should return a transaction by idempotency key" do
-        Transaction.create!(amount: 1000, currency: "JPY", idempotency_key: "test_key_1")
+    it "should return a transaction by uid" do
+        transaction = Transaction.create!(amount: 1000, currency: "JPY", idempotency_key: "test_key_1")
 
-        get "/api/v1/payments/test_key_1"
+        get "/api/v1/payments/#{transaction.uid}"
 
         expect(response).to have_http_status(:ok)
         expect(response.parsed_body["idempotency_key"]).to eq("test_key_1")

@@ -2,16 +2,16 @@ module Payments
   class FindService
     Result = Data.define(:transaction, :status)
 
-    def self.call(idempotency_key)
-      new(idempotency_key).call
+    def self.call(uid)
+      new(uid).call
     end
 
-    def initialize(idempotency_key)
-      @idempotency_key = idempotency_key
+    def initialize(uid)
+      @uid = uid
     end
 
     def call
-      transaction = Transaction.find_by(idempotency_key: @idempotency_key)
+      transaction = Transaction.find_by(uid: @uid)
       raise PaymentError::NotFound unless transaction
 
       Result.new(transaction: transaction, status: :ok)
