@@ -1,6 +1,7 @@
 class CreateTransactions < ActiveRecord::Migration[8.1]
   def change
     create_table :transactions do |t|
+      t.string :uid
       t.bigint :amount
       t.string :currency
       t.integer :status
@@ -12,5 +13,6 @@ class CreateTransactions < ActiveRecord::Migration[8.1]
     end
 
     add_index :transactions, :idempotency_key, unique: true
+    add_index :transactions, :uid, unique: true
   end
 end
