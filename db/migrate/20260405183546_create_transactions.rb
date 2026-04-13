@@ -10,5 +10,7 @@ class CreateTransactions < ActiveRecord::Migration[8.1]
 
       t.timestamps
     end
+
+    add_index :transactions, :idempotency_key, unique: true
   end
 end

@@ -23,5 +23,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_05_183546) do
     t.string "provider_reference"
     t.integer "status"
     t.datetime "updated_at", null: false
+    t.index ["idempotency_key"], name: "index_transactions_on_idempotency_key", unique: true
   end
 end
