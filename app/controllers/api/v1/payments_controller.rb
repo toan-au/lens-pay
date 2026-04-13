@@ -14,9 +14,9 @@ class Api::V1::PaymentsController < ApplicationController
   end
 
   def create
-    params.require([:amount, :currency, :idempotency_key])
+    params.require([ :amount, :currency, :idempotency_key ])
 
-    result = Payments::CreateService.call(transaction_params)
+    result = Payments::CreateService.call(transaction_params, current_merchant)
 
     render json: result.transaction, status: result.status
   end
@@ -33,6 +33,6 @@ class Api::V1::PaymentsController < ApplicationController
   private
 
   def transaction_params
-    params.permit(:amount, :currency, :idempotency_key, :merchant_id)
+    params.permit(:amount, :currency, :idempotency_key)
   end
 end

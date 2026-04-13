@@ -2,12 +2,13 @@ module Payments
   class CreateService
     Result = Data.define(:transaction, :status)
 
-    def self.call(params)
-      new(params).call
+    def self.call(params, merchant)
+      new(params, merchant).call
     end
 
-    def initialize(params)
+    def initialize(params, merchant)
       @params = params
+      @merchant = merchant
     end
 
     def call
@@ -16,7 +17,7 @@ module Payments
       existing = Transaction.find_by(idempotency_key: @params[:idempotency_key])
       return Result.new(transaction: existing, status: :ok) if existing
 
-      transaction = Transaction.new(@params)
+      transaction = Transaction.new(@params.merge(merchant: @merchant))
 
       raise PaymentError::ValidationFailed, transaction.errors.full_messages unless transaction.save
 
