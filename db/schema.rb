@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_13_084022) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_16_114424) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -32,6 +32,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_13_084022) do
 
   create_table "transactions", force: :cascade do |t|
     t.bigint "amount", null: false
+    t.bigint "captured_amount"
     t.datetime "created_at", null: false
     t.string "currency", limit: 3, null: false
     t.string "idempotency_key", null: false
@@ -42,6 +43,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_13_084022) do
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["idempotency_key"], name: "index_transactions_on_idempotency_key", unique: true
+    t.index ["merchant_id", "created_at"], name: "index_transactions_on_merchant_id_and_created_at"
+    t.index ["merchant_id", "status"], name: "index_transactions_on_merchant_id_and_status"
     t.index ["merchant_id"], name: "index_transactions_on_merchant_id"
     t.index ["uid"], name: "index_transactions_on_uid", unique: true
   end

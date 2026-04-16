@@ -19,4 +19,16 @@ module PaymentError
       super("Payment not found")
     end
   end
+
+  class InvalidTransition < StandardError
+    def initialize(from:, to:)
+      super("Cannot transition payment from '#{from}' to '#{to}'")
+    end
+  end
+
+  class CapturedAmountExceedsAuthorized < StandardError
+    def initialize
+      super("Captured amount cannot exceed the authorized amount")
+    end
+  end
 end
