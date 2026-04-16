@@ -26,6 +26,16 @@ RSpec.describe "Payments API", type: :request do
     expect(Transaction.last.status).to eq("pending")
   end
 
+  it "enqueues an AuthorizePaymentJob when a payment is created" do
+    expect {
+      post "/api/v1/payments", params: {
+        amount: 1000,
+        currency: "JPY",
+        idempotency_key: "test_key_1"
+      }, headers: auth_headers
+    }.to have_enqueued_job(AuthorizePaymentJob)
+  end
+
   it "should respond with a Bad Request when amount is negative" do
     post "/api/v1/payments", params: {
       amount: -1000,

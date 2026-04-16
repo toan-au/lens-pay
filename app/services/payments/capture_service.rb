@@ -17,6 +17,8 @@ module Payments
       @transaction.capture!
       @transaction.update!(captured_amount: @captured_amount)
 
+      SettlePaymentJob.perform_later(@transaction.id)
+
       Result.new(transaction: @transaction, status: :ok)
     rescue AASM::InvalidTransition
       raise PaymentError::InvalidTransition.new(from: @transaction.status, to: "processing")
@@ -26,7 +28,7 @@ module Payments
 
     def validate_captured_amount!
       raise PaymentError::CapturedAmountExceedsAuthorized if @captured_amount > @transaction.amount
-      raise PaymentError::ValidationFailed, ["Captured amount must be greater than 0"] if @captured_amount <= 0
+      raise PaymentError::ValidationFailed, [ "Captured amount must be greater than 0" ] if @captured_amount <= 0
     end
   end
 end
