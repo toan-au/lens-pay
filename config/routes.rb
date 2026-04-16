@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :payments, only: [ :create, :show, :update ], param: :uid
+      resources :merchants, only: [ :create, :show ], param: :uid
     end
   end
 end

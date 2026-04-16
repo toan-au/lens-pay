@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe "Payments API", type: :request do
-  let(:merchant) { Merchant.create!(name: "Test Merchant") }
+  let(:merchant) { create(:merchant) }
   let(:auth_headers) { { 'Authorization' => "Bearer #{merchant.raw_api_key}" } }
 
   it "should create a Transaction when inputs are valid" do
@@ -23,7 +23,7 @@ RSpec.describe "Payments API", type: :request do
       idempotency_key: "test_key_1"
     }, headers: auth_headers
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "should respond with a Bad Request when either amount, currency, or idempotency_key is missing" do

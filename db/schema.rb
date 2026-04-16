@@ -10,16 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_13_070345) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_13_084022) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "merchants", force: :cascade do |t|
     t.string "api_key_digest", null: false
+    t.string "country", limit: 2, null: false
     t.datetime "created_at", null: false
+    t.string "currency", limit: 3, null: false
+    t.string "email", null: false
     t.string "name", null: false
+    t.integer "status", default: 0, null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
+    t.string "webhook_url"
+    t.index ["email"], name: "index_merchants_on_email", unique: true
+    t.index ["status"], name: "index_merchants_on_status"
     t.index ["uid"], name: "index_merchants_on_uid", unique: true
   end
 

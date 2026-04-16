@@ -6,7 +6,7 @@ class Api::V1::PaymentsController < ApplicationController
   end
 
   rescue_from PaymentError::ValidationFailed do |e|
-    render json: { errors: e.messages }, status: :unprocessable_entity
+    render json: { errors: e.messages }, status: :unprocessable_content
   end
 
   rescue_from PaymentError::NotFound do |e|

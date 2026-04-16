@@ -1,13 +1,11 @@
 module Middleware
   class ApiKeyAuthenticator
-    UNAUTHENTICATED_PATHS = %w[/up].freeze
-
     def initialize(app)
       @app = app
     end
 
     def call(env)
-      return @app.call(env) if UNAUTHENTICATED_PATHS.include?(env["PATH_INFO"])
+      return @app.call(env) if unauthenticated?(env)
 
       token = extract_token(env)
       return unauthorized("Missing Authorization header") unless token
@@ -20,6 +18,11 @@ module Middleware
     end
 
     private
+
+    def unauthenticated?(env)
+      env["PATH_INFO"] == "/up" ||
+        (env["PATH_INFO"] == "/api/v1/merchants" && env["REQUEST_METHOD"] == "POST")
+    end
 
     def extract_token(env)
       header = env["HTTP_AUTHORIZATION"]
