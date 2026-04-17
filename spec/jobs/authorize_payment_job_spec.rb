@@ -17,6 +17,5 @@ RSpec.describe AuthorizePaymentJob do
 
       expect(transaction.reload.status).to eq("declined")
     end
-
   end
 end

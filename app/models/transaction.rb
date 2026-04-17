@@ -2,6 +2,7 @@ class Transaction < ApplicationRecord
   include AASM
 
   belongs_to :merchant
+  has_many :refunds
 
   validates :amount, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :currency, presence: true, inclusion: { in: Money::Currency.all.map(&:iso_code), message: "%{value} is not a supported currency" }
@@ -34,6 +35,11 @@ class Transaction < ApplicationRecord
       transitions from: %i[pending authorized processing], to: :declined
     end
   end
+
+  def refundable_amount
+    captured_amount - self.refunds.succeeded.sum(:amount)
+  end
+
 
   private def setup_transaction
     self.uid = "tr_#{SecureRandom.uuid}"

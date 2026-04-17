@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_16_114424) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_16_181020) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -28,6 +28,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_114424) do
     t.index ["email"], name: "index_merchants_on_email", unique: true
     t.index ["status"], name: "index_merchants_on_status"
     t.index ["uid"], name: "index_merchants_on_uid", unique: true
+  end
+
+  create_table "refunds", force: :cascade do |t|
+    t.bigint "amount", null: false
+    t.datetime "created_at", null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "transaction_id", null: false
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.index ["uid"], name: "index_refunds_on_uid", unique: true
   end
 
   create_table "transactions", force: :cascade do |t|
@@ -49,5 +59,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_114424) do
     t.index ["uid"], name: "index_transactions_on_uid", unique: true
   end
 
+  add_foreign_key "refunds", "transactions"
   add_foreign_key "transactions", "merchants"
 end
