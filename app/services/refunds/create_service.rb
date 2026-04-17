@@ -26,7 +26,7 @@ module Refunds
         def validate_refunded_amount!
             raise RefundError::PaymentNotSucceeded unless @transaction.succeeded?
             raise RefundError::PaymentAlreadyRefunded if @transaction.refundable_amount == 0
-            raise RefundError::InvalidRefund if @transaction.refundable_amount < @refund.amount
+            raise RefundError::AmountExceedsRefundable if @transaction.refundable_amount < @refund.amount
         end
     end
 end

@@ -9,10 +9,6 @@ class Api::V1::PaymentsController < ApplicationController
     render json: { errors: e.messages }, status: :unprocessable_content
   end
 
-  rescue_from PaymentError::NotFound do |e|
-    render json: { error: e.message }, status: :not_found
-  end
-
   rescue_from PaymentError::InvalidTransition do |e|
     render json: { error: e.message }, status: :unprocessable_content
   end
