@@ -20,7 +20,7 @@ class Api::V1::RefundsController < ApplicationController
   def create
     params.require([ :amount ])
 
-    transaction = Payments::FindService.call(params[:payment_uid]).result
+    transaction = Payments::FindService.call(params[:payment_uid]).transaction
     result = Refunds::CreateService.call(refund_params, transaction)
 
     render json: result.refund, status: result.status
