@@ -17,41 +17,47 @@ class Api::V1::PaymentsController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_content
   end
 
+  def index
+    result = Payments::ListService.call(
+      current_merchant,
+      cursor: list_params[:cursor],
+      status: list_params[:status]
+    )
+
+    render json: {
+      transactions: result.transactions,
+      next_cursor: result.next_cursor
+    }, status: result.status
+  end
+
   def create
     params.require([ :amount, :currency, :idempotency_key ])
-
     result = Payments::CreateService.call(transaction_params, current_merchant)
-
     render json: result.transaction, status: result.status
   end
 
   def show
     result = Payments::FindService.call(params[:uid])
-
     render json: result.transaction, status: result.status
   end
 
   def authorize
     result = Payments::AuthorizeService.call(find_transaction)
-
     render json: result.transaction, status: result.status
   end
 
   def capture
     result = Payments::CaptureService.call(find_transaction, captured_amount: params[:captured_amount]&.to_i)
-
     render json: result.transaction, status: result.status
   end
 
   def complete
     result = Payments::CompleteService.call(find_transaction)
-
     render json: result.transaction, status: result.status
   end
 
   def decline
     result = Payments::DeclineService.call(find_transaction)
-
     render json: result.transaction, status: result.status
   end
 
@@ -63,5 +69,9 @@ class Api::V1::PaymentsController < ApplicationController
 
   def transaction_params
     params.permit(:amount, :currency, :idempotency_key)
+  end
+
+  def list_params
+    params.permit(:cursor, :status)
   end
 end
