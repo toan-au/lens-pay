@@ -25,14 +25,14 @@ class Api::V1::PaymentsController < ApplicationController
     )
 
     render json: {
-      transactions: result.transactions,
+      payments: result.transactions,
       next_cursor: result.next_cursor
     }, status: result.status
   end
 
   def create
     params.require([ :amount, :currency, :idempotency_key ])
-    result = Payments::CreateService.call(transaction_params, current_merchant)
+    result = Payments::CreateService.call(payment_params, current_merchant)
     render json: result.transaction, status: result.status
   end
 
@@ -42,32 +42,32 @@ class Api::V1::PaymentsController < ApplicationController
   end
 
   def authorize
-    result = Payments::AuthorizeService.call(find_transaction)
+    result = Payments::AuthorizeService.call(find_payment)
     render json: result.transaction, status: result.status
   end
 
   def capture
-    result = Payments::CaptureService.call(find_transaction, captured_amount: params[:captured_amount]&.to_i)
+    result = Payments::CaptureService.call(find_payment, captured_amount: params[:captured_amount]&.to_i)
     render json: result.transaction, status: result.status
   end
 
   def complete
-    result = Payments::CompleteService.call(find_transaction)
+    result = Payments::CompleteService.call(find_payment)
     render json: result.transaction, status: result.status
   end
 
   def decline
-    result = Payments::DeclineService.call(find_transaction)
+    result = Payments::DeclineService.call(find_payment)
     render json: result.transaction, status: result.status
   end
 
   private
 
-  def find_transaction
+  def find_payment
     Payments::FindService.call(params[:uid]).transaction
   end
 
-  def transaction_params
+  def payment_params
     params.permit(:amount, :currency, :idempotency_key)
   end
 
