@@ -1,12 +1,8 @@
 module Payments
-  class ListService
+  class ListService < ApplicationService
     Result = Data.define(:transactions, :next_cursor, :status)
 
-    def self.call(merchant, cursor: nil, status: nil, limit: nil)
-      new(merchant, cursor:, status:, limit:).call
-    end
-
-    def initialize(merchant, cursor:, status:, limit:)
+    def initialize(merchant, cursor: nil, status: nil, limit: nil)
       default_limit = 25
 
       @merchant = merchant
@@ -15,7 +11,7 @@ module Payments
       @limit = limit&.nonzero? || default_limit
     end
 
-    def call
+    def perform
       transactions = @merchant.transactions
 
       transactions = transactions.where(status: @status) if @status.present?
@@ -37,6 +33,16 @@ module Payments
       end
 
       Result.new(transactions:, next_cursor:, status: :ok)
+    end
+
+    def event_name
+      "payment.listed"
+    end
+
+    def log_context
+      {
+        merchant_uid: @merchant.uid
+      }
     end
   end
 end

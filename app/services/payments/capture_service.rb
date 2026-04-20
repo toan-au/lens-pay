@@ -1,18 +1,16 @@
 module Payments
-  class CaptureService
+  class CaptureService < ApplicationService
     Result = Data.define(:transaction, :status)
 
-    def self.call(transaction, captured_amount: nil)
-      new(transaction, captured_amount:).call
-    end
-
-    def initialize(transaction, captured_amount:)
+    def initialize(transaction, captured_amount: nil)
       @transaction = transaction
       @captured_amount = captured_amount || transaction.amount
     end
 
-    def call
+    def perform
       validate_captured_amount!
+
+      @previous_status = @transaction.status
 
       @transaction.capture!
       @transaction.update!(captured_amount: @captured_amount)
@@ -22,6 +20,19 @@ module Payments
       Result.new(transaction: @transaction, status: :ok)
     rescue AASM::InvalidTransition
       raise PaymentError::InvalidTransition.new(from: @transaction.status, to: "processing")
+    end
+
+    def event_name
+      "payment.captured"
+    end
+
+    def log_context
+      {
+        merchant_uid: @transaction.merchant.uid,
+        transaction_uid: @transaction.uid,
+        transaction_status: @previous_status,
+        captured_amount: @transaction.captured_amount
+      }
     end
 
     private
