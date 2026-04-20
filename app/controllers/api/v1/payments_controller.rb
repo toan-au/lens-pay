@@ -21,7 +21,8 @@ class Api::V1::PaymentsController < ApplicationController
     result = Payments::ListService.call(
       current_merchant,
       cursor: list_params[:cursor],
-      status: list_params[:status]
+      status: list_params[:status],
+      limit: list_params[:limit]&.to_i
     )
 
     render json: {
@@ -32,7 +33,7 @@ class Api::V1::PaymentsController < ApplicationController
 
   def create
     params.require([ :amount, :currency, :idempotency_key ])
-    result = Payments::CreateService.call(payment_params, current_merchant)
+    result = Payments::CreateService.call(create_payment_params, current_merchant)
     render json: result.transaction, status: result.status
   end
 
@@ -67,11 +68,11 @@ class Api::V1::PaymentsController < ApplicationController
     Payments::FindService.call(params[:uid]).transaction
   end
 
-  def payment_params
+  def create_payment_params
     params.permit(:amount, :currency, :idempotency_key)
   end
 
   def list_params
-    params.permit(:cursor, :status)
+    params.permit(:cursor, :status, :limit)
   end
 end
