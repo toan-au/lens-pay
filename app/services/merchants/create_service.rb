@@ -11,11 +11,11 @@ module Merchants
     end
 
     def perform
-      merchant = Merchant.new(@params)
+      @merchant = Merchant.new(@params)
 
-      raise MerchantError::ValidationFailed, merchant.errors.full_messages unless merchant.save
+      raise MerchantError::ValidationFailed, @merchant.errors.full_messages unless @merchant.save
 
-      Result.new(merchant: merchant, status: :created)
+      Result.new(merchant: @merchant, status: :created)
     end
 
     def event_name
@@ -23,6 +23,10 @@ module Merchants
     end
 
     def log_context
+      {
+        merchant_uid: @merchant.uid,
+        merchant_name: @merchant.name
+      }
     end
   end
 end

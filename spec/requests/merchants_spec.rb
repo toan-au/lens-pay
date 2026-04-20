@@ -41,6 +41,7 @@ RSpec.describe "Merchants API", type: :request do
 
   describe "GET /api/v1/merchants/:uid" do
     let(:merchant) { create(:merchant) }
+    let(:other_merchant) { create(:merchant) }
     let(:auth_headers) { { "Authorization" => "Bearer #{merchant.raw_api_key}" } }
 
     it "returns the merchant" do
@@ -52,6 +53,12 @@ RSpec.describe "Merchants API", type: :request do
 
     it "returns not found for an unknown uid" do
       get "/api/v1/merchants/mch_unknown", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 when fetching another merchant's profile" do
+      get "/api/v1/merchants/#{other_merchant.uid}", headers: auth_headers
 
       expect(response).to have_http_status(:not_found)
     end

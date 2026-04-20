@@ -18,9 +18,9 @@ class Api::V1::MerchantsController < ApplicationController
   end
 
   def show
-    result = Merchants::FindService.call(params[:uid])
+    raise MerchantError::NotFound unless params[:uid] == current_merchant.uid
 
-    render json: result.merchant.as_json(only: %i[uid name email country currency status webhook_url]),
+    render json: current_merchant.as_json(only: %i[uid name email country currency status webhook_url]),
            status: :ok
   end
 

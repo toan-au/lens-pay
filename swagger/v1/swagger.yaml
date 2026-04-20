@@ -1,0 +1,300 @@
+---
+openapi: 3.0.1
+info:
+  title: LensPay API
+  version: v1
+  description: Payment processing API for LensPay
+paths:
+  "/api/v1/merchants":
+    post:
+      summary: Create a merchant
+      tags:
+      - Merchants
+      parameters: []
+      responses:
+        '201':
+          description: merchant created
+        '422':
+          description: validation failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Acme Store
+                email:
+                  type: string
+                  example: store@acme.com
+                country:
+                  type: string
+                  example: JP
+                  description: ISO 3166-1 alpha-2 country code
+                currency:
+                  type: string
+                  example: JPY
+                  description: ISO 4217 currency code
+                webhook_url:
+                  type: string
+                  example: https://acme.com/webhooks
+                  description: Optional URL to receive payment event notifications
+              required:
+              - name
+              - email
+              - country
+              - currency
+  "/api/v1/merchants/{uid}":
+    parameters:
+    - name: uid
+      in: path
+      description: Merchant UID
+      example: mch_abc123
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Fetch a merchant
+      tags:
+      - Merchants
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: merchant found
+        '404':
+          description: merchant not found
+        '401':
+          description: unauthorized
+  "/api/v1/payments":
+    post:
+      summary: Create a payment
+      tags:
+      - Payments
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '201':
+          description: payment created
+        '400':
+          description: invalid currency
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: integer
+                  example: 1000
+                  description: Amount in smallest currency unit (e.g. yen)
+                currency:
+                  type: string
+                  example: JPY
+                  description: ISO 4217 currency code
+                idempotency_key:
+                  type: string
+                  example: order_abc_123
+                  description: Unique key to prevent duplicate payments
+              required:
+              - amount
+              - currency
+              - idempotency_key
+    get:
+      summary: List payments
+      tags:
+      - Payments
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        description: Pagination cursor (uid of last payment in previous page)
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        description: Filter by status (pending, authorized, processing, succeeded,
+          declined)
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 'Number of results per page (default: 25, max: 100)'
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: payments listed
+        '401':
+          description: unauthorized
+  "/api/v1/payments/{uid}":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      example: tr_abc123
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Fetch a payment
+      tags:
+      - Payments
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: payment found
+        '404':
+          description: payment not found
+        '401':
+          description: unauthorized
+  "/api/v1/payments/{uid}/authorize":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Authorize a payment
+      tags:
+      - Payment Transitions
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: payment authorized
+        '422':
+          description: invalid transition
+        '401':
+          description: unauthorized
+  "/api/v1/payments/{uid}/capture":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Capture a payment
+      tags:
+      - Payment Transitions
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '200':
+          description: payment captured
+        '422':
+          description: invalid transition
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                captured_amount:
+                  type: integer
+                  example: 800
+                  description: Amount to capture (defaults to full authorized amount)
+  "/api/v1/payments/{uid}/complete":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Complete a payment
+      tags:
+      - Payment Transitions
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: payment succeeded
+        '422':
+          description: invalid transition
+        '401':
+          description: unauthorized
+  "/api/v1/payments/{uid}/decline":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Decline a payment
+      tags:
+      - Payment Transitions
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: payment declined
+        '422':
+          description: invalid transition
+        '401':
+          description: unauthorized
+  "/api/v1/payments/{payment_uid}/refunds":
+    parameters:
+    - name: payment_uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Create a refund
+      tags:
+      - Refunds
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '201':
+          description: refund created
+        '422':
+          description: payment not succeeded
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: integer
+                  example: 500
+                  description: Amount to refund in smallest currency unit
+              required:
+              - amount
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
+components:
+  securitySchemes:
+    bearer_auth:
+      type: http
+      scheme: bearer
+security:
+- bearer_auth: []
