@@ -28,7 +28,7 @@ transactions = [
   { amount: 5000, currency: "JPY", idempotency_key: "seed_processing_1", status: :processing, captured_amount: 5000 },
   { amount: 3000, currency: "JPY", idempotency_key: "seed_succeeded_1", status: :succeeded, captured_amount: 3000 },
   { amount: 3000, currency: "JPY", idempotency_key: "seed_succeeded_2", status: :succeeded, captured_amount: 2000 },
-  { amount: 1500, currency: "JPY", idempotency_key: "seed_declined_1", status: :declined },
+  { amount: 1500, currency: "JPY", idempotency_key: "seed_declined_1", status: :declined }
 ]
 
 transactions.each do |attrs|

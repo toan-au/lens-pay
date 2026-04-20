@@ -20,9 +20,8 @@ class Api::V1::MerchantsController < ApplicationController
   def show
     result = Merchants::FindService.call(params[:uid])
 
-    render json: { uid: result.merchant.uid, name: result.merchant.name, email: result.merchant.email,
-                   country: result.merchant.country, currency: result.merchant.currency,
-                   status: result.merchant.status, webhook_url: result.merchant.webhook_url }, status: :ok
+    render json: result.merchant.as_json(only: %i[uid name email country currency status webhook_url]),
+           status: :ok
   end
 
   private
