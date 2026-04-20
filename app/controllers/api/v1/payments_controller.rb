@@ -33,12 +33,12 @@ class Api::V1::PaymentsController < ApplicationController
 
   def create
     params.require([ :amount, :currency, :idempotency_key ])
-    result = Payments::CreateService.call(create_payment_params, current_merchant)
+    result = Payments::CreateService.call(current_merchant, create_payment_params)
     render json: result.transaction, status: result.status
   end
 
   def show
-    result = Payments::FindService.call(params[:uid])
+    result = Payments::FindService.call(current_merchant, params[:uid])
     render json: result.transaction, status: result.status
   end
 
@@ -65,7 +65,7 @@ class Api::V1::PaymentsController < ApplicationController
   private
 
   def find_payment
-    Payments::FindService.call(params[:uid]).transaction
+    Payments::FindService.call(current_merchant, params[:uid]).transaction
   end
 
   def create_payment_params

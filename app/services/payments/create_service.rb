@@ -2,13 +2,13 @@ module Payments
   class CreateService
     Result = Data.define(:transaction, :status)
 
-    def self.call(params, merchant)
-      new(params, merchant).call
+    def self.call(merchant, params)
+      new(merchant, params).call
     end
 
-    def initialize(params, merchant)
-      @params = params
+    def initialize(merchant, params)
       @merchant = merchant
+      @params = params
     end
 
     def call

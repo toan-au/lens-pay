@@ -122,15 +122,6 @@ RSpec.describe "Payments API", type: :request do
   end
 
   describe "GET /api/v1/payments" do
-    it "does not return another merchant's payments" do
-      create_list(:transaction, 3, merchant: other_merchant)
-      create_list(:transaction, 2, merchant:)
-
-      get "/api/v1/payments", headers: auth_headers
-
-      expect(response.parsed_body["payments"].count).to eq(2)
-    end
-
     it "returns a list of the current merchant's payments" do
       create_list(:transaction, 10, merchant:)
 
@@ -278,6 +269,51 @@ RSpec.describe "Payments API", type: :request do
       post "/api/v1/payments/#{transaction.uid}/decline", headers: auth_headers
 
       expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+
+  # =============== SECURITY ==================
+
+  describe "cross-merchant security" do
+    let(:other_transaction) { create(:transaction, merchant: other_merchant) }
+
+    it "does not return another merchant's payments" do
+      create_list(:transaction, 3, merchant: other_merchant)
+      create_list(:transaction, 2, merchant:)
+
+      get "/api/v1/payments", headers: auth_headers
+
+      expect(response.parsed_body["payments"].count).to eq(2)
+    end
+
+    it "returns 404 when fetching another merchant's payment" do
+      get "/api/v1/payments/#{other_transaction.uid}", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 when authorizing another merchant's payment" do
+      post "/api/v1/payments/#{other_transaction.uid}/authorize", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 when capturing another merchant's payment" do
+      post "/api/v1/payments/#{other_transaction.uid}/capture", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 when completing another merchant's payment" do
+      post "/api/v1/payments/#{other_transaction.uid}/complete", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 when declining another merchant's payment" do
+      post "/api/v1/payments/#{other_transaction.uid}/decline", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 end

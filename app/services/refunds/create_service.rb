@@ -2,18 +2,17 @@ module Refunds
     class CreateService
         Result = Data.define(:refund, :status)
 
-        def self.call(params, transaction)
-            new(params, transaction).call
+        def self.call(transaction, params)
+            new(transaction, params).call
         end
 
-        def initialize(params, transaction)
-            @params = params
+        def initialize(transaction, params)
             @transaction = transaction
+            @params = params
         end
 
         def call
-            @refund = Refund.new(@params)
-            @refund.payment = @transaction
+            @refund = @transaction.refunds.new(@params)
 
             validate_refunded_amount!
 

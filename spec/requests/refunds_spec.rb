@@ -13,16 +13,18 @@ RSpec.describe "Refunds API", type: :request do
 
       expect(response).to have_http_status(:unauthorized)
     end
+
     it "creates a refund for a valid transaction" do
-      payment = create(:transaction, captured_amount: 500, status: "succeeded")
+      payment = create(:transaction, captured_amount: 500, merchant:, status: "succeeded")
       post "/api/v1/payments/#{payment.uid}/refunds", params: {
         amount: 500
       }, headers: auth_headers
 
       expect(response).to have_http_status(201)
     end
+
     it "returns unprocessable_content for a fully refunded transaction" do
-      payment = create(:transaction, captured_amount: 500, status: "succeeded")
+      payment = create(:transaction, captured_amount: 500, merchant:, status: "succeeded")
       create(:refund, payment: payment, amount: 500, status: "succeeded")
 
       post "/api/v1/payments/#{payment.uid}/refunds", params: {
@@ -31,8 +33,9 @@ RSpec.describe "Refunds API", type: :request do
 
       expect(response).to have_http_status(:unprocessable_content)
     end
+
     it "return sunprocessable_content for a refnd that exceeds the refundable amount" do
-      payment = create(:transaction, captured_amount: 500, status: "succeeded")
+      payment = create(:transaction, captured_amount: 500, merchant:, status: "succeeded")
       post "/api/v1/payments/#{payment.uid}/refunds", params: {
         amount: 5000
       }, headers: auth_headers
