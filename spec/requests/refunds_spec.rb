@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe "Refunds API", type: :request do
   let(:merchant) { create(:merchant) }
+  let(:other_merchant) { create(:merchant) }
   let(:auth_headers) { { 'Authorization' => "Bearer #{merchant.raw_api_key}" } }
 
   describe "POST /api/v1/payments/:payment_uid/refunds" do
@@ -41,6 +42,16 @@ RSpec.describe "Refunds API", type: :request do
       }, headers: auth_headers
 
       expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+
+  describe "cross-merchant security" do
+    it "returns 404 when refunding another merchant's payment" do
+      other_payment = create(:transaction, :succeeded, captured_amount: 500, merchant: other_merchant)
+
+      post "/api/v1/payments/#{other_payment.uid}/refunds", params: { amount: 500 }, headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 end
