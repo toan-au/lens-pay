@@ -236,5 +236,31 @@ RSpec.describe 'Payments API', type: :request do
         run_test!
       end
     end
+
+    get 'List refunds for a payment' do
+      tags 'Refunds'
+      produces 'application/json'
+      security [ { bearer_auth: [] } ]
+
+      response '200', 'refunds listed' do
+        let(:payment_uid) do
+          payment = create(:transaction, :succeeded, captured_amount: 1000, merchant: merchant)
+          create(:refund, payment: payment, amount: 500)
+          payment.uid
+        end
+        run_test!
+      end
+
+      response '404', 'payment not found' do
+        let(:payment_uid) { 'tr_nonexistent' }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid' }
+        let(:payment_uid) { 'tr_any' }
+        run_test!
+      end
+    end
   end
 end

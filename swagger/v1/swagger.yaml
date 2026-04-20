@@ -286,6 +286,19 @@ paths:
                   description: Amount to refund in smallest currency unit
               required:
               - amount
+    get:
+      summary: List refunds for a payment
+      tags:
+      - Refunds
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: refunds listed
+        '404':
+          description: payment not found
+        '401':
+          description: unauthorized
 servers:
 - url: http://{defaultHost}
   variables:

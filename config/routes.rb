@@ -13,7 +13,7 @@ Rails.application.routes.draw do
           post :complete
           post :decline
         end
-        resources :refunds, only: [ :create ]
+        resources :refunds, only: [ :index, :create ]
       end
       resources :merchants, only: [ :create, :show ], param: :uid
     end

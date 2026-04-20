@@ -45,11 +45,40 @@ RSpec.describe "Refunds API", type: :request do
     end
   end
 
+  describe "GET /api/v1/payments/:payment_uid/refunds" do
+    it "return's all of a transaction's refunds" do
+      payment = create(:transaction, merchant:, amount: 1000, status: "succeeded")
+      create(:refund, payment:, amount: 500)
+      create(:refund, payment:, amount: 500)
+
+      get "/api/v1/payments/#{payment.uid}/refunds", headers: auth_headers
+
+      expect(response.parsed_body["refunds"].count).to eq(2)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns an empty array if transaction has no refunds" do
+      payment = create(:transaction, merchant:, amount: 900, status: "succeeded")
+      get "/api/v1/payments/#{payment.uid}/refunds", headers: auth_headers
+
+      expect(response.parsed_body["refunds"]).to eq([])
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
   describe "cross-merchant security" do
     it "returns 404 when refunding another merchant's payment" do
       other_payment = create(:transaction, :succeeded, captured_amount: 500, merchant: other_merchant)
 
       post "/api/v1/payments/#{other_payment.uid}/refunds", params: { amount: 500 }, headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 when retrieving another merchant's refunds" do
+      other_payment = create(:transaction, :succeeded, captured_amount: 500, merchant: other_merchant)
+
+      get "/api/v1/payments/#{other_payment.uid}/refunds", headers: auth_headers
 
       expect(response).to have_http_status(:not_found)
     end
