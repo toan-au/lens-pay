@@ -121,5 +121,5 @@ Business logic lives in service objects under `app/services/`, not in controller
 ## Planned
 
 - **Webhook delivery**: HMAC-signed `POST` to `merchant.webhook_url` on payment and refund events, with a `WebhookDelivery` audit record and retry logic on failure
-- **Row-level security**: PostgreSQL RLS as a second layer of cross-merchant isolation beneath the application layer
+- **Row-level security**: PostgreSQL RLS as a second layer of cross-merchant isolation beneath the application layer (currently researching implementation)
 - **Frontend**: Vue interface to demonstrate the full payment lifecycle end to end
