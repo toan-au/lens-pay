@@ -299,6 +299,37 @@ paths:
           description: payment not found
         '401':
           description: unauthorized
+  "/api/v1/refunds":
+    get:
+      summary: List all refunds
+      tags:
+      - Refunds
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        description: Pagination cursor (uid of last refund in previous page)
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        description: Filter by status (pending, succeeded, declined)
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 'Number of results per page (default: 25, max: 100)'
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: refunds listed
+        '401':
+          description: unauthorized
 servers:
 - url: http://{defaultHost}
   variables:

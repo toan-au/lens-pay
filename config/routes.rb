@@ -6,6 +6,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      get "refunds/index"
       resources :payments, only: [ :index, :create, :show ], param: :uid do
         member do
           post :authorize
@@ -13,9 +14,10 @@ Rails.application.routes.draw do
           post :complete
           post :decline
         end
-        resources :refunds, only: [ :index, :create ]
+        resources :refunds, only: [ :index, :create ], controller: "payment_refunds"
       end
       resources :merchants, only: [ :create, :show ], param: :uid
+      resources :refunds, only: [ :index ]
     end
   end
 end
