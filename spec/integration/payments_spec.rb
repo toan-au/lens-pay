@@ -212,9 +212,10 @@ RSpec.describe 'Payments API', type: :request do
       parameter name: :refund, in: :body, schema: {
         type: :object,
         properties: {
-          amount: { type: :integer, example: 500, description: 'Amount to refund in smallest currency unit' }
+          amount: { type: :integer, example: 500, description: 'Amount to refund in smallest currency unit' },
+          idempotency_key: { type: :string, example: 'order_abc123_refund', description: 'Unique key to safely retry refund requests without double-refunding' }
         },
-        required: %w[amount]
+        required: %w[amount idempotency_key]
       }
 
       response '201', 'refund created' do
