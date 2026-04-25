@@ -13,9 +13,10 @@ module Refunds
 
       @refund = @transaction.refunds.new(@params)
 
-      validate_refunded_amount!
-
-      raise RefundError::ValidationFailed, @refund.errors.full_messages unless @refund.save
+      @transaction.with_lock do
+        validate_refunded_amount!
+        raise RefundError::ValidationFailed, @refund.errors.full_messages unless @refund.save
+      end
 
       SettleRefundJob.perform_later(@refund.id)
 
