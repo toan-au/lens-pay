@@ -29,6 +29,14 @@ RSpec.describe Refunds::CreateService do
       expect { described_class.call(transaction, params) }.to raise_error(RefundError::PaymentNotSucceeded)
     end
 
+    it "acquires a lock on the transaction before creating a refund" do
+      transaction = create(:transaction, :succeeded, captured_amount: 1000)
+      params = { amount: 500, idempotency_key: "refund_key_1111" }
+      expect(transaction).to receive(:with_lock).and_call_original
+
+      described_class.call(transaction, params)
+    end
+
     it "returns the existing refund when the same idempotency key is used" do
       transaction = create(:transaction, :succeeded, captured_amount: 1000)
       params = { amount: 500, idempotency_key: "refund_key_1111" }

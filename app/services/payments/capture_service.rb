@@ -10,10 +10,12 @@ module Payments
     def perform
       validate_captured_amount!
 
-      @previous_status = @transaction.status
+      @transaction.with_lock do
+        @previous_status = @transaction.status
 
-      @transaction.capture!
-      @transaction.update!(captured_amount: @captured_amount)
+        @transaction.capture!
+        @transaction.update!(captured_amount: @captured_amount)
+      end
 
       SettlePaymentJob.perform_later(@transaction.id)
 

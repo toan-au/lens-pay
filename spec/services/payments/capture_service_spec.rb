@@ -41,6 +41,13 @@ RSpec.describe Payments::CaptureService do
       end
     end
 
+    it "acquires a lock on the transaction before capturing" do
+      transaction = create(:transaction, :authorized, amount: 1000)
+      expect(transaction).to receive(:with_lock).and_call_original
+
+      described_class.call(transaction)
+    end
+
     it "raises InvalidTransition when the transaction is not authorized" do
       transaction = create(:transaction)
 
