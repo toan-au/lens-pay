@@ -219,20 +219,20 @@ RSpec.describe 'Payments API', type: :request do
 
       response '201', 'refund created' do
         let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 1000, merchant: merchant).uid }
-        let(:refund) { { amount: 500 } }
+        let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
 
       response '422', 'payment not succeeded' do
         let(:payment_uid) { create(:transaction, merchant: merchant).uid }
-        let(:refund) { { amount: 500 } }
+        let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
 
       response '401', 'unauthorized' do
         let(:Authorization) { 'Bearer invalid' }
         let(:payment_uid) { 'tr_any' }
-        let(:refund) { { amount: 500 } }
+        let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
     end

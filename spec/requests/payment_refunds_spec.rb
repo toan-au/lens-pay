@@ -18,7 +18,8 @@ RSpec.describe "Refunds API", type: :request do
     it "creates a refund for a valid transaction" do
       payment = create(:transaction, captured_amount: 500, merchant:, status: "succeeded")
       post "/api/v1/payments/#{payment.uid}/refunds", params: {
-        amount: 500
+        amount: 500,
+        idempotency_key: "duck_duck_goose"
       }, headers: auth_headers
 
       expect(response).to have_http_status(201)
@@ -29,16 +30,18 @@ RSpec.describe "Refunds API", type: :request do
       create(:refund, payment: payment, amount: 500, status: "succeeded")
 
       post "/api/v1/payments/#{payment.uid}/refunds", params: {
-        amount: 500
+        amount: 500,
+        idempotency_key: "refund_already_refunded"
       }, headers: auth_headers
 
       expect(response).to have_http_status(:unprocessable_content)
     end
 
-    it "return sunprocessable_content for a refnd that exceeds the refundable amount" do
+    it "returns unprocessable_content for a refund that exceeds the refundable amount" do
       payment = create(:transaction, captured_amount: 500, merchant:, status: "succeeded")
       post "/api/v1/payments/#{payment.uid}/refunds", params: {
-        amount: 5000
+        amount: 5000,
+        idempotency_key: "refund_exceeds_amount"
       }, headers: auth_headers
 
       expect(response).to have_http_status(:unprocessable_content)
@@ -70,7 +73,7 @@ RSpec.describe "Refunds API", type: :request do
     it "returns 404 when refunding another merchant's payment" do
       other_payment = create(:transaction, :succeeded, captured_amount: 500, merchant: other_merchant)
 
-      post "/api/v1/payments/#{other_payment.uid}/refunds", params: { amount: 500 }, headers: auth_headers
+      post "/api/v1/payments/#{other_payment.uid}/refunds", params: { amount: 500, idempotency_key: "refund_cross_merchant" }, headers: auth_headers
 
       expect(response).to have_http_status(:not_found)
     end
