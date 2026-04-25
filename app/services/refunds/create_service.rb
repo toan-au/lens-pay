@@ -8,11 +8,16 @@ module Refunds
     end
 
     def perform
+      existing_refund = @transaction.refunds.find_by(idempotency_key: @params[:idempotency_key])
+      return Result.new(refund: existing_refund, status: :ok) if existing_refund
+
       @refund = @transaction.refunds.new(@params)
 
       validate_refunded_amount!
 
       raise RefundError::ValidationFailed, @refund.errors.full_messages unless @refund.save
+
+      SettleRefundJob.perform_later(@refund.id)
 
       Result.new(refund: @refund, status: :created)
     end

@@ -37,7 +37,7 @@ class Transaction < ApplicationRecord
   end
 
   def refundable_amount
-    captured_amount - self.refunds.succeeded.sum(:amount)
+    captured_amount - self.refunds.where(status: [ :pending, :succeeded ]).sum(:amount)
   end
 
 

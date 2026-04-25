@@ -80,4 +80,27 @@ RSpec.describe Transaction, type: :model do
       expect { transaction.decline! }.to raise_error(AASM::InvalidTransition)
     end
   end
+
+  describe "#refundable_amount" do
+    it "subtracts succeeded refunds from captured amount" do
+      transaction = create(:transaction, :succeeded, captured_amount: 1000)
+      create(:refund, payment: transaction, amount: 400, status: :succeeded)
+
+      expect(transaction.refundable_amount).to eq(600)
+    end
+
+    it "subtracts pending refunds from captured amount" do
+      transaction = create(:transaction, :succeeded, captured_amount: 1000)
+      create(:refund, payment: transaction, amount: 400, status: :pending)
+
+      expect(transaction.refundable_amount).to eq(600)
+    end
+
+    it "does not subtract declined refunds from captured amount" do
+      transaction = create(:transaction, :succeeded, captured_amount: 1000)
+      create(:refund, payment: transaction, amount: 400, status: :declined)
+
+      expect(transaction.refundable_amount).to eq(1000)
+    end
+  end
 end

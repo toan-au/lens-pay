@@ -25,7 +25,7 @@ class Api::V1::PaymentRefundsController < ApplicationController
   end
 
   def create
-    params.require([ :amount ])
+    params.require([ :amount, :idempotency_key ])
 
     transaction = Payments::FindService.call(current_merchant, params[:payment_uid]).transaction
     result = Refunds::CreateService.call(transaction, refund_params)
@@ -35,6 +35,6 @@ class Api::V1::PaymentRefundsController < ApplicationController
 
   private
   def refund_params
-    params.permit(:amount)
+    params.permit(:amount, :idempotency_key)
   end
 end

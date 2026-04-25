@@ -212,27 +212,40 @@ RSpec.describe 'Payments API', type: :request do
       parameter name: :refund, in: :body, schema: {
         type: :object,
         properties: {
-          amount: { type: :integer, example: 500, description: 'Amount to refund in smallest currency unit' }
+          amount: { type: :integer, example: 500, description: 'Amount to refund in smallest currency unit' },
+          idempotency_key: { type: :string, example: 'order_abc123_refund', description: 'Unique key to safely retry refund requests without double-refunding' }
         },
-        required: %w[amount]
+        required: %w[amount idempotency_key]
       }
 
       response '201', 'refund created' do
+        let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 1000, merchant: merchant).uid }
+        let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
+        run_test!
+      end
+
+      response '400', 'missing required parameters' do
         let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 1000, merchant: merchant).uid }
         let(:refund) { { amount: 500 } }
         run_test!
       end
 
-      response '422', 'payment not succeeded' do
+      response '422', 'payment not in a refundable state' do
         let(:payment_uid) { create(:transaction, merchant: merchant).uid }
-        let(:refund) { { amount: 500 } }
+        let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
+        run_test!
+      end
+
+      response '422', 'refund amount exceeds refundable amount' do
+        let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 100, merchant: merchant).uid }
+        let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
 
       response '401', 'unauthorized' do
         let(:Authorization) { 'Bearer invalid' }
         let(:payment_uid) { 'tr_any' }
-        let(:refund) { { amount: 500 } }
+        let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
     end

@@ -22,4 +22,10 @@ module RefundError
       super("Payment has already been refunded")
     end
   end
+
+  class InvalidTransition < StandardError
+    def initialize(from:, to:)
+      super("Cannot transition refund from '#{from}' to '#{to}'")
+    end
+  end
 end

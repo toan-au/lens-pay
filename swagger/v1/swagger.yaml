@@ -270,8 +270,10 @@ paths:
       responses:
         '201':
           description: refund created
+        '400':
+          description: missing required parameters
         '422':
-          description: payment not succeeded
+          description: refund amount exceeds refundable amount
         '401':
           description: unauthorized
       requestBody:
@@ -284,8 +286,14 @@ paths:
                   type: integer
                   example: 500
                   description: Amount to refund in smallest currency unit
+                idempotency_key:
+                  type: string
+                  example: order_abc123_refund
+                  description: Unique key to safely retry refund requests without
+                    double-refunding
               required:
               - amount
+              - idempotency_key
     get:
       summary: List refunds for a payment
       tags:
