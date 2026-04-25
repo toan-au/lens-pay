@@ -17,6 +17,8 @@ module Refunds
 
       raise RefundError::ValidationFailed, @refund.errors.full_messages unless @refund.save
 
+      SettleRefundJob.perform_later(@refund.id)
+
       Result.new(refund: @refund, status: :created)
     end
 

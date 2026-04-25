@@ -270,8 +270,10 @@ paths:
       responses:
         '201':
           description: refund created
+        '400':
+          description: missing required parameters
         '422':
-          description: payment not succeeded
+          description: refund amount exceeds refundable amount
         '401':
           description: unauthorized
       requestBody:

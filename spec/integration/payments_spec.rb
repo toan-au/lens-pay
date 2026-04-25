@@ -224,8 +224,20 @@ RSpec.describe 'Payments API', type: :request do
         run_test!
       end
 
-      response '422', 'payment not succeeded' do
+      response '400', 'missing required parameters' do
+        let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 1000, merchant: merchant).uid }
+        let(:refund) { { amount: 500 } }
+        run_test!
+      end
+
+      response '422', 'payment not in a refundable state' do
         let(:payment_uid) { create(:transaction, merchant: merchant).uid }
+        let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
+        run_test!
+      end
+
+      response '422', 'refund amount exceeds refundable amount' do
+        let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 100, merchant: merchant).uid }
         let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
