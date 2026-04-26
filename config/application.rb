@@ -30,6 +30,7 @@ module LensPay
 
     require_relative "../lib/middleware/api_key_authenticator"
     config.middleware.use Middleware::ApiKeyAuthenticator
+    config.middleware.use Rack::Attack
 
     # Configuration for the application, engines, and railties goes here.
     #
