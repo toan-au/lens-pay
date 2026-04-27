@@ -36,4 +36,28 @@ RSpec.describe Merchant, type: :model do
 
     expect(Merchant.find(merchant.id).webhook_secret).to eq(merchant.webhook_secret)
   end
+
+  it "accepts a valid webhook_url" do
+    merchant = build(:merchant, webhook_url: "https://example.com/webhooks")
+
+    expect(merchant).to be_valid
+  end
+
+  it "rejects a webhook_url that is not a valid URL" do
+    merchant = build(:merchant, webhook_url: "not-a-url")
+
+    expect(merchant).not_to be_valid
+  end
+
+  it "rejects a webhook_url with an embedded newline" do
+    merchant = build(:merchant, webhook_url: "https://evil.com\ninjected")
+
+    expect(merchant).not_to be_valid
+  end
+
+  it "allows webhook_url to be blank" do
+    merchant = build(:merchant, webhook_url: nil)
+
+    expect(merchant).to be_valid
+  end
 end

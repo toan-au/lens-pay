@@ -8,7 +8,7 @@ class Merchant < ApplicationRecord
   validates :country, presence: true, length: { is: 2 }
   validates :currency, presence: true, inclusion: { in: Money::Currency.all.map(&:iso_code) }
   validates :status, presence: true
-  validates :webhook_url, format: { with: /\Ahttps?:\/\/.+/, message: "must be a valid HTTP or HTTPS URL" }, allow_blank: true
+  validates :webhook_url, format: { with: /\Ahttps?:\/\/.+\z/, message: "must be a valid HTTP or HTTPS URL" }, allow_blank: true
 
   attr_reader :raw_api_key
 
