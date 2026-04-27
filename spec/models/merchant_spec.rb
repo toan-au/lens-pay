@@ -24,4 +24,16 @@ RSpec.describe Merchant, type: :model do
 
     expect(merchant).to be_active
   end
+
+  it "generates a webhook_secret with the whs_ prefix on create" do
+    merchant = create(:merchant)
+
+    expect(merchant.webhook_secret).to start_with("whs_")
+  end
+
+  it "stores the webhook_secret in plaintext" do
+    merchant = create(:merchant)
+
+    expect(Merchant.find(merchant.id).webhook_secret).to eq(merchant.webhook_secret)
+  end
 end

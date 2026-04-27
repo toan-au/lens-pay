@@ -14,6 +14,12 @@ RSpec.describe "Merchants API", type: :request do
       expect(response.parsed_body["api_key"]).to start_with("sk_")
     end
 
+    it "returns the webhook_secret on creation" do
+      post "/api/v1/merchants", params: valid_params
+
+      expect(response.parsed_body["webhook_secret"]).to start_with("whs_")
+    end
+
     it "does not expose the api_key_digest in the response" do
       post "/api/v1/merchants", params: valid_params
 
@@ -39,28 +45,46 @@ RSpec.describe "Merchants API", type: :request do
     end
   end
 
-  describe "GET /api/v1/merchants/:uid" do
+  describe "GET /api/v1/merchants/me" do
     let(:merchant) { create(:merchant) }
-    let(:other_merchant) { create(:merchant) }
     let(:auth_headers) { { "Authorization" => "Bearer #{merchant.raw_api_key}" } }
 
-    it "returns the merchant" do
-      get "/api/v1/merchants/#{merchant.uid}", headers: auth_headers
+    it "returns the merchant profile" do
+      get "/api/v1/merchants/me", headers: auth_headers
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["uid"]).to eq(merchant.uid)
+      expect(response.parsed_body["webhook_secret"]).to eq(merchant.webhook_secret)
     end
 
-    it "returns not found for an unknown uid" do
-      get "/api/v1/merchants/mch_unknown", headers: auth_headers
+    it "returns 401 without auth" do
+      get "/api/v1/merchants/me"
 
-      expect(response).to have_http_status(:not_found)
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  describe "PATCH /api/v1/merchants/me" do
+    let(:merchant) { create(:merchant) }
+    let(:auth_headers) { { "Authorization" => "Bearer #{merchant.raw_api_key}" } }
+
+    it "updates the webhook_url" do
+      patch "/api/v1/merchants/me", params: { webhook_url: "https://example.com/webhooks" }, headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["webhook_url"]).to eq("https://example.com/webhooks")
     end
 
-    it "returns 404 when fetching another merchant's profile" do
-      get "/api/v1/merchants/#{other_merchant.uid}", headers: auth_headers
+    it "returns unprocessable entity for an invalid webhook_url" do
+      patch "/api/v1/merchants/me", params: { webhook_url: "not-a-url" }, headers: auth_headers
 
-      expect(response).to have_http_status(:not_found)
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "returns 401 without auth" do
+      patch "/api/v1/merchants/me", params: { webhook_url: "https://example.com/webhooks" }
+
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 end

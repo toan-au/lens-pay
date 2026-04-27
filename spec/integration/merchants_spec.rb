@@ -34,27 +34,48 @@ RSpec.describe 'Merchants API', type: :request do
     end
   end
 
-  path '/api/v1/merchants/{uid}' do
-    parameter name: :uid, in: :path, type: :string, description: 'Merchant UID', example: 'mch_abc123'
-
-    get 'Fetch a merchant' do
+  path '/api/v1/merchants/me' do
+    get 'Fetch own merchant profile' do
       tags 'Merchants'
       produces 'application/json'
       security [ { bearer_auth: [] } ]
 
       response '200', 'merchant found' do
-        let(:uid) { merchant.uid }
-        run_test!
-      end
-
-      response '404', 'merchant not found' do
-        let(:uid) { 'mch_nonexistent' }
         run_test!
       end
 
       response '401', 'unauthorized' do
         let(:Authorization) { 'Bearer invalid' }
-        let(:uid) { 'mch_any' }
+        run_test!
+      end
+    end
+
+    patch 'Update own merchant profile' do
+      tags 'Merchants'
+      consumes 'application/json'
+      produces 'application/json'
+      security [ { bearer_auth: [] } ]
+
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        properties: {
+          webhook_url: { type: :string, example: 'https://acme.com/webhooks' }
+        }
+      }
+
+      response '200', 'merchant updated' do
+        let(:body) { { webhook_url: 'https://acme.com/webhooks' } }
+        run_test!
+      end
+
+      response '422', 'validation failed' do
+        let(:body) { { webhook_url: 'not-a-url' } }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid' }
+        let(:body) { {} }
         run_test!
       end
     end
