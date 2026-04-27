@@ -8,6 +8,7 @@ module Payments
 
     def perform
       @transaction.authorize!
+      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "payment.authorized", "Transaction", @transaction.id)
       Result.new(transaction: @transaction, status: :ok)
     rescue AASM::InvalidTransition
       raise PaymentError::InvalidTransition.new(from: @transaction.status, to: "authorized")
