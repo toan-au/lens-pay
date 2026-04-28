@@ -42,23 +42,8 @@ class Api::V1::PaymentsController < ApplicationController
     render json: result.transaction, status: result.status
   end
 
-  def authorize
-    result = Payments::AuthorizeService.call(find_payment)
-    render json: result.transaction, status: result.status
-  end
-
   def capture
     result = Payments::CaptureService.call(find_payment, captured_amount: params[:captured_amount]&.to_i)
-    render json: result.transaction, status: result.status
-  end
-
-  def complete
-    result = Payments::CompleteService.call(find_payment)
-    render json: result.transaction, status: result.status
-  end
-
-  def decline
-    result = Payments::DeclineService.call(find_payment)
     render json: result.transaction, status: result.status
   end
 

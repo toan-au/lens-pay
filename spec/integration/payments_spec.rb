@@ -85,32 +85,6 @@ RSpec.describe 'Payments API', type: :request do
     end
   end
 
-  path '/api/v1/payments/{uid}/authorize' do
-    parameter name: :uid, in: :path, type: :string, description: 'Payment UID'
-
-    post 'Authorize a payment' do
-      tags 'Payment Transitions'
-      produces 'application/json'
-      security [ { bearer_auth: [] } ]
-
-      response '200', 'payment authorized' do
-        let(:uid) { create(:transaction, merchant: merchant).uid }
-        run_test!
-      end
-
-      response '422', 'invalid transition' do
-        let(:uid) { create(:transaction, :authorized, merchant: merchant).uid }
-        run_test!
-      end
-
-      response '401', 'unauthorized' do
-        let(:Authorization) { 'Bearer invalid' }
-        let(:uid) { 'tr_any' }
-        run_test!
-      end
-    end
-  end
-
   path '/api/v1/payments/{uid}/capture' do
     parameter name: :uid, in: :path, type: :string, description: 'Payment UID'
 
@@ -143,58 +117,6 @@ RSpec.describe 'Payments API', type: :request do
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'tr_any' }
         let(:body) { {} }
-        run_test!
-      end
-    end
-  end
-
-  path '/api/v1/payments/{uid}/complete' do
-    parameter name: :uid, in: :path, type: :string, description: 'Payment UID'
-
-    post 'Complete a payment' do
-      tags 'Payment Transitions'
-      produces 'application/json'
-      security [ { bearer_auth: [] } ]
-
-      response '200', 'payment succeeded' do
-        let(:uid) { create(:transaction, :processing, merchant: merchant).uid }
-        run_test!
-      end
-
-      response '422', 'invalid transition' do
-        let(:uid) { create(:transaction, merchant: merchant).uid }
-        run_test!
-      end
-
-      response '401', 'unauthorized' do
-        let(:Authorization) { 'Bearer invalid' }
-        let(:uid) { 'tr_any' }
-        run_test!
-      end
-    end
-  end
-
-  path '/api/v1/payments/{uid}/decline' do
-    parameter name: :uid, in: :path, type: :string, description: 'Payment UID'
-
-    post 'Decline a payment' do
-      tags 'Payment Transitions'
-      produces 'application/json'
-      security [ { bearer_auth: [] } ]
-
-      response '200', 'payment declined' do
-        let(:uid) { create(:transaction, merchant: merchant).uid }
-        run_test!
-      end
-
-      response '422', 'invalid transition' do
-        let(:uid) { create(:transaction, :succeeded, merchant: merchant).uid }
-        run_test!
-      end
-
-      response '401', 'unauthorized' do
-        let(:Authorization) { 'Bearer invalid' }
-        let(:uid) { 'tr_any' }
         run_test!
       end
     end

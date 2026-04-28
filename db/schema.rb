@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_26_170650) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_28_042321) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_170650) do
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["idempotency_key"], name: "index_refunds_on_idempotency_key", unique: true
+    t.index ["transaction_id", "created_at"], name: "index_refunds_on_transaction_id_and_created_at"
     t.index ["uid"], name: "index_refunds_on_uid", unique: true
   end
 

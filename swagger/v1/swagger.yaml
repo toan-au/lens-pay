@@ -45,17 +45,9 @@ paths:
               - email
               - country
               - currency
-  "/api/v1/merchants/{uid}":
-    parameters:
-    - name: uid
-      in: path
-      description: Merchant UID
-      example: mch_abc123
-      required: true
-      schema:
-        type: string
+  "/api/v1/merchants/me":
     get:
-      summary: Fetch a merchant
+      summary: Fetch own merchant profile
       tags:
       - Merchants
       security:
@@ -63,10 +55,31 @@ paths:
       responses:
         '200':
           description: merchant found
-        '404':
-          description: merchant not found
         '401':
           description: unauthorized
+    patch:
+      summary: Update own merchant profile
+      tags:
+      - Merchants
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '200':
+          description: merchant updated
+        '422':
+          description: validation failed
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                webhook_url:
+                  type: string
+                  example: https://acme.com/webhooks
   "/api/v1/payments":
     post:
       summary: Create a payment
@@ -157,27 +170,6 @@ paths:
           description: payment not found
         '401':
           description: unauthorized
-  "/api/v1/payments/{uid}/authorize":
-    parameters:
-    - name: uid
-      in: path
-      description: Payment UID
-      required: true
-      schema:
-        type: string
-    post:
-      summary: Authorize a payment
-      tags:
-      - Payment Transitions
-      security:
-      - bearer_auth: []
-      responses:
-        '200':
-          description: payment authorized
-        '422':
-          description: invalid transition
-        '401':
-          description: unauthorized
   "/api/v1/payments/{uid}/capture":
     parameters:
     - name: uid
@@ -210,48 +202,6 @@ paths:
                   type: integer
                   example: 800
                   description: Amount to capture (defaults to full authorized amount)
-  "/api/v1/payments/{uid}/complete":
-    parameters:
-    - name: uid
-      in: path
-      description: Payment UID
-      required: true
-      schema:
-        type: string
-    post:
-      summary: Complete a payment
-      tags:
-      - Payment Transitions
-      security:
-      - bearer_auth: []
-      responses:
-        '200':
-          description: payment succeeded
-        '422':
-          description: invalid transition
-        '401':
-          description: unauthorized
-  "/api/v1/payments/{uid}/decline":
-    parameters:
-    - name: uid
-      in: path
-      description: Payment UID
-      required: true
-      schema:
-        type: string
-    post:
-      summary: Decline a payment
-      tags:
-      - Payment Transitions
-      security:
-      - bearer_auth: []
-      responses:
-        '200':
-          description: payment declined
-        '422':
-          description: invalid transition
-        '401':
-          description: unauthorized
   "/api/v1/payments/{payment_uid}/refunds":
     parameters:
     - name: payment_uid
