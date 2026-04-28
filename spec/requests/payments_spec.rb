@@ -174,28 +174,7 @@ RSpec.describe "Payments API", type: :request do
     end
   end
 
-  # =============== STATE TRANSITIONS ==================
-
-  describe "POST /authorize" do
-    it "authorizes a pending transaction" do
-      transaction = create(:transaction, merchant: merchant)
-
-      post "/api/v1/payments/#{transaction.uid}/authorize", headers: auth_headers
-
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["status"]).to eq("authorized")
-    end
-
-    it "returns 422 when the transaction is not pending" do
-      transaction = create(:transaction, :authorized, merchant: merchant)
-
-      post "/api/v1/payments/#{transaction.uid}/authorize", headers: auth_headers
-
-      expect(response).to have_http_status(:unprocessable_content)
-    end
-  end
-
-  describe "POST /capture" do
+  describe "POST /api/v1/payments/:uid/capture" do
     it "captures a full amount by default" do
       transaction = create(:transaction, :authorized, amount: 1000, merchant: merchant)
 
@@ -232,46 +211,6 @@ RSpec.describe "Payments API", type: :request do
     end
   end
 
-  describe "POST /complete" do
-    it "completes a processing transaction" do
-      transaction = create(:transaction, :processing, merchant: merchant)
-
-      post "/api/v1/payments/#{transaction.uid}/complete", headers: auth_headers
-
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["status"]).to eq("succeeded")
-    end
-
-    it "returns 422 when the transaction is not processing" do
-      transaction = create(:transaction, :authorized, merchant: merchant)
-
-      post "/api/v1/payments/#{transaction.uid}/complete", headers: auth_headers
-
-      expect(response).to have_http_status(:unprocessable_content)
-    end
-  end
-
-  describe "POST /decline" do
-    %w[pending authorized processing].each do |state|
-      it "declines a #{state} transaction" do
-        transaction = create(:transaction, state.to_sym, merchant: merchant)
-
-        post "/api/v1/payments/#{transaction.uid}/decline", headers: auth_headers
-
-        expect(response).to have_http_status(:ok)
-        expect(response.parsed_body["status"]).to eq("declined")
-      end
-    end
-
-    it "returns 422 when the transaction is already succeeded" do
-      transaction = create(:transaction, :succeeded, merchant: merchant)
-
-      post "/api/v1/payments/#{transaction.uid}/decline", headers: auth_headers
-
-      expect(response).to have_http_status(:unprocessable_content)
-    end
-  end
-
   # =============== SECURITY ==================
 
   describe "cross-merchant security" do
@@ -292,26 +231,8 @@ RSpec.describe "Payments API", type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
-    it "returns 404 when authorizing another merchant's payment" do
-      post "/api/v1/payments/#{other_transaction.uid}/authorize", headers: auth_headers
-
-      expect(response).to have_http_status(:not_found)
-    end
-
     it "returns 404 when capturing another merchant's payment" do
       post "/api/v1/payments/#{other_transaction.uid}/capture", headers: auth_headers
-
-      expect(response).to have_http_status(:not_found)
-    end
-
-    it "returns 404 when completing another merchant's payment" do
-      post "/api/v1/payments/#{other_transaction.uid}/complete", headers: auth_headers
-
-      expect(response).to have_http_status(:not_found)
-    end
-
-    it "returns 404 when declining another merchant's payment" do
-      post "/api/v1/payments/#{other_transaction.uid}/decline", headers: auth_headers
 
       expect(response).to have_http_status(:not_found)
     end

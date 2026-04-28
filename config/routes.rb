@@ -9,10 +9,7 @@ Rails.application.routes.draw do
       resources :refunds, only: [ :index ]
       resources :payments, only: [ :index, :create, :show ], param: :uid do
         member do
-          post :authorize
           post :capture
-          post :complete
-          post :decline
         end
         resources :refunds, only: [ :index, :create ], controller: "payment_refunds"
       end
