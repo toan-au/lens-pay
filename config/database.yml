@@ -91,6 +91,7 @@ production:
     database: lens_pay_production
     username: lens_pay
     password: <%= ENV["LENS_PAY_DATABASE_PASSWORD"] %>
+    host: <%= ENV.fetch("DB_HOST", "lens_pay-db") %>
   cache:
     <<: *primary_production
     database: lens_pay_production_cache
