@@ -76,6 +76,7 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # Reject requests with a Host header not matching the configured domain.
-  # Prevents DNS rebinding attacks. Update APP_HOST when the domain is known.
+  # Prevents DNS rebinding attacks. /up is excluded so kamal-proxy health checks pass.
   config.hosts = [ ENV["APP_HOST"] ].compact
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end
