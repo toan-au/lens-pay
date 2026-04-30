@@ -5,6 +5,7 @@ export function createPayment(params: {
   amount: number
   currency: string
   idempotency_key: string
+  metadata?: Record<string, string>
 }): Promise<Payment> {
   return api.post<Payment>('/payments', params)
 }

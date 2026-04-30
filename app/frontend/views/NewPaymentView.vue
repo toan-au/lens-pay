@@ -22,18 +22,43 @@
               {{ merchantStore.merchant?.currency ?? '...' }}
             </span>
           </div>
-          <p class="text-xs text-gray-400">
-            Enter amount in {{ currencyHint }}
-          </p>
+          <p class="text-xs text-gray-400">{{ currencyHint }}</p>
         </div>
 
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Idempotency Key</label>
           <div class="flex gap-2">
             <input v-model="form.idempotency_key" type="text" required class="input flex-1 font-mono text-xs" />
-            <button type="button" @click="regenerateKey" class="btn-ghost text-xs whitespace-nowrap">Regenerate</button>
+            <button type="button" @click="regenerateKey" class="btn-ghost text-xs whitespace-nowrap cursor-pointer">Regenerate</button>
           </div>
           <p class="text-xs text-gray-400">Prevents duplicate payments on retries.</p>
+        </div>
+
+        <!-- Metadata editor -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium">Metadata</label>
+            <button type="button" @click="addMetadataRow" class="text-xs text-indigo-500 hover:text-indigo-700 cursor-pointer">+ Add field</button>
+          </div>
+          <p class="text-xs text-gray-400">Attach arbitrary key-value data to this payment — useful for linking to an order ID, customer, or any internal reference.</p>
+
+          <div v-if="metadataRows.length > 0" class="flex flex-col gap-2">
+            <div v-for="(row, i) in metadataRows" :key="i" class="flex gap-2 items-center">
+              <input
+                v-model="row.key"
+                type="text"
+                placeholder="key"
+                class="input flex-1 font-mono text-xs"
+              />
+              <input
+                v-model="row.value"
+                type="text"
+                placeholder="value"
+                class="input flex-1 font-mono text-xs"
+              />
+              <button type="button" @click="removeMetadataRow(i)" class="text-gray-300 hover:text-red-400 cursor-pointer text-lg leading-none">&times;</button>
+            </div>
+          </div>
         </div>
 
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
@@ -69,28 +94,42 @@ const currencyHint = computed(() =>
     : `${currency.value} minor units (e.g. 1000 = $10.00)`
 )
 
-function generateKey(): string {
-  return crypto.randomUUID()
+const form = reactive({
+  amount: null as number | null,
+  idempotency_key: crypto.randomUUID(),
+})
+
+const metadataRows = reactive<{ key: string; value: string }[]>([])
+
+function addMetadataRow() {
+  metadataRows.push({ key: '', value: '' })
+}
+
+function removeMetadataRow(index: number) {
+  metadataRows.splice(index, 1)
 }
 
 function regenerateKey() {
-  form.idempotency_key = generateKey()
+  form.idempotency_key = crypto.randomUUID()
 }
 
-const form = reactive({
-  amount: null as number | null,
-  idempotency_key: generateKey(),
-})
+function buildMetadata(): Record<string, string> {
+  return Object.fromEntries(
+    metadataRows.filter(r => r.key.trim()).map(r => [r.key.trim(), r.value])
+  )
+}
 
 async function handleSubmit() {
   if (!form.amount || !merchantStore.merchant) return
   loading.value = true
   error.value = ''
   try {
+    const metadata = buildMetadata()
     const payment = await paymentStore.submitPayment({
       amount: form.amount,
       currency: currency.value,
       idempotency_key: form.idempotency_key,
+      ...(Object.keys(metadata).length > 0 && { metadata }),
     })
     router.push(`/payments/${payment.uid}`)
   } catch (e: any) {

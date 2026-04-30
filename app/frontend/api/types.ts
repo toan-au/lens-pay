@@ -23,6 +23,7 @@ export interface Payment {
   captured_amount: number | null
   idempotency_key: string
   merchant_uid: string
+  metadata: Record<string, string>
   created_at: string
 }
 

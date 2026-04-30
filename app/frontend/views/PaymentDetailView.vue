@@ -34,6 +34,16 @@
           <span class="text-sm text-gray-500">Idempotency key</span>
           <span class="text-xs font-mono text-gray-600">{{ payment.idempotency_key }}</span>
         </div>
+        <template v-if="Object.keys(payment.metadata ?? {}).length > 0">
+          <div
+            v-for="(value, key) in payment.metadata"
+            :key="key"
+            class="flex justify-between px-5 py-4"
+          >
+            <span class="text-sm text-gray-500 font-mono">{{ key }}</span>
+            <span class="text-sm text-gray-700 font-mono">{{ value }}</span>
+          </div>
+        </template>
       </div>
 
       <!-- Polling indicator -->
@@ -124,13 +134,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
 import { formatAmount, formatDate, statusClass } from '../utils/format'
 
 const POLL_PAYMENT_STATUSES = ['pending', 'processing']
 
 const route = useRoute()
+const router = useRouter()
 const paymentStore = usePaymentStore()
 
 const uid = route.params.uid as string
