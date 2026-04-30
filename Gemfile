@@ -61,3 +61,5 @@ group :development, :test do
 
   gem "rswag-specs"
 end
+
+gem "vite_rails", "~> 3.10"
