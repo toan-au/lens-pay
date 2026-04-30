@@ -36,4 +36,11 @@ export interface Refund {
   amount: number
   status: 'pending' | 'succeeded' | 'declined'
   created_at: string
+  payment_uid?: string
+  currency?: string
+}
+
+export interface RefundListResponse {
+  refunds: Refund[]
+  next_cursor: string | null
 }

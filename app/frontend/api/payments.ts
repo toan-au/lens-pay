@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { Payment, PaymentListResponse, Refund } from './types'
+import type { Payment, PaymentListResponse, Refund, RefundListResponse } from './types'
 
 export function createPayment(params: {
   amount: number
@@ -39,4 +39,17 @@ export function createRefund(paymentUid: string, params: {
 
 export function listRefunds(paymentUid: string): Promise<{ refunds: Refund[] }> {
   return api.get<{ refunds: Refund[] }>(`/payments/${paymentUid}/refunds`)
+}
+
+export function listAllRefunds(params?: {
+  cursor?: string
+  status?: string
+  limit?: number
+}): Promise<RefundListResponse> {
+  const query = new URLSearchParams()
+  if (params?.cursor) query.set('cursor', params.cursor)
+  if (params?.status) query.set('status', params.status)
+  if (params?.limit) query.set('limit', String(params.limit))
+  const qs = query.toString()
+  return api.get<RefundListResponse>(`/refunds${qs ? `?${qs}` : ''}`)
 }

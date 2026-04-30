@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { listPayments, getPayment, createPayment, capturePayment, createRefund, listRefunds } from '../api/payments'
+import { listPayments, getPayment, createPayment, capturePayment, createRefund, listRefunds, listAllRefunds } from '../api/payments'
 import type { Payment, Refund } from '../api/types'
 
 export const usePaymentStore = defineStore('payments', () => {
@@ -8,6 +8,8 @@ export const usePaymentStore = defineStore('payments', () => {
   const currentPayment = ref<Payment | null>(null)
   const currentRefunds = ref<Refund[]>([])
   const nextCursor = ref<string | null>(null)
+  const allRefunds = ref<Refund[]>([])
+  const allRefundsNextCursor = ref<string | null>(null)
 
   async function fetchPayments(params?: { cursor?: string; status?: string }): Promise<void> {
     const result = await listPayments(params)
@@ -48,11 +50,22 @@ export const usePaymentStore = defineStore('payments', () => {
     currentRefunds.value = [refund, ...currentRefunds.value]
   }
 
+  async function fetchAllRefunds(params?: { cursor?: string; status?: string }): Promise<void> {
+    const result = await listAllRefunds(params)
+    allRefunds.value = params?.cursor
+      ? [...allRefunds.value, ...result.refunds]
+      : result.refunds
+    allRefundsNextCursor.value = result.next_cursor
+  }
+
   return {
     payments,
     currentPayment,
     currentRefunds,
     nextCursor,
+    allRefunds,
+    allRefundsNextCursor,
+    fetchAllRefunds,
     fetchPayments,
     fetchPayment,
     submitPayment,
