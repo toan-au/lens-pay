@@ -21,4 +21,7 @@ Rails.application.routes.draw do
       end
     end
   end
+
+  root to: "frontend#index"
+  get "*path", to: "frontend#index"
 end

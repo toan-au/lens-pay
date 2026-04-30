@@ -20,6 +20,7 @@ module Middleware
     private
 
     def unauthenticated?(env)
+      !env["PATH_INFO"].start_with?("/api") ||
       env["PATH_INFO"] == "/up" ||
       (env["PATH_INFO"] == "/api/v1/merchants" && env["REQUEST_METHOD"] == "POST") ||
       env["PATH_INFO"].start_with?("/api-docs")
