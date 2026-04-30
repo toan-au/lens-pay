@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-6 max-w-2xl">
-    <RouterLink to="/" class="btn-ghost text-xs w-fit">← Back</RouterLink>
+    <button @click="router.back()" class="btn-ghost text-xs w-fit cursor-pointer">← Back</button>
 
     <div v-if="!payment" class="text-gray-400 text-sm">Loading...</div>
 

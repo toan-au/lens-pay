@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-6 max-w-md">
     <div class="flex items-center gap-3">
-      <RouterLink to="/" class="btn-ghost text-xs">← Back</RouterLink>
+      <button @click="router.back()" class="btn-ghost text-xs cursor-pointer">← Back</button>
       <h1 class="text-2xl font-bold">New Payment</h1>
     </div>
 
