@@ -286,6 +286,49 @@ paths:
       responses:
         '200':
           description: refunds listed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - refunds
+                properties:
+                  refunds:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - uid
+                      - amount
+                      - status
+                      - currency
+                      - payment_uid
+                      - created_at
+                      properties:
+                        uid:
+                          type: string
+                          example: re_abc123
+                        amount:
+                          type: integer
+                          example: 500
+                        status:
+                          type: string
+                          enum:
+                          - pending
+                          - succeeded
+                          - declined
+                        currency:
+                          type: string
+                          example: JPY
+                        payment_uid:
+                          type: string
+                          example: py_abc123
+                        created_at:
+                          type: string
+                          format: date-time
+                  next_cursor:
+                    type: string
+                    nullable: true
         '401':
           description: unauthorized
 servers:
