@@ -13,3 +13,4 @@ export function createMerchant(params: {
 export function getMe(): Promise<Merchant> {
   return api.get<Merchant>('/merchants/me')
 }
+

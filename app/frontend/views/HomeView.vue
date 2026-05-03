@@ -5,17 +5,6 @@
       <RouterLink to="/payments/new" class="btn-primary">+ New Payment</RouterLink>
     </div>
 
-    <!-- Demo API key banner -->
-    <div v-if="merchantStore.apiKey" class="flex items-center justify-between bg-red-50 border border-red-200 rounded-lg px-4 py-3 gap-4">
-      <div class="flex flex-col gap-0.5">
-        <p class="text-xs font-medium text-red-600">Demo mode — API key (not shown in production)</p>
-        <code class="text-xs text-red-800 break-all">{{ merchantStore.apiKey }}</code>
-      </div>
-      <button @click="copyKey" class="btn-ghost text-xs whitespace-nowrap">
-        {{ keyCopied ? 'Copied!' : 'Copy' }}
-      </button>
-    </div>
-
     <!-- Status filter -->
     <div class="flex gap-2 flex-wrap">
       <button
@@ -79,7 +68,6 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
-import { useMerchantStore } from '../stores/merchant'
 import { formatAmount, formatDate, statusClass } from '../utils/format'
 
 const STATUS_TABS = [
@@ -93,17 +81,8 @@ const STATUS_TABS = [
 
 const router = useRouter()
 const paymentStore = usePaymentStore()
-const merchantStore = useMerchantStore()
 const loading = ref(false)
 const activeFilter = ref('')
-const keyCopied = ref(false)
-
-function copyKey() {
-  if (!merchantStore.apiKey) return
-  navigator.clipboard.writeText(merchantStore.apiKey)
-  keyCopied.value = true
-  setTimeout(() => (keyCopied.value = false), 2000)
-}
 
 async function load(filter: string, cursor?: string) {
   loading.value = true

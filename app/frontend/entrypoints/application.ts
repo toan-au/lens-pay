@@ -11,6 +11,7 @@ const router = createRouter({
     { path: '/payments/new', component: () => import('../views/NewPaymentView.vue') },
     { path: '/payments/:uid', component: () => import('../views/PaymentDetailView.vue') },
     { path: '/refunds', component: () => import('../views/RefundsView.vue') },
+    { path: '/profile', component: () => import('../views/ProfileView.vue') },
   ],
 })
 

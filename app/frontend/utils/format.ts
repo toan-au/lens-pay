@@ -24,6 +24,7 @@ export function statusClass(status: string): string {
     processing: 'status-processing',
     succeeded: 'status-succeeded',
     declined: 'status-declined',
+    active: 'status-succeeded',
   }
   return `status-badge ${map[status] ?? 'status-pending'}`
 }

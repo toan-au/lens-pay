@@ -21,12 +21,13 @@
           v-if="open"
           class="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
         >
-          <button
-            @click="emit('openProfile')"
-            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+          <RouterLink
+            to="/profile"
+            @click="open = false"
+            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
           >
             Profile
-          </button>
+          </RouterLink>
           <button
             @click="logout"
             class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50 cursor-pointer"
@@ -51,7 +52,6 @@ import { ref } from 'vue'
 import { useMerchantStore } from '../../stores/merchant'
 
 const merchantStore = useMerchantStore()
-const emit = defineEmits<{ openProfile: [] }>()
 const open = ref(false)
 
 function logout() {

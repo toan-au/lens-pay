@@ -1,6 +1,6 @@
 <template>
   <template v-if="merchantStore.isAuthenticated">
-    <AppLayout @open-profile="showProfile = true">
+    <AppLayout>
       <RouterView />
     </AppLayout>
   </template>
@@ -20,7 +20,6 @@ import { useMerchantStore } from './stores/merchant'
 
 const merchantStore = useMerchantStore()
 const showOnboarding = ref(false)
-const showProfile = ref(false)
 
 onMounted(async () => {
   if (merchantStore.isAuthenticated) {
