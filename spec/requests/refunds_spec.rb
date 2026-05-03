@@ -17,6 +17,17 @@ RSpec.describe "Refunds API", type: :request do
       expect(response.parsed_body["refunds"].count).to eq(2)
     end
 
+    it "includes payment_uid and currency on each refund" do
+      payment = create(:transaction, :succeeded, captured_amount: 1000, merchant:, currency: "JPY")
+      create(:refund, payment:, amount: 500)
+
+      get "/api/v1/refunds", headers: auth_headers
+
+      refund = response.parsed_body["refunds"].first
+      expect(refund["payment_uid"]).to eq(payment.uid)
+      expect(refund["currency"]).to eq("JPY")
+    end
+
     it "returns an empty array when the merchant has no refunds" do
       get "/api/v1/refunds", headers: auth_headers
 

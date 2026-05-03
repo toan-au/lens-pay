@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@layer components {
+  .input {
+    @apply px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-indigo-500 bg-white;
+  }
+
+  .btn-primary {
+    @apply bg-indigo-500 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors;
+  }
+
+  .btn-ghost {
+    @apply border border-gray-200 text-gray-700 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors;
+  }
+
+  .status-badge {
+    @apply inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize;
+  }
+
+  .status-pending {
+    @apply bg-gray-100 text-gray-600;
+  }
+
+  .status-authorized {
+    @apply bg-blue-100 text-blue-700;
+  }
+
+  .status-processing {
+    @apply bg-amber-100 text-amber-700;
+  }
+
+  .status-succeeded {
+    @apply bg-green-100 text-green-700;
+  }
+
+  .status-declined {
+    @apply bg-red-100 text-red-700;
+  }
+}
