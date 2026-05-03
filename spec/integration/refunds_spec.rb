@@ -16,7 +16,7 @@ RSpec.describe 'Refunds API', type: :request do
 
       response '200', 'refunds listed' do
         schema type: :object,
-          required: ['refunds'],
+          required: [ 'refunds' ],
           properties: {
             refunds: {
               type: :array,
