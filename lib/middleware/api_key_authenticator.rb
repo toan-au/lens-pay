@@ -19,11 +19,22 @@ module Middleware
 
     private
 
+    NON_API_PATHS = %w[/up /api-docs].freeze
+
+    PUBLIC_ROUTES = [
+      [ "POST", "/api/v1/merchants" ],
+      [ "POST", %r{\A/api/v1/webhook-captures/} ]
+    ].freeze
+
     def unauthenticated?(env)
-      !env["PATH_INFO"].start_with?("/api") ||
-      env["PATH_INFO"] == "/up" ||
-      (env["PATH_INFO"] == "/api/v1/merchants" && env["REQUEST_METHOD"] == "POST") ||
-      env["PATH_INFO"].start_with?("/api-docs")
+      path = env["PATH_INFO"]
+      return true unless path.start_with?("/api")
+      return true if NON_API_PATHS.any? { |p| path.start_with?(p) }
+
+      PUBLIC_ROUTES.any? do |method, pattern|
+        env["REQUEST_METHOD"] == method &&
+          (pattern.is_a?(Regexp) ? pattern.match?(path) : path == pattern)
+      end
     end
 
     def extract_token(env)
