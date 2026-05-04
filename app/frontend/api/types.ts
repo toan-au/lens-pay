@@ -45,3 +45,10 @@ export interface RefundListResponse {
   refunds: Refund[]
   next_cursor: string | null
 }
+
+export interface WebhookCapture {
+  id: number
+  event_type: string
+  payload: Record<string, any>
+  created_at: string
+}

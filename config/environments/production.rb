@@ -77,6 +77,8 @@ Rails.application.configure do
 
   # Reject requests with a Host header not matching the configured domain.
   # Prevents DNS rebinding attacks. /up is excluded so kamal-proxy health checks pass.
+  config.app_host = "https://#{ENV["APP_HOST"]}"
+
   config.hosts = [ ENV["APP_HOST"] ].compact
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

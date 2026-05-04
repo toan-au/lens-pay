@@ -6,6 +6,7 @@
         <nav class="flex items-center gap-4 text-sm text-gray-500">
           <RouterLink to="/" class="hover:text-gray-900 transition-colors" active-class="text-gray-900 font-medium">Payments</RouterLink>
           <RouterLink to="/refunds" class="hover:text-gray-900 transition-colors" active-class="text-gray-900 font-medium">Refunds</RouterLink>
+          <RouterLink to="/webhooks" class="hover:text-gray-900 transition-colors" active-class="text-gray-900 font-medium">Webhooks</RouterLink>
         </nav>
       </div>
 

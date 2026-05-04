@@ -128,6 +128,31 @@
 
         <p v-else class="text-sm text-gray-500">Fully refunded.</p>
       </div>
+
+      <!-- Webhook Events panel -->
+      <div class="flex flex-col gap-4">
+        <h2 class="font-semibold">Webhook Events</h2>
+
+        <div v-if="webhookCaptures.length > 0" class="flex flex-col gap-3">
+          <div v-for="capture in webhookCaptures" :key="capture.id" class="bg-white rounded-xl border border-gray-200">
+            <button
+              class="w-full px-5 py-4 flex items-center justify-between cursor-pointer"
+              @click="toggleCapture(capture.id)"
+            >
+              <span class="text-sm font-mono font-medium">{{ capture.event_type }}</span>
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-gray-400">{{ formatDate(capture.created_at) }}</span>
+                <span class="text-gray-400 text-xs">{{ expandedCaptures.has(capture.id) ? '▲' : '▼' }}</span>
+              </div>
+            </button>
+            <div v-if="expandedCaptures.has(capture.id)" class="px-5 pb-4">
+              <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto text-gray-600">{{ JSON.stringify(capture.payload, null, 2) }}</pre>
+            </div>
+          </div>
+        </div>
+
+        <p v-else class="text-sm text-gray-400">No webhook events yet — fire a capture or refund to see events here.</p>
+      </div>
     </template>
   </div>
 </template>
@@ -137,6 +162,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
 import { formatAmount, formatDate, statusClass } from '../utils/format'
+import { listWebhookCaptures } from '../api/webhook_captures'
+import type { WebhookCapture } from '../api/types'
 
 const POLL_PAYMENT_STATUSES = ['pending', 'processing']
 
@@ -154,6 +181,29 @@ const capturing = ref(false)
 const refundAmount = ref<number | null>(null)
 const refundError = ref('')
 const refunding = ref(false)
+
+const webhookCaptures = ref<WebhookCapture[]>([])
+const expandedCaptures = ref<Set<number>>(new Set())
+let webhookPollTimeout: ReturnType<typeof setTimeout> | null = null
+
+function toggleCapture(id: number) {
+  const next = new Set(expandedCaptures.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  expandedCaptures.value = next
+}
+
+async function pollWebhooks() {
+  const { webhook_captures } = await listWebhookCaptures()
+  webhookCaptures.value = webhook_captures
+  webhookPollTimeout = setTimeout(pollWebhooks, 3000)
+}
+
+function stopWebhookPolling() {
+  if (webhookPollTimeout) {
+    clearTimeout(webhookPollTimeout)
+    webhookPollTimeout = null
+  }
+}
 
 const remainingAmount = computed(() => {
   if (!payment.value?.captured_amount) return 0
@@ -237,10 +287,12 @@ onMounted(async () => {
   await paymentStore.fetchPayment(uid)
   await paymentStore.fetchRefunds(uid)
   startPollingIfNeeded()
+  pollWebhooks()
 })
 
 onUnmounted(() => {
   stopPolling()
+  stopWebhookPolling()
   paymentStore.currentPayment = null
   paymentStore.currentRefunds = []
 })
