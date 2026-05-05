@@ -40,6 +40,11 @@
 # Ignore development files
 /.devcontainer
 
+# Ignore frontend build artifacts and dependencies
+/node_modules
+/public/vite-dev
+/public/vite-test
+
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
