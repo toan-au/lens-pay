@@ -7,6 +7,7 @@
           <RouterLink to="/" class="hover:text-gray-900 transition-colors" active-class="text-gray-900 font-medium">Payments</RouterLink>
           <RouterLink to="/refunds" class="hover:text-gray-900 transition-colors" active-class="text-gray-900 font-medium">Refunds</RouterLink>
           <RouterLink to="/webhooks" class="hover:text-gray-900 transition-colors" active-class="text-gray-900 font-medium">Webhooks</RouterLink>
+          <a href="/api-docs" target="_blank" class="hover:text-gray-900 transition-colors">API Docs</a>
         </nav>
       </div>
 
