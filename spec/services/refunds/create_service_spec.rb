@@ -56,6 +56,17 @@ RSpec.describe Refunds::CreateService do
       expect { described_class.call(transaction, params) }.to raise_error(RefundError::PaymentAlreadyRefunded)
     end
 
+    it "enqueues a payment.refund.created webhook on success" do
+      transaction = create(:transaction, :succeeded, captured_amount: 1000)
+      params = { amount: 500, idempotency_key: "refund_key_webhook" }
+
+      expect {
+        described_class.call(transaction, params)
+      }.to have_enqueued_job(WebhookDeliveryJob).with(
+        transaction.merchant_id, "payment.refund.created", "Refund", anything
+      )
+    end
+
     it "raises AmountExceedsRefundable for amounts exceeding the payment's refundable amount" do
       transaction = create(:transaction, :succeeded, captured_amount: 100)
       params = { amount: 10000 }

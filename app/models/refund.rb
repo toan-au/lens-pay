@@ -7,19 +7,19 @@ class Refund < ApplicationRecord
 
   before_create :setup_refund
 
-  enum :status, { pending: 0, succeeded: 1, declined: 2 }
+  enum :status, { pending: 0, succeeded: 1, failed: 2 }
 
   aasm column: :status, enum: true, whiny_transitions: true do
     state :pending, initial: true
     state :succeeded
-    state :declined
+    state :failed
 
     event :succeed do
       transitions from: :pending, to: :succeeded
     end
 
     event :decline do
-      transitions from: :pending, to: :declined
+      transitions from: :pending, to: :failed
     end
   end
 

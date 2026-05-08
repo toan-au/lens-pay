@@ -9,8 +9,8 @@ FactoryBot.define do
       status { :succeeded }
     end
 
-    trait :declined do
-      status { :declined }
+    trait :failed do
+      status { :failed }
     end
   end
 end

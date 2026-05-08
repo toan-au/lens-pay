@@ -11,7 +11,7 @@ RSpec.describe 'Refunds API', type: :request do
       security [ { bearer_auth: [] } ]
 
       parameter name: :cursor, in: :query, type: :string, required: false, description: 'Pagination cursor (uid of last refund in previous page)'
-      parameter name: :status, in: :query, type: :string, required: false, description: 'Filter by status (pending, succeeded, declined)'
+      parameter name: :status, in: :query, type: :string, required: false, description: 'Filter by status (pending, succeeded, failed)'
       parameter name: :limit, in: :query, type: :integer, required: false, description: 'Number of results per page (default: 25, max: 100)'
 
       response '200', 'refunds listed' do
@@ -26,7 +26,7 @@ RSpec.describe 'Refunds API', type: :request do
                 properties: {
                   uid:         { type: :string, example: 're_abc123' },
                   amount:      { type: :integer, example: 500 },
-                  status:      { type: :string, enum: %w[pending succeeded declined] },
+                  status:      { type: :string, enum: %w[pending succeeded failed] },
                   currency:    { type: :string, example: 'JPY' },
                   payment_uid: { type: :string, example: 'py_abc123' },
                   created_at:  { type: :string, format: 'date-time' }

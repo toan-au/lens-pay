@@ -19,6 +19,7 @@ module Refunds
       end
 
       SettleRefundJob.perform_later(@refund.id)
+      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "payment.refund.created", "Refund", @refund.id)
 
       Result.new(refund: @refund, status: :created)
     end

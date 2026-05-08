@@ -274,7 +274,7 @@ paths:
       - name: status
         in: query
         required: false
-        description: Filter by status (pending, succeeded, declined)
+        description: Filter by status (pending, succeeded, failed)
         schema:
           type: string
       - name: limit
@@ -316,7 +316,7 @@ paths:
                           enum:
                           - pending
                           - succeeded
-                          - declined
+                          - failed
                         currency:
                           type: string
                           example: JPY

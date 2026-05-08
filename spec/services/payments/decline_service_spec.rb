@@ -31,7 +31,7 @@ RSpec.describe Payments::DeclineService do
       expect {
         described_class.call(transaction)
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        transaction.merchant_id, "payment.declined", "Transaction", transaction.id
+        transaction.merchant_id, "payment.failed", "Transaction", transaction.id
       )
     end
 

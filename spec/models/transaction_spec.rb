@@ -96,9 +96,9 @@ RSpec.describe Transaction, type: :model do
       expect(transaction.refundable_amount).to eq(600)
     end
 
-    it "does not subtract declined refunds from captured amount" do
+    it "does not subtract failed refunds from captured amount" do
       transaction = create(:transaction, :succeeded, captured_amount: 1000)
-      create(:refund, payment: transaction, amount: 400, status: :declined)
+      create(:refund, payment: transaction, amount: 400, status: :failed)
 
       expect(transaction.refundable_amount).to eq(1000)
     end

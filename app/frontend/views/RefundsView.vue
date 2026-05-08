@@ -72,7 +72,7 @@ const STATUS_TABS = [
   { label: 'All', value: '' },
   { label: 'Pending', value: 'pending' },
   { label: 'Succeeded', value: 'succeeded' },
-  { label: 'Declined', value: 'declined' },
+  { label: 'Failed', value: 'failed' },
 ]
 
 const router = useRouter()

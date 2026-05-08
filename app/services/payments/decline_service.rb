@@ -9,14 +9,14 @@ module Payments
     def perform
       @previous_status = @transaction.status
       @transaction.decline!
-      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "payment.declined", "Transaction", @transaction.id)
+      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "payment.failed", "Transaction", @transaction.id)
       Result.new(transaction: @transaction, status: :ok)
     rescue AASM::InvalidTransition
       raise PaymentError::InvalidTransition.new(from: @transaction.status, to: "declined")
     end
 
     def event_name
-      "payment.declined"
+      "payment.failed"
     end
 
     def log_context
