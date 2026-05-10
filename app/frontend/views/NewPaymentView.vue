@@ -5,6 +5,11 @@
       <h1 class="text-2xl font-bold">New Payment</h1>
     </div>
 
+    <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 text-sm text-amber-800">
+      In production, payments are created by your backend via the API, not through a UI. This form is here so you can generate test payments and explore the dashboard.
+      See the <a href="/api-docs" target="_blank" class="underline font-medium hover:text-amber-900">API documentation</a> to call this endpoint directly.
+    </div>
+
     <div class="bg-white rounded-xl border border-gray-200 p-6">
       <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
@@ -95,11 +100,13 @@ const currencyHint = computed(() =>
 )
 
 const form = reactive({
-  amount: null as number | null,
+  amount: 1000 as number | null,
   idempotency_key: crypto.randomUUID(),
 })
 
-const metadataRows = reactive<{ key: string; value: string }[]>([])
+const metadataRows = reactive<{ key: string; value: string }[]>([
+  { key: 'order_id', value: 'order_demo_001' },
+])
 
 function addMetadataRow() {
   metadataRows.push({ key: '', value: '' })

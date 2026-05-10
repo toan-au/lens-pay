@@ -48,7 +48,7 @@
 
       <!-- Polling indicator -->
       <div v-if="isPolling" class="flex items-center gap-2 text-sm text-amber-600">
-        <span class="animate-pulse">●</span> Waiting for payment to settle...
+        <span class="animate-pulse">●</span> {{ pollingMessage }}
       </div>
 
       <!-- Capture section (only when authorized) -->
@@ -204,6 +204,13 @@ function stopWebhookPolling() {
     webhookPollTimeout = null
   }
 }
+
+const pollingMessage = computed(() => {
+  if (payment.value?.status === 'pending') return 'Simulating card network authorization...'
+  if (payment.value?.status === 'processing') return 'Simulating card network settlement...'
+  if (paymentStore.currentRefunds.some(r => r.status === 'pending')) return 'Processing refund...'
+  return 'Waiting...'
+})
 
 const remainingAmount = computed(() => {
   if (!payment.value?.captured_amount) return 0
