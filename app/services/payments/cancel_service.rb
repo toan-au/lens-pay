@@ -7,8 +7,10 @@ module Payments
     end
 
     def perform
-      @previous_status = @transaction.status
-      @transaction.cancel!
+      @transaction.with_lock do
+        @previous_status = @transaction.status
+        @transaction.cancel!
+      end
       WebhookDeliveryJob.perform_later(@transaction.merchant_id, "payment.cancelled", "Transaction", @transaction.id)
       Result.new(transaction: @transaction, status: :ok)
     rescue AASM::InvalidTransition

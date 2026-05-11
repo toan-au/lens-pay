@@ -7,7 +7,9 @@ module Refunds
     end
 
     def perform
-      @refund.decline!
+      @refund.with_lock do
+        @refund.decline!
+      end
       WebhookDeliveryJob.perform_later(@refund.payment.merchant_id, "payment.refund.failed", "Refund", @refund.id)
       Result.new(refund: @refund, status: :ok)
     rescue AASM::InvalidTransition
