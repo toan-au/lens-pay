@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { listPayments, getPayment, createPayment, capturePayment, createRefund, listRefunds, listAllRefunds } from '../api/payments'
+import { listPayments, getPayment, createPayment, capturePayment, cancelPayment, createRefund, listRefunds, listAllRefunds } from '../api/payments'
 import type { Payment, Refund } from '../api/types'
 
 export const usePaymentStore = defineStore('payments', () => {
@@ -38,6 +38,10 @@ export const usePaymentStore = defineStore('payments', () => {
     currentPayment.value = await capturePayment(uid, capturedAmount)
   }
 
+  async function cancel(uid: string): Promise<void> {
+    currentPayment.value = await cancelPayment(uid)
+  }
+
   async function fetchRefunds(paymentUid: string): Promise<void> {
     const result = await listRefunds(paymentUid)
     currentRefunds.value = result.refunds
@@ -71,6 +75,7 @@ export const usePaymentStore = defineStore('payments', () => {
     fetchPayment,
     submitPayment,
     capture,
+    cancel,
     fetchRefunds,
     submitRefund,
   }

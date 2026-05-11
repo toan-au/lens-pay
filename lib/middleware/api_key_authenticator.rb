@@ -23,7 +23,7 @@ module Middleware
 
     PUBLIC_ROUTES = [
       [ "POST", "/api/v1/merchants" ],
-      [ "POST", %r{\A/api/v1/webhook-captures/} ]
+      [ "POST", %r{\A/api/v1/webhooks/mch_} ]
     ].freeze
 
     def unauthenticated?(env)

@@ -16,7 +16,7 @@ RSpec.describe SettleRefundJob, type: :job do
 
       expect { described_class.perform_now(refund.id) }.to raise_error(StandardError, "processor error")
 
-      expect(refund.reload.status).to eq("declined")
+      expect(refund.reload.status).to eq("failed")
     end
   end
 end

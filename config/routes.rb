@@ -6,13 +6,16 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      post "webhook-captures/:merchant_uid", to: "webhook_captures#create"
-      get  "webhook-captures", to: "webhook_captures#index"
+      post "webhooks/ping", to: "webhooks#ping"
+      get  "webhooks", to: "webhooks#index"
+      post "webhooks/:merchant_uid", to: "webhooks#create"
 
       resources :refunds, only: [ :index ]
       resources :payments, only: [ :index, :create, :show ], param: :uid do
         member do
           post :capture
+          post :cancel
+          get "webhook-events", to: "webhooks#payment_events"
         end
         resources :refunds, only: [ :index, :create ], controller: "payment_refunds"
       end

@@ -1,6 +1,6 @@
 class Merchant < ApplicationRecord
   has_many :transactions, dependent: :destroy
-  has_many :webhook_captures, dependent: :destroy
+  has_many :webhook_events, dependent: :destroy
 
   enum :status, { pending: 0, active: 1, suspended: 2 }
 
@@ -23,7 +23,7 @@ class Merchant < ApplicationRecord
     self.api_key_digest = Digest::SHA256.hexdigest(@raw_api_key)
     self.webhook_secret = "whs_#{SecureRandom.hex(24)}"
 
-    self.webhook_url = "http://localhost:3000/api/v1/webhook-captures/#{self.uid}"
+    self.webhook_url = "http://localhost:3000/api/v1/webhooks/#{self.uid}"
 
     # We'll just make all accounts active
     self.status = :active
