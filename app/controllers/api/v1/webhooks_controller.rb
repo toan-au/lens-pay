@@ -1,7 +1,12 @@
-class Api::V1::WebhookCapturesController < ApplicationController
+class Api::V1::WebhooksController < ApplicationController
+  def ping
+    WebhookDeliveryJob.perform_later(current_merchant.id, "ping", "Merchant", current_merchant.id)
+    render json: {}, status: :ok
+  end
+
   def index
-    webhook_captures = current_merchant.webhook_captures.order(created_at: :desc)
-    render json: { webhook_captures: }, status: :ok
+    webhook_events = current_merchant.webhook_events.order(created_at: :desc)
+    render json: { webhook_events: }, status: :ok
   end
 
   def create
@@ -18,7 +23,7 @@ class Api::V1::WebhookCapturesController < ApplicationController
     return render json: { error: "Invalid signature" }, status: :unauthorized unless request.headers["X-LensPay-Signature"]
 
     if ActiveSupport::SecurityUtils.secure_compare(request.headers["X-LensPay-Signature"], signature)
-      merchant.webhook_captures.create!(
+      merchant.webhook_events.create!(
         event_type: parsed_body["type"],
         payload: parsed_body
       )

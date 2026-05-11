@@ -35,7 +35,7 @@ export interface PaymentListResponse {
 export interface Refund {
   uid: string
   amount: number
-  status: 'pending' | 'succeeded' | 'declined'
+  status: 'pending' | 'succeeded' | 'failed'
   created_at: string
   payment_uid?: string
   currency?: string
@@ -46,7 +46,7 @@ export interface RefundListResponse {
   next_cursor: string | null
 }
 
-export interface WebhookCapture {
+export interface WebhookEvent {
   id: number
   event_type: string
   payload: Record<string, any>
