@@ -28,6 +28,18 @@ RSpec.describe "Payments API", type: :request do
       expect(Transaction.last.status).to eq("pending")
     end
 
+    it "returns expires_at in the response" do
+      freeze_time do
+        post "/api/v1/payments", params: {
+          amount: 1000,
+          currency: "JPY",
+          idempotency_key: "test_key_1"
+        }, headers: auth_headers
+
+        expect(Time.parse(response.parsed_body["expires_at"])).to be_within(1.second).of(Transaction::EXPIRY_WINDOW.from_now)
+      end
+    end
+
     it "enqueues an AuthorizePaymentJob when a payment is created" do
       expect {
         post "/api/v1/payments", params: {
@@ -118,6 +130,7 @@ RSpec.describe "Payments API", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["idempotency_key"]).to eq("test_key_1")
       expect(response.parsed_body["amount"]).to eq(1000)
+      expect(response.parsed_body["expires_at"]).to be_present
     end
   end
 
@@ -144,6 +157,17 @@ RSpec.describe "Payments API", type: :request do
       response.parsed_body["payments"].each { |payment|
         expect(payment["status"]).to eq(filter_status)
       }
+    end
+
+    it "filters by expired status" do
+      create_list(:transaction, 2, :expired, merchant:)
+      create(:transaction, merchant:)
+
+      get "/api/v1/payments?status=expired", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["payments"].count).to eq(2)
+      expect(response.parsed_body["payments"].map { |p| p["status"] }.uniq).to eq([ "expired" ])
     end
 
     it "limits the number of returned items by a provided filter" do

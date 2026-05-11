@@ -25,7 +25,7 @@ module Refunds
     end
 
     def event_name
-      "refund.created"
+      "payment.refund.created"
     end
 
     def log_context

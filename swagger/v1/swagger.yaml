@@ -134,7 +134,7 @@ paths:
         in: query
         required: false
         description: Filter by status (pending, authorized, processing, succeeded,
-          declined)
+          declined, cancelled, expired)
         schema:
           type: string
       - name: limit
@@ -202,6 +202,29 @@ paths:
                   type: integer
                   example: 800
                   description: Amount to capture (defaults to full authorized amount)
+  "/api/v1/payments/{uid}/cancel":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Cancel a payment
+      tags:
+      - Payment Transitions
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: payment cancelled
+        '422':
+          description: invalid transition
+        '404':
+          description: payment not found
+        '401':
+          description: unauthorized
   "/api/v1/payments/{payment_uid}/refunds":
     parameters:
     - name: payment_uid
