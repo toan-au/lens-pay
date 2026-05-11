@@ -78,6 +78,7 @@ const STATUS_TABS = [
   { label: 'Succeeded', value: 'succeeded' },
   { label: 'Declined', value: 'declined' },
   { label: 'Cancelled', value: 'cancelled' },
+  { label: 'Expired', value: 'expired' },
 ]
 
 const router = useRouter()

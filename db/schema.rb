@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_11_011004) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_11_070234) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_011004) do
     t.bigint "captured_amount"
     t.datetime "created_at", null: false
     t.string "currency", limit: 3, null: false
+    t.datetime "expires_at"
     t.string "idempotency_key", null: false
     t.bigint "merchant_id", null: false
     t.jsonb "metadata", default: {}, null: false

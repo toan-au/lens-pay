@@ -25,6 +25,7 @@ export function statusClass(status: string): string {
     succeeded: 'status-succeeded',
     declined: 'status-declined',
     cancelled: 'status-cancelled',
+    expired: 'status-expired',
     failed: 'status-failed',
     active: 'status-succeeded',
   }

@@ -19,12 +19,13 @@ export interface Payment {
   uid: string
   amount: number
   currency: string
-  status: 'pending' | 'authorized' | 'processing' | 'succeeded' | 'declined' | 'cancelled'
+  status: 'pending' | 'authorized' | 'processing' | 'succeeded' | 'declined' | 'cancelled' | 'expired'
   captured_amount: number | null
   idempotency_key: string
   merchant_uid: string
   metadata: Record<string, string>
   created_at: string
+  expires_at: string | null
 }
 
 export interface PaymentListResponse {

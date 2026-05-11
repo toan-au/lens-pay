@@ -48,4 +48,8 @@
   .status-failed {
     @apply bg-red-100 text-red-700;
   }
+
+  .status-expired {
+    @apply bg-gray-100 text-gray-500;
+  }
 }

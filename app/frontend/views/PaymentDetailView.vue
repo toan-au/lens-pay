@@ -34,6 +34,10 @@
           <span class="text-sm text-gray-500">Idempotency key</span>
           <span class="text-xs font-mono text-gray-600">{{ payment.idempotency_key }}</span>
         </div>
+        <div v-if="payment.expires_at" class="flex justify-between px-5 py-4">
+          <span class="text-sm text-gray-500">Expires</span>
+          <span class="text-sm font-medium">{{ formatDate(payment.expires_at) }}</span>
+        </div>
         <template v-if="Object.keys(payment.metadata ?? {}).length > 0">
           <div
             v-for="(value, key) in payment.metadata"
