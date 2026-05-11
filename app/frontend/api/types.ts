@@ -19,7 +19,7 @@ export interface Payment {
   uid: string
   amount: number
   currency: string
-  status: 'pending' | 'authorized' | 'processing' | 'succeeded' | 'declined'
+  status: 'pending' | 'authorized' | 'processing' | 'succeeded' | 'declined' | 'cancelled'
   captured_amount: number | null
   idempotency_key: string
   merchant_uid: string

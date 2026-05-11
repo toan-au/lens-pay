@@ -211,6 +211,42 @@ RSpec.describe "Payments API", type: :request do
     end
   end
 
+  describe "POST /api/v1/payments/:uid/cancel" do
+    it "cancels a pending payment" do
+      transaction = create(:transaction, merchant: merchant)
+
+      post "/api/v1/payments/#{transaction.uid}/cancel", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["status"]).to eq("cancelled")
+    end
+
+    it "cancels an authorized payment" do
+      transaction = create(:transaction, :authorized, merchant: merchant)
+
+      post "/api/v1/payments/#{transaction.uid}/cancel", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["status"]).to eq("cancelled")
+    end
+
+    it "returns 422 when the payment cannot be cancelled" do
+      transaction = create(:transaction, :succeeded, merchant: merchant)
+
+      post "/api/v1/payments/#{transaction.uid}/cancel", headers: auth_headers
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "returns 404 for another merchant's payment" do
+      other_transaction = create(:transaction, :authorized, merchant: other_merchant)
+
+      post "/api/v1/payments/#{other_transaction.uid}/cancel", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   # =============== SECURITY ==================
 
   describe "cross-merchant security" do

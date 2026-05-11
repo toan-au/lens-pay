@@ -79,6 +79,34 @@ RSpec.describe Transaction, type: :model do
 
       expect { transaction.decline! }.to raise_error(AASM::InvalidTransition)
     end
+
+    it "transitions from pending to cancelled" do
+      transaction = create(:transaction)
+
+      transaction.cancel!
+
+      expect(transaction.status).to eq("cancelled")
+    end
+
+    it "transitions from authorized to cancelled" do
+      transaction = create(:transaction, :authorized)
+
+      transaction.cancel!
+
+      expect(transaction.status).to eq("cancelled")
+    end
+
+    it "cannot cancel a processing transaction" do
+      transaction = create(:transaction, :processing)
+
+      expect { transaction.cancel! }.to raise_error(AASM::InvalidTransition)
+    end
+
+    it "cannot cancel a succeeded transaction" do
+      transaction = create(:transaction, :succeeded)
+
+      expect { transaction.cancel! }.to raise_error(AASM::InvalidTransition)
+    end
   end
 
   describe "#refundable_amount" do

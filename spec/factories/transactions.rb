@@ -21,5 +21,9 @@ FactoryBot.define do
     trait :declined do
       status { :declined }
     end
+
+    trait :cancelled do
+      status { :cancelled }
+    end
   end
 end

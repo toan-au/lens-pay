@@ -79,6 +79,16 @@
         </form>
       </div>
 
+      <!-- Cancel section (pending or authorized) -->
+      <div v-if="payment.status === 'pending' || payment.status === 'authorized'" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
+        <h2 class="font-semibold">Cancel Payment</h2>
+        <p class="text-sm text-gray-500">Void this payment and release any reserved funds. This cannot be undone.</p>
+        <p v-if="cancelError" class="text-sm text-red-500">{{ cancelError }}</p>
+        <button @click="handleCancel" :disabled="cancelling" class="btn-danger w-fit">
+          {{ cancelling ? 'Cancelling...' : 'Cancel Payment' }}
+        </button>
+      </div>
+
       <!-- Refunds section (only when succeeded) -->
       <div v-if="payment.status === 'succeeded'" class="flex flex-col gap-4">
         <h2 class="font-semibold">Refunds</h2>
@@ -162,7 +172,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
 import { formatAmount, formatDate, statusClass } from '../utils/format'
-import { listWebhookEvents } from '../api/webhook_events'
+import { listPaymentWebhookEvents } from '../api/webhook_events'
 import type { WebhookEvent } from '../api/types'
 
 const POLL_PAYMENT_STATUSES = ['pending', 'processing']
@@ -181,6 +191,8 @@ const capturing = ref(false)
 const refundAmount = ref<number | null>(null)
 const refundError = ref('')
 const refunding = ref(false)
+const cancelling = ref(false)
+const cancelError = ref('')
 
 const webhookEvents = ref<WebhookEvent[]>([])
 const expandedEvents = ref<Set<number>>(new Set())
@@ -193,7 +205,7 @@ function toggleEvent(id: number) {
 }
 
 async function pollWebhooks() {
-  const { webhook_events } = await listWebhookEvents()
+  const { webhook_events } = await listPaymentWebhookEvents(uid)
   webhookEvents.value = webhook_events
   webhookPollTimeout = setTimeout(pollWebhooks, 3000)
 }
@@ -263,6 +275,19 @@ async function handleCapture() {
     captureError.value = e.error ?? 'Something went wrong'
   } finally {
     capturing.value = false
+  }
+}
+
+async function handleCancel() {
+  cancelling.value = true
+  cancelError.value = ''
+  try {
+    await paymentStore.cancel(uid)
+    stopPolling()
+  } catch (e: any) {
+    cancelError.value = e.error ?? 'Something went wrong'
+  } finally {
+    cancelling.value = false
   }
 }
 

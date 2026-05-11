@@ -31,6 +31,10 @@ export function capturePayment(uid: string, capturedAmount?: number): Promise<Pa
   return api.post<Payment>(`/payments/${uid}/capture`, { captured_amount: capturedAmount })
 }
 
+export function cancelPayment(uid: string): Promise<Payment> {
+  return api.post<Payment>(`/payments/${uid}/cancel`, {})
+}
+
 export function createRefund(paymentUid: string, params: {
   amount: number
   idempotency_key: string

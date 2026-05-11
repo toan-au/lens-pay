@@ -10,7 +10,7 @@ class Transaction < ApplicationRecord
 
   before_create :setup_transaction
 
-  enum :status, { pending: 0, authorized: 1, processing: 2, succeeded: 3, declined: 4 }
+  enum :status, { pending: 0, authorized: 1, processing: 2, succeeded: 3, declined: 4, cancelled: 5 }
 
   aasm column: :status, enum: true, whiny_transitions: true do
     state :pending, initial: true
@@ -18,6 +18,7 @@ class Transaction < ApplicationRecord
     state :processing
     state :succeeded
     state :declined
+    state :cancelled
 
     event :authorize do
       transitions from: :pending, to: :authorized
@@ -33,6 +34,10 @@ class Transaction < ApplicationRecord
 
     event :decline do
       transitions from: %i[pending authorized processing], to: :declined
+    end
+
+    event :cancel do
+      transitions from: %i[pending authorized], to: :cancelled
     end
   end
 

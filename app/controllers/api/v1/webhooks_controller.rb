@@ -9,6 +9,17 @@ class Api::V1::WebhooksController < ApplicationController
     render json: { webhook_events: }, status: :ok
   end
 
+  def payment_events
+    payment = current_merchant.transactions.find_by(uid: params[:uid])
+    return render json: { error: "Payment not found" }, status: :not_found unless payment
+
+    webhook_events = current_merchant.webhook_events
+      .where("payload->'data'->>'id' = ? OR payload->'data'->>'transaction_uid' = ?", payment.uid, payment.uid)
+      .order(created_at: :desc)
+
+    render json: { webhook_events: }, status: :ok
+  end
+
   def create
     merchant_uid = params[:merchant_uid]
     merchant = Merchant.find_by(uid: merchant_uid)

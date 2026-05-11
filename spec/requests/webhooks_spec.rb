@@ -48,6 +48,48 @@ RSpec.describe "Webhooks API", type: :request do
     end
   end
 
+  describe "GET /api/v1/payments/:uid/webhook-events" do
+    let(:payment) { create(:transaction, merchant: merchant) }
+
+    it "returns webhook events for the specific payment" do
+      other_payment = create(:transaction, merchant: merchant)
+      create(:webhook_event, merchant: merchant, payload: { "data" => { "id" => payment.uid } })
+      create(:webhook_event, merchant: merchant, payload: { "data" => { "id" => other_payment.uid } })
+
+      get "/api/v1/payments/#{payment.uid}/webhook-events", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["webhook_events"].length).to eq(1)
+      expect(response.parsed_body["webhook_events"].first.dig("payload", "data", "id")).to eq(payment.uid)
+    end
+
+    it "returns refund events for the specific payment via transaction_uid" do
+      create(:webhook_event, merchant: merchant, payload: { "data" => { "id" => payment.uid } })
+      create(:webhook_event, merchant: merchant, payload: { "data" => { "transaction_uid" => payment.uid } })
+
+      get "/api/v1/payments/#{payment.uid}/webhook-events", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["webhook_events"].length).to eq(2)
+    end
+
+    it "does not return events belonging to another merchant's payment" do
+      other_merchant = create(:merchant)
+      other_payment = create(:transaction, merchant: other_merchant)
+      create(:webhook_event, merchant: other_merchant, payload: { "data" => { "id" => other_payment.uid } })
+
+      get "/api/v1/payments/#{other_payment.uid}/webhook-events", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 401 without auth" do
+      get "/api/v1/payments/#{payment.uid}/webhook-events"
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   describe "POST /api/v1/webhooks/:merchant_uid" do
     let(:payload) { { id: "evt_123", type: "payment.succeeded", data: {} }.to_json }
     let(:signature) do

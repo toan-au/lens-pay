@@ -14,6 +14,8 @@ Rails.application.routes.draw do
       resources :payments, only: [ :index, :create, :show ], param: :uid do
         member do
           post :capture
+          post :cancel
+          get "webhook-events", to: "webhooks#payment_events"
         end
         resources :refunds, only: [ :index, :create ], controller: "payment_refunds"
       end
