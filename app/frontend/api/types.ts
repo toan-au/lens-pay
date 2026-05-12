@@ -47,6 +47,20 @@ export interface RefundListResponse {
   next_cursor: string | null
 }
 
+export interface Customer {
+  uid: string
+  name: string
+  email: string
+  metadata: Record<string, string> | null
+  deleted_at: string | null
+  created_at: string
+}
+
+export interface CustomerListResponse {
+  customers: Customer[]
+  next_cursor: string | null
+}
+
 export interface WebhookEvent {
   id: number
   event_type: string
