@@ -2,6 +2,7 @@ class Transaction < ApplicationRecord
   include AASM
 
   belongs_to :merchant
+  belongs_to :customer, optional: true
   has_many :refunds
 
   validates :amount, presence: true, numericality: { only_integer: true, greater_than: 0 }

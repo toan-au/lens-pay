@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       get  "webhooks", to: "webhooks#index"
       post "webhooks/:merchant_uid", to: "webhooks#create"
 
+      resources :customers, only: [ :index, :create, :show, :update, :destroy ], param: :uid
       resources :refunds, only: [ :index ]
       resources :payments, only: [ :index, :create, :show ], param: :uid do
         member do
