@@ -47,6 +47,11 @@ class Api::V1::PaymentsController < ApplicationController
     render json: result.transaction, status: result.status
   end
 
+  def cancel
+    result = Payments::CancelService.call(find_payment)
+    render json: result.transaction, status: result.status
+  end
+
   private
 
   def find_payment

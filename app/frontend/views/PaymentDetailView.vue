@@ -34,6 +34,10 @@
           <span class="text-sm text-gray-500">Idempotency key</span>
           <span class="text-xs font-mono text-gray-600">{{ payment.idempotency_key }}</span>
         </div>
+        <div v-if="payment.expires_at" class="flex justify-between px-5 py-4">
+          <span class="text-sm text-gray-500">Expires</span>
+          <span class="text-sm font-medium">{{ formatDate(payment.expires_at) }}</span>
+        </div>
         <template v-if="Object.keys(payment.metadata ?? {}).length > 0">
           <div
             v-for="(value, key) in payment.metadata"
@@ -48,7 +52,7 @@
 
       <!-- Polling indicator -->
       <div v-if="isPolling" class="flex items-center gap-2 text-sm text-amber-600">
-        <span class="animate-pulse">●</span> Waiting for payment to settle...
+        <span class="animate-pulse">●</span> {{ pollingMessage }}
       </div>
 
       <!-- Capture section (only when authorized) -->
@@ -77,6 +81,16 @@
             {{ capturing ? 'Capturing...' : `Capture ${formatAmount(captureAmount || payment.amount, payment.currency)}` }}
           </button>
         </form>
+      </div>
+
+      <!-- Cancel section (pending or authorized) -->
+      <div v-if="payment.status === 'pending' || payment.status === 'authorized'" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
+        <h2 class="font-semibold">Cancel Payment</h2>
+        <p class="text-sm text-gray-500">Void this payment and release any reserved funds. This cannot be undone.</p>
+        <p v-if="cancelError" class="text-sm text-red-500">{{ cancelError }}</p>
+        <button @click="handleCancel" :disabled="cancelling" class="btn-danger w-fit">
+          {{ cancelling ? 'Cancelling...' : 'Cancel Payment' }}
+        </button>
       </div>
 
       <!-- Refunds section (only when succeeded) -->
@@ -133,19 +147,19 @@
       <div class="flex flex-col gap-4">
         <h2 class="font-semibold">Webhook Events</h2>
 
-        <div v-if="webhookCaptures.length > 0" class="flex flex-col gap-3">
-          <div v-for="capture in webhookCaptures" :key="capture.id" class="bg-white rounded-xl border border-gray-200">
+        <div v-if="webhookEvents.length > 0" class="flex flex-col gap-3">
+          <div v-for="capture in webhookEvents" :key="capture.id" class="bg-white rounded-xl border border-gray-200">
             <button
               class="w-full px-5 py-4 flex items-center justify-between cursor-pointer"
-              @click="toggleCapture(capture.id)"
+              @click="toggleEvent(capture.id)"
             >
               <span class="text-sm font-mono font-medium">{{ capture.event_type }}</span>
               <div class="flex items-center gap-3">
                 <span class="text-xs text-gray-400">{{ formatDate(capture.created_at) }}</span>
-                <span class="text-gray-400 text-xs">{{ expandedCaptures.has(capture.id) ? '▲' : '▼' }}</span>
+                <span class="text-gray-400 text-xs">{{ expandedEvents.has(capture.id) ? '▲' : '▼' }}</span>
               </div>
             </button>
-            <div v-if="expandedCaptures.has(capture.id)" class="px-5 pb-4">
+            <div v-if="expandedEvents.has(capture.id)" class="px-5 pb-4">
               <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto text-gray-600">{{ JSON.stringify(capture.payload, null, 2) }}</pre>
             </div>
           </div>
@@ -162,8 +176,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
 import { formatAmount, formatDate, statusClass } from '../utils/format'
-import { listWebhookCaptures } from '../api/webhook_captures'
-import type { WebhookCapture } from '../api/types'
+import { listPaymentWebhookEvents } from '../api/webhook_events'
+import type { WebhookEvent } from '../api/types'
 
 const POLL_PAYMENT_STATUSES = ['pending', 'processing']
 
@@ -181,20 +195,22 @@ const capturing = ref(false)
 const refundAmount = ref<number | null>(null)
 const refundError = ref('')
 const refunding = ref(false)
+const cancelling = ref(false)
+const cancelError = ref('')
 
-const webhookCaptures = ref<WebhookCapture[]>([])
-const expandedCaptures = ref<Set<number>>(new Set())
+const webhookEvents = ref<WebhookEvent[]>([])
+const expandedEvents = ref<Set<number>>(new Set())
 let webhookPollTimeout: ReturnType<typeof setTimeout> | null = null
 
-function toggleCapture(id: number) {
-  const next = new Set(expandedCaptures.value)
+function toggleEvent(id: number) {
+  const next = new Set(expandedEvents.value)
   next.has(id) ? next.delete(id) : next.add(id)
-  expandedCaptures.value = next
+  expandedEvents.value = next
 }
 
 async function pollWebhooks() {
-  const { webhook_captures } = await listWebhookCaptures()
-  webhookCaptures.value = webhook_captures
+  const { webhook_events } = await listPaymentWebhookEvents(uid)
+  webhookEvents.value = webhook_events
   webhookPollTimeout = setTimeout(pollWebhooks, 3000)
 }
 
@@ -204,6 +220,13 @@ function stopWebhookPolling() {
     webhookPollTimeout = null
   }
 }
+
+const pollingMessage = computed(() => {
+  if (payment.value?.status === 'pending') return 'Simulating card network authorization...'
+  if (payment.value?.status === 'processing') return 'Simulating card network settlement...'
+  if (paymentStore.currentRefunds.some(r => r.status === 'pending')) return 'Processing refund...'
+  return 'Waiting...'
+})
 
 const remainingAmount = computed(() => {
   if (!payment.value?.captured_amount) return 0
@@ -263,6 +286,19 @@ async function handleCapture() {
     captureError.value = e.error ?? 'Something went wrong'
   } finally {
     capturing.value = false
+  }
+}
+
+async function handleCancel() {
+  cancelling.value = true
+  cancelError.value = ''
+  try {
+    await paymentStore.cancel(uid)
+    stopPolling()
+  } catch (e: any) {
+    cancelError.value = e.error ?? 'Something went wrong'
+  } finally {
+    cancelling.value = false
   }
 }
 

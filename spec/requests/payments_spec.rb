@@ -28,6 +28,18 @@ RSpec.describe "Payments API", type: :request do
       expect(Transaction.last.status).to eq("pending")
     end
 
+    it "returns expires_at in the response" do
+      freeze_time do
+        post "/api/v1/payments", params: {
+          amount: 1000,
+          currency: "JPY",
+          idempotency_key: "test_key_1"
+        }, headers: auth_headers
+
+        expect(Time.parse(response.parsed_body["expires_at"])).to be_within(1.second).of(Transaction::EXPIRY_WINDOW.from_now)
+      end
+    end
+
     it "enqueues an AuthorizePaymentJob when a payment is created" do
       expect {
         post "/api/v1/payments", params: {
@@ -118,6 +130,7 @@ RSpec.describe "Payments API", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["idempotency_key"]).to eq("test_key_1")
       expect(response.parsed_body["amount"]).to eq(1000)
+      expect(response.parsed_body["expires_at"]).to be_present
     end
   end
 
@@ -144,6 +157,17 @@ RSpec.describe "Payments API", type: :request do
       response.parsed_body["payments"].each { |payment|
         expect(payment["status"]).to eq(filter_status)
       }
+    end
+
+    it "filters by expired status" do
+      create_list(:transaction, 2, :expired, merchant:)
+      create(:transaction, merchant:)
+
+      get "/api/v1/payments?status=expired", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["payments"].count).to eq(2)
+      expect(response.parsed_body["payments"].map { |p| p["status"] }.uniq).to eq([ "expired" ])
     end
 
     it "limits the number of returned items by a provided filter" do
@@ -208,6 +232,42 @@ RSpec.describe "Payments API", type: :request do
       post "/api/v1/payments/#{transaction.uid}/capture", headers: auth_headers
 
       expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+
+  describe "POST /api/v1/payments/:uid/cancel" do
+    it "cancels a pending payment" do
+      transaction = create(:transaction, merchant: merchant)
+
+      post "/api/v1/payments/#{transaction.uid}/cancel", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["status"]).to eq("cancelled")
+    end
+
+    it "cancels an authorized payment" do
+      transaction = create(:transaction, :authorized, merchant: merchant)
+
+      post "/api/v1/payments/#{transaction.uid}/cancel", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["status"]).to eq("cancelled")
+    end
+
+    it "returns 422 when the payment cannot be cancelled" do
+      transaction = create(:transaction, :succeeded, merchant: merchant)
+
+      post "/api/v1/payments/#{transaction.uid}/cancel", headers: auth_headers
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "returns 404 for another merchant's payment" do
+      other_transaction = create(:transaction, :authorized, merchant: other_merchant)
+
+      post "/api/v1/payments/#{other_transaction.uid}/cancel", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 

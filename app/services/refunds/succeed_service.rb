@@ -7,15 +7,17 @@ module Refunds
     end
 
     def perform
-      @refund.succeed!
-      WebhookDeliveryJob.perform_later(@refund.payment.merchant_id, "refund.succeeded", "Refund", @refund.id)
+      @refund.with_lock do
+        @refund.succeed!
+      end
+      WebhookDeliveryJob.perform_later(@refund.payment.merchant_id, "payment.refunded", "Refund", @refund.id)
       Result.new(refund: @refund, status: :ok)
     rescue AASM::InvalidTransition
       raise RefundError::InvalidTransition.new(from: @refund.status, to: "succeeded")
     end
 
     def event_name
-      "refund.succeeded"
+      "payment.refunded"
     end
 
     def log_context

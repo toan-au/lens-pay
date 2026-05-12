@@ -48,6 +48,16 @@ RSpec.describe Payments::CaptureService do
       described_class.call(transaction)
     end
 
+    it "enqueues a payment.captured webhook on success" do
+      transaction = create(:transaction, :authorized, amount: 1000)
+
+      expect {
+        described_class.call(transaction)
+      }.to have_enqueued_job(WebhookDeliveryJob).with(
+        transaction.merchant_id, "payment.captured", "Transaction", transaction.id
+      )
+    end
+
     it "raises InvalidTransition when the transaction is not authorized" do
       transaction = create(:transaction)
 

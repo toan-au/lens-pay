@@ -18,7 +18,8 @@ module Webhooks
         captured_amount: @transaction.captured_amount,
         idempotency_key: @transaction.idempotency_key,
         merchant_uid: @transaction.merchant.uid,
-        created_at: @transaction.created_at.iso8601
+        created_at: @transaction.created_at.iso8601,
+        expires_at: @transaction.expires_at&.iso8601
       }
     end
   end

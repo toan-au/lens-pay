@@ -21,5 +21,14 @@ FactoryBot.define do
     trait :declined do
       status { :declined }
     end
+
+    trait :cancelled do
+      status { :cancelled }
+    end
+
+    trait :expired do
+      status { :expired }
+      expires_at { 1.hour.ago }
+    end
   end
 end

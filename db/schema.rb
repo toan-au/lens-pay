@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_04_094104) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_11_070234) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_04_094104) do
     t.bigint "captured_amount"
     t.datetime "created_at", null: false
     t.string "currency", limit: 3, null: false
+    t.datetime "expires_at"
     t.string "idempotency_key", null: false
     t.bigint "merchant_id", null: false
     t.jsonb "metadata", default: {}, null: false
@@ -63,16 +64,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_04_094104) do
     t.index ["uid"], name: "index_transactions_on_uid", unique: true
   end
 
-  create_table "webhook_captures", force: :cascade do |t|
+  create_table "webhook_events", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "event_type", null: false
     t.bigint "merchant_id", null: false
     t.jsonb "payload", null: false
     t.datetime "updated_at", null: false
-    t.index ["merchant_id"], name: "index_webhook_captures_on_merchant_id"
+    t.index ["merchant_id"], name: "index_webhook_events_on_merchant_id"
   end
 
   add_foreign_key "refunds", "transactions"
   add_foreign_key "transactions", "merchants"
-  add_foreign_key "webhook_captures", "merchants"
+  add_foreign_key "webhook_events", "merchants"
 end

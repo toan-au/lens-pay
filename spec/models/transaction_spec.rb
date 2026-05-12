@@ -79,6 +79,64 @@ RSpec.describe Transaction, type: :model do
 
       expect { transaction.decline! }.to raise_error(AASM::InvalidTransition)
     end
+
+    it "transitions from pending to cancelled" do
+      transaction = create(:transaction)
+
+      transaction.cancel!
+
+      expect(transaction.status).to eq("cancelled")
+    end
+
+    it "transitions from authorized to cancelled" do
+      transaction = create(:transaction, :authorized)
+
+      transaction.cancel!
+
+      expect(transaction.status).to eq("cancelled")
+    end
+
+    it "cannot cancel a processing transaction" do
+      transaction = create(:transaction, :processing)
+
+      expect { transaction.cancel! }.to raise_error(AASM::InvalidTransition)
+    end
+
+    it "cannot cancel a succeeded transaction" do
+      transaction = create(:transaction, :succeeded)
+
+      expect { transaction.cancel! }.to raise_error(AASM::InvalidTransition)
+    end
+
+    it "transitions from pending to expired" do
+      transaction = create(:transaction)
+
+      transaction.expire!
+
+      expect(transaction.status).to eq("expired")
+    end
+
+    it "cannot expire an authorized transaction" do
+      transaction = create(:transaction, :authorized)
+
+      expect { transaction.expire! }.to raise_error(AASM::InvalidTransition)
+    end
+
+    it "cannot expire a succeeded transaction" do
+      transaction = create(:transaction, :succeeded)
+
+      expect { transaction.expire! }.to raise_error(AASM::InvalidTransition)
+    end
+  end
+
+  describe "expires_at" do
+    it "is set to EXPIRY_WINDOW from now on create" do
+      freeze_time do
+        transaction = create(:transaction)
+
+        expect(transaction.expires_at).to be_within(1.second).of(Transaction::EXPIRY_WINDOW.from_now)
+      end
+    end
   end
 
   describe "#refundable_amount" do
@@ -96,9 +154,9 @@ RSpec.describe Transaction, type: :model do
       expect(transaction.refundable_amount).to eq(600)
     end
 
-    it "does not subtract declined refunds from captured amount" do
+    it "does not subtract failed refunds from captured amount" do
       transaction = create(:transaction, :succeeded, captured_amount: 1000)
-      create(:refund, payment: transaction, amount: 400, status: :declined)
+      create(:refund, payment: transaction, amount: 400, status: :failed)
 
       expect(transaction.refundable_amount).to eq(1000)
     end

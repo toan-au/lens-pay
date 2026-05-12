@@ -18,6 +18,7 @@ module Payments
       end
 
       SettlePaymentJob.perform_later(@transaction.id)
+      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "payment.captured", "Transaction", @transaction.id)
 
       Result.new(transaction: @transaction, status: :ok)
     rescue AASM::InvalidTransition

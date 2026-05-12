@@ -10,7 +10,9 @@ class Transaction < ApplicationRecord
 
   before_create :setup_transaction
 
-  enum :status, { pending: 0, authorized: 1, processing: 2, succeeded: 3, declined: 4 }
+  EXPIRY_WINDOW = 3.days
+
+  enum :status, { pending: 0, authorized: 1, processing: 2, succeeded: 3, declined: 4, cancelled: 5, expired: 6 }
 
   aasm column: :status, enum: true, whiny_transitions: true do
     state :pending, initial: true
@@ -18,6 +20,8 @@ class Transaction < ApplicationRecord
     state :processing
     state :succeeded
     state :declined
+    state :cancelled
+    state :expired
 
     event :authorize do
       transitions from: :pending, to: :authorized
@@ -34,6 +38,14 @@ class Transaction < ApplicationRecord
     event :decline do
       transitions from: %i[pending authorized processing], to: :declined
     end
+
+    event :cancel do
+      transitions from: %i[pending authorized], to: :cancelled
+    end
+
+    event :expire do
+      transitions from: :pending, to: :expired
+    end
   end
 
   def refundable_amount
@@ -43,5 +55,6 @@ class Transaction < ApplicationRecord
 
   private def setup_transaction
     self.uid = "tr_#{SecureRandom.uuid}"
+    self.expires_at ||= EXPIRY_WINDOW.from_now
   end
 end

@@ -20,20 +20,20 @@ RSpec.describe Refund, type: :model do
       expect { refund.succeed! }.to change { refund.status }.from("pending").to("succeeded")
     end
 
-    it "transitions from pending to declined" do
+    it "transitions from pending to failed" do
       refund = create(:refund, status: :pending)
 
-      expect { refund.decline! }.to change { refund.status }.from("pending").to("declined")
+      expect { refund.decline! }.to change { refund.status }.from("pending").to("failed")
     end
 
-    it "cannot transition from succeeded to declined" do
+    it "cannot transition from succeeded to failed" do
       refund = create(:refund, status: :succeeded)
 
       expect { refund.decline! }.to raise_error(AASM::InvalidTransition)
     end
 
-    it "cannot transition from declined to succeeded" do
-      refund = create(:refund, status: :declined)
+    it "cannot transition from failed to succeeded" do
+      refund = create(:refund, status: :failed)
 
       expect { refund.succeed! }.to raise_error(AASM::InvalidTransition)
     end

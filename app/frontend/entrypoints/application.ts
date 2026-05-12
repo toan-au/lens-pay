@@ -11,7 +11,7 @@ const router = createRouter({
     { path: '/payments/new', component: () => import('../views/NewPaymentView.vue') },
     { path: '/payments/:uid', component: () => import('../views/PaymentDetailView.vue') },
     { path: '/refunds', component: () => import('../views/RefundsView.vue') },
-    { path: '/webhooks', component: () => import('../views/WebhookCapturesView.vue') },
+    { path: '/webhooks', component: () => import('../views/WebhookEventsView.vue') },
     { path: '/profile', component: () => import('../views/ProfileView.vue') },
   ],
 })

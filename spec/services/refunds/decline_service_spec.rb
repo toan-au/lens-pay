@@ -2,13 +2,13 @@ require 'rails_helper'
 
 RSpec.describe Refunds::DeclineService do
   describe ".call" do
-    it "transitions a pending refund to declined" do
+    it "transitions a pending refund to failed" do
       refund = create(:refund, status: :pending)
 
       result = described_class.call(refund)
 
       expect(result.status).to eq(:ok)
-      expect(refund.reload.status).to eq("declined")
+      expect(refund.reload.status).to eq("failed")
     end
 
     it "raises InvalidTransition when refund is not pending" do
@@ -23,7 +23,7 @@ RSpec.describe Refunds::DeclineService do
       expect {
         described_class.call(refund)
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        refund.payment.merchant_id, "refund.declined", "Refund", refund.id
+        refund.payment.merchant_id, "payment.refund.failed", "Refund", refund.id
       )
     end
 

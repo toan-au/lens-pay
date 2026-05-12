@@ -44,7 +44,7 @@ RSpec.describe 'Payments API', type: :request do
       security [ { bearer_auth: [] } ]
 
       parameter name: :cursor, in: :query, type: :string, required: false, description: 'Pagination cursor (uid of last payment in previous page)'
-      parameter name: :status, in: :query, type: :string, required: false, description: 'Filter by status (pending, authorized, processing, succeeded, declined)'
+      parameter name: :status, in: :query, type: :string, required: false, description: 'Filter by status (pending, authorized, processing, succeeded, declined, cancelled, expired)'
       parameter name: :limit, in: :query, type: :integer, required: false, description: 'Number of results per page (default: 25, max: 100)'
 
       response '200', 'payments listed' do
@@ -117,6 +117,37 @@ RSpec.describe 'Payments API', type: :request do
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'tr_any' }
         let(:body) { {} }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/payments/{uid}/cancel' do
+    parameter name: :uid, in: :path, type: :string, description: 'Payment UID'
+
+    post 'Cancel a payment' do
+      tags 'Payment Transitions'
+      produces 'application/json'
+      security [ { bearer_auth: [] } ]
+
+      response '200', 'payment cancelled' do
+        let(:uid) { create(:transaction, merchant: merchant).uid }
+        run_test!
+      end
+
+      response '422', 'invalid transition' do
+        let(:uid) { create(:transaction, :succeeded, merchant: merchant).uid }
+        run_test!
+      end
+
+      response '404', 'payment not found' do
+        let(:uid) { 'tr_nonexistent' }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid' }
+        let(:uid) { 'tr_any' }
         run_test!
       end
     end
