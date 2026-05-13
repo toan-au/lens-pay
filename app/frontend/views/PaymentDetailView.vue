@@ -38,6 +38,19 @@
           <span class="text-sm text-gray-500">Expires</span>
           <span class="text-sm font-medium">{{ formatDate(payment.expires_at) }}</span>
         </div>
+        <template v-if="payment.customer">
+          <div class="flex justify-between px-5 py-4">
+            <span class="text-sm text-gray-500">Customer</span>
+            <RouterLink
+              :to="`/customers/${payment.customer.uid}`"
+              class="text-sm text-indigo-600 hover:underline"
+            >{{ payment.customer.name }}</RouterLink>
+          </div>
+          <div class="flex justify-between px-5 py-4">
+            <span class="text-sm text-gray-500">Customer email</span>
+            <span class="text-sm text-gray-600">{{ payment.customer.email }}</span>
+          </div>
+        </template>
         <template v-if="Object.keys(payment.metadata ?? {}).length > 0">
           <div
             v-for="(value, key) in payment.metadata"
