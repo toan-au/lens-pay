@@ -54,8 +54,17 @@ class Transaction < ApplicationRecord
   end
 
 
+  def customer_snapshot
+    return nil unless customer_name || customer_email
+    { uid: customer&.uid, name: customer_name, email: customer_email }
+  end
+
   private def setup_transaction
     self.uid = "tr_#{SecureRandom.uuid}"
     self.expires_at ||= EXPIRY_WINDOW.from_now
+    if customer
+      self.customer_name = customer.name
+      self.customer_email = customer.email
+    end
   end
 end

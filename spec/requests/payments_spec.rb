@@ -273,6 +273,45 @@ RSpec.describe "Payments API", type: :request do
 
   # =============== SECURITY ==================
 
+  describe "customer snapshot" do
+    let(:customer) { create(:customer, merchant:) }
+
+    it "attaches the customer and snapshots name/email when customer_uid is provided" do
+      post "/api/v1/payments", params: {
+        amount: 1000, currency: "JPY", idempotency_key: "key_1",
+        customer_uid: customer.uid
+      }, headers: auth_headers
+
+      expect(response).to have_http_status(:created)
+      body = response.parsed_body
+      expect(body["customer"]["uid"]).to eq(customer.uid)
+      expect(body["customer"]["name"]).to eq(customer.name)
+      expect(body["customer"]["email"]).to eq(customer.email)
+      expect(Transaction.last.customer).to eq(customer)
+    end
+
+    it "returns customer: null when no customer_uid is given" do
+      post "/api/v1/payments", params: {
+        amount: 1000, currency: "JPY", idempotency_key: "key_2"
+      }, headers: auth_headers
+
+      expect(response.parsed_body["customer"]).to be_nil
+    end
+
+    it "preserves the snapshot after the customer is deleted" do
+      post "/api/v1/payments", params: {
+        amount: 1000, currency: "JPY", idempotency_key: "key_3",
+        customer_uid: customer.uid
+      }, headers: auth_headers
+
+      customer.delete!
+      transaction = Transaction.last
+
+      expect(transaction.customer_name).to eq(customer.name)
+      expect(transaction.customer_email).to eq(customer.email)
+    end
+  end
+
   describe "cross-merchant security" do
     let(:other_transaction) { create(:transaction, merchant: other_merchant) }
 
@@ -293,6 +332,17 @@ RSpec.describe "Payments API", type: :request do
 
     it "returns 404 when capturing another merchant's payment" do
       post "/api/v1/payments/#{other_transaction.uid}/capture", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 when creating a payment with another merchant's customer" do
+      other_customer = create(:customer, merchant: other_merchant)
+
+      post "/api/v1/payments", params: {
+        amount: 1000, currency: "JPY", idempotency_key: "key_x",
+        customer_uid: other_customer.uid
+      }, headers: auth_headers
 
       expect(response).to have_http_status(:not_found)
     end
