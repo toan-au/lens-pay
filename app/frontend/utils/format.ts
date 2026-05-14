@@ -1,4 +1,4 @@
-const ZERO_DECIMAL_CURRENCIES = ['JPY', 'KRW', 'VND', 'IDR', 'HUF', 'TWD', 'CLP', 'ISK']
+export const ZERO_DECIMAL_CURRENCIES = ['JPY', 'KRW', 'VND', 'IDR', 'HUF', 'TWD', 'CLP', 'ISK']
 
 export function formatAmount(amount: number, currency: string): string {
   const value = ZERO_DECIMAL_CURRENCIES.includes(currency.toUpperCase())

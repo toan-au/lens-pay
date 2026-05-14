@@ -27,6 +27,7 @@ export const usePaymentStore = defineStore('payments', () => {
     amount: number
     currency: string
     idempotency_key: string
+    customer_uid?: string
     metadata?: Record<string, string>
   }): Promise<Payment> {
     const payment = await createPayment(params)

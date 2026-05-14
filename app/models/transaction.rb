@@ -2,6 +2,7 @@ class Transaction < ApplicationRecord
   include AASM
 
   belongs_to :merchant
+  belongs_to :customer, optional: true
   has_many :refunds
 
   validates :amount, presence: true, numericality: { only_integer: true, greater_than: 0 }
@@ -53,8 +54,17 @@ class Transaction < ApplicationRecord
   end
 
 
+  def customer_snapshot
+    return nil unless customer_name || customer_email
+    { uid: customer&.uid, name: customer_name, email: customer_email }
+  end
+
   private def setup_transaction
     self.uid = "tr_#{SecureRandom.uuid}"
     self.expires_at ||= EXPIRY_WINDOW.from_now
+    if customer
+      self.customer_name = customer.name
+      self.customer_email = customer.email
+    end
   end
 end

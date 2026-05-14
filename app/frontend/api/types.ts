@@ -15,6 +15,12 @@ export interface MerchantCreateResponse {
   webhook_secret: string
 }
 
+export interface PaymentCustomer {
+  uid: string | null
+  name: string
+  email: string
+}
+
 export interface Payment {
   uid: string
   amount: number
@@ -24,6 +30,7 @@ export interface Payment {
   idempotency_key: string
   merchant_uid: string
   metadata: Record<string, string>
+  customer: PaymentCustomer | null
   created_at: string
   expires_at: string | null
 }
@@ -44,6 +51,20 @@ export interface Refund {
 
 export interface RefundListResponse {
   refunds: Refund[]
+  next_cursor: string | null
+}
+
+export interface Customer {
+  uid: string
+  name: string
+  email: string
+  metadata: Record<string, string> | null
+  deleted_at: string | null
+  created_at: string
+}
+
+export interface CustomerListResponse {
+  customers: Customer[]
   next_cursor: string | null
 }
 
