@@ -81,9 +81,10 @@
               <input
                 v-model.number="captureAmount"
                 type="number"
-                min="1"
-                :max="payment.amount"
-                :placeholder="String(payment.amount)"
+                :min="isZeroDecimal ? 1 : 0.01"
+                :step="isZeroDecimal ? 1 : 0.01"
+                :max="naturalPaymentAmount"
+                :placeholder="String(naturalPaymentAmount)"
                 class="input flex-1"
               />
               <span class="input bg-gray-50 text-gray-500 min-w-16 text-center">{{ payment.currency }}</span>
@@ -91,7 +92,7 @@
           </div>
           <p v-if="captureError" class="text-sm text-red-500">{{ captureError }}</p>
           <button type="submit" :disabled="capturing" class="btn-primary">
-            {{ capturing ? 'Capturing...' : `Capture ${formatAmount(captureAmount || payment.amount, payment.currency)}` }}
+            {{ capturing ? 'Capturing...' : `Capture ${formatAmount(toMinorUnits(captureAmount ?? naturalPaymentAmount), payment.currency)}` }}
           </button>
         </form>
       </div>
@@ -188,7 +189,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
-import { formatAmount, formatDate, statusClass } from '../utils/format'
+import { formatAmount, formatDate, statusClass, ZERO_DECIMAL_CURRENCIES } from '../utils/format'
 import { listPaymentWebhookEvents } from '../api/webhook_events'
 import type { WebhookEvent } from '../api/types'
 
@@ -204,6 +205,19 @@ const payment = computed(() => paymentStore.currentPayment)
 const isPolling = ref(false)
 const captureAmount = ref<number | null>(null)
 const captureError = ref('')
+
+const isZeroDecimal = computed(() =>
+  ZERO_DECIMAL_CURRENCIES.includes(payment.value?.currency?.toUpperCase() ?? '')
+)
+
+function toMinorUnits(amount: number): number {
+  return isZeroDecimal.value ? Math.round(amount) : Math.round(amount * 100)
+}
+
+const naturalPaymentAmount = computed(() => {
+  if (!payment.value) return 0
+  return isZeroDecimal.value ? payment.value.amount : payment.value.amount / 100
+})
 const capturing = ref(false)
 const refundAmount = ref<number | null>(null)
 const refundError = ref('')
@@ -293,7 +307,8 @@ async function handleCapture() {
   capturing.value = true
   captureError.value = ''
   try {
-    await paymentStore.capture(uid, captureAmount.value ?? undefined)
+    const minor = captureAmount.value != null ? toMinorUnits(captureAmount.value) : undefined
+    await paymentStore.capture(uid, minor)
     startPollingIfNeeded()
   } catch (e: any) {
     captureError.value = e.error ?? 'Something went wrong'
