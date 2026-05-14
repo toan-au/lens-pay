@@ -14,9 +14,10 @@ RSpec.describe 'Payments API', type: :request do
       parameter name: :payment, in: :body, schema: {
         type: :object,
         properties: {
-          amount: { type: :integer, example: 1000, description: 'Amount in smallest currency unit (e.g. yen)' },
+          amount: { type: :integer, example: 1000, description: 'Amount in smallest currency unit (e.g. yen, cents)' },
           currency: { type: :string, example: 'JPY', description: 'ISO 4217 currency code' },
-          idempotency_key: { type: :string, example: 'order_abc_123', description: 'Unique key to prevent duplicate payments' }
+          idempotency_key: { type: :string, example: 'order_abc_123', description: 'Unique key to prevent duplicate payments' },
+          customer_uid: { type: :string, example: 'cus_abc123', description: 'UID of an existing customer to attach to this payment' }
         },
         required: %w[amount currency idempotency_key]
       }

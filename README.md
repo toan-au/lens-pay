@@ -1,6 +1,6 @@
 # LensPay
 
-A payment gateway API built with Ruby on Rails, modelled on Komoju's API design. Covers merchant onboarding, the full payment lifecycle, partial captures, refunds, cancellations, payment expiry, and outbound webhook delivery.
+A payment gateway API built with Ruby on Rails, modelled on Komoju's API design. Covers merchant onboarding, customer management, the full payment lifecycle, partial captures, refunds, cancellations, payment expiry, and outbound webhook delivery.
 
 Live demo: [lenspay.toanau.com](https://lenspay.toanau.com)  
 API docs: `http://localhost:3000/api-docs`
@@ -70,7 +70,12 @@ All endpoints except `POST /merchants` and `POST /webhooks/:merchant_uid` requir
 | `POST` | `/api/v1/merchants` | Register a merchant. Returns API key and webhook secret (shown once) |
 | `GET` | `/api/v1/merchants/me` | Fetch merchant profile |
 | `PATCH` | `/api/v1/merchants/me` | Update merchant profile |
-| `POST` | `/api/v1/payments` | Create a payment |
+| `POST` | `/api/v1/customers` | Create a customer |
+| `GET` | `/api/v1/customers` | List customers (cursor pagination) |
+| `GET` | `/api/v1/customers/:uid` | Fetch a customer |
+| `PATCH` | `/api/v1/customers/:uid` | Update a customer |
+| `DELETE` | `/api/v1/customers/:uid` | Soft-delete a customer |
+| `POST` | `/api/v1/payments` | Create a payment (optional `customer_uid`) |
 | `GET` | `/api/v1/payments` | List payments (cursor pagination, status filter) |
 | `GET` | `/api/v1/payments/:uid` | Fetch a payment |
 | `POST` | `/api/v1/payments/:uid/capture` | Capture an authorized payment (supports partial capture) |
@@ -153,6 +158,14 @@ Each payment has a `captured_amount` column separate from `amount`. A merchant c
 ### Refunds as a separate model
 
 Refunds are not a status on a transaction — they are their own model with their own lifecycle. A succeeded transaction can be partially refunded multiple times up to the captured amount. `refundable_amount` is derived as `captured_amount - sum(pending + succeeded refunds)`.
+
+### Customer model and payment snapshots
+
+Customers are a first-class resource scoped to a merchant. They can be attached to a payment via `customer_uid` at creation time. When a customer is attached, their name and email are snapshotted onto the transaction at the moment of payment — stored as `customer_name` and `customer_email` columns on the `transactions` table.
+
+This means the payment record is immutable with respect to the customer: if the customer later changes their email or is deleted, the payment still reflects who was charged and at what contact details. The `customer_id` foreign key is preserved for relational queries (`customer.payments`), while the snapshot columns serve the response payload.
+
+Customers support soft deletion via a `deleted_at` column. Deleted customers are excluded from list endpoints and cannot be attached to new payments, but their historical payment records and the snapshot data remain intact.
 
 ### Idempotency keys
 
