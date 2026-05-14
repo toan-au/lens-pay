@@ -31,7 +31,7 @@ RSpec.describe Customers::ListService do
 
       result = described_class.call(merchant)
 
-      expect(result.customers).to eq([own_customer])
+      expect(result.customers).to eq([ own_customer ])
     end
 
     it "returns customers newest first" do
@@ -40,7 +40,7 @@ RSpec.describe Customers::ListService do
 
       result = described_class.call(merchant)
 
-      expect(result.customers).to eq([second, first])
+      expect(result.customers).to eq([ second, first ])
     end
 
     it "paginates with a cursor" do
