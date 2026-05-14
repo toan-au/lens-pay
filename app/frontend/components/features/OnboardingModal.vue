@@ -73,10 +73,32 @@
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">Currency</label>
             <select v-model="form.currency" required class="input">
-              <option value="JPY">JPY</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="AUD">AUD</option>
+              <option value="JPY">JPY — Japanese Yen</option>
+              <option value="USD">USD — US Dollar</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="GBP">GBP — British Pound</option>
+              <option value="AUD">AUD — Australian Dollar</option>
+              <option value="CAD">CAD — Canadian Dollar</option>
+              <option value="NZD">NZD — New Zealand Dollar</option>
+              <option value="SGD">SGD — Singapore Dollar</option>
+              <option value="HKD">HKD — Hong Kong Dollar</option>
+              <option value="KRW">KRW — South Korean Won</option>
+              <option value="TWD">TWD — Taiwan Dollar</option>
+              <option value="CNY">CNY — Chinese Yuan</option>
+              <option value="THB">THB — Thai Baht</option>
+              <option value="MYR">MYR — Malaysian Ringgit</option>
+              <option value="IDR">IDR — Indonesian Rupiah</option>
+              <option value="PHP">PHP — Philippine Peso</option>
+              <option value="VND">VND — Vietnamese Dong</option>
+              <option value="INR">INR — Indian Rupee</option>
+              <option value="BRL">BRL — Brazilian Real</option>
+              <option value="MXN">MXN — Mexican Peso</option>
+              <option value="CHF">CHF — Swiss Franc</option>
+              <option value="SEK">SEK — Swedish Krona</option>
+              <option value="NOK">NOK — Norwegian Krone</option>
+              <option value="DKK">DKK — Danish Krone</option>
+              <option value="PLN">PLN — Polish Zloty</option>
+              <option value="ZAR">ZAR — South African Rand</option>
             </select>
           </div>
 
