@@ -20,9 +20,10 @@
             <input
               v-model.number="form.amount"
               type="number"
-              min="1"
+              :min="isZeroDecimal ? 1 : 0.01"
+              :step="isZeroDecimal ? 1 : 0.01"
               required
-              placeholder="1000"
+              :placeholder="isZeroDecimal ? '1000' : '10.00'"
               class="input flex-1"
             />
             <span class="input bg-gray-50 text-gray-500 min-w-16 text-center">
@@ -171,9 +172,8 @@ import { useRouter } from 'vue-router'
 import { useMerchantStore } from '../stores/merchant'
 import { usePaymentStore } from '../stores/payments'
 import { listCustomers, createCustomer } from '../api/customers'
+import { ZERO_DECIMAL_CURRENCIES } from '../utils/format'
 import type { Customer } from '../api/types'
-
-const ZERO_DECIMAL_CURRENCIES = ['JPY', 'KRW', 'VND', 'IDR', 'HUF', 'TWD', 'CLP', 'ISK']
 
 const router = useRouter()
 const merchantStore = useMerchantStore()
@@ -183,14 +183,19 @@ const loading = ref(false)
 const error = ref('')
 
 const currency = computed(() => merchantStore.merchant?.currency ?? 'JPY')
+const isZeroDecimal = computed(() => ZERO_DECIMAL_CURRENCIES.includes(currency.value.toUpperCase()))
 const currencyHint = computed(() =>
-  ZERO_DECIMAL_CURRENCIES.includes(currency.value.toUpperCase())
-    ? `${currency.value} (e.g. 1000 = ¥1,000)`
-    : `${currency.value} minor units (e.g. 1000 = $10.00)`
+  isZeroDecimal.value
+    ? `Enter the exact amount (e.g. 1000 = ¥1,000)`
+    : `Enter the natural amount (e.g. 10.00 = $10.00)`
 )
 
+function toMinorUnits(amount: number): number {
+  return isZeroDecimal.value ? Math.round(amount) : Math.round(amount * 100)
+}
+
 const form = reactive({
-  amount: 1000 as number | null,
+  amount: null as number | null,
   idempotency_key: crypto.randomUUID(),
 })
 
@@ -255,7 +260,7 @@ async function handleSubmit() {
     const metadata = buildMetadata()
     const customer_uid = await resolveCustomerUid()
     const payment = await paymentStore.submitPayment({
-      amount: form.amount,
+      amount: toMinorUnits(form.amount!),
       currency: currency.value,
       idempotency_key: form.idempotency_key,
       ...(customer_uid && { customer_uid }),
