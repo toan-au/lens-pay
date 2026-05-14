@@ -30,7 +30,10 @@
               {{ merchantStore.merchant?.currency ?? '...' }}
             </span>
           </div>
-          <p class="text-xs text-gray-400">{{ currencyHint }}</p>
+          <p v-if="form.amount" class="text-sm font-medium text-indigo-600">
+            = {{ formatAmount(toMinorUnits(form.amount), currency) }}
+          </p>
+          <p v-else class="text-xs text-gray-400">{{ currencyHint }}</p>
         </div>
 
         <!-- Idempotency key -->
@@ -172,7 +175,7 @@ import { useRouter } from 'vue-router'
 import { useMerchantStore } from '../stores/merchant'
 import { usePaymentStore } from '../stores/payments'
 import { listCustomers, createCustomer } from '../api/customers'
-import { ZERO_DECIMAL_CURRENCIES } from '../utils/format'
+import { ZERO_DECIMAL_CURRENCIES, formatAmount } from '../utils/format'
 import type { Customer } from '../api/types'
 
 const router = useRouter()
