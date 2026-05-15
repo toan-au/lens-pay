@@ -5,7 +5,6 @@
     <div v-if="!customer" class="text-gray-400 text-sm">Loading...</div>
 
     <template v-else>
-      <!-- Header -->
       <div class="flex items-start justify-between">
         <div>
           <h1 class="text-xl font-bold">{{ customer.name }}</h1>
@@ -19,33 +18,23 @@
         </span>
       </div>
 
-      <!-- Details card -->
-      <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        <div class="flex justify-between px-5 py-4">
-          <span class="text-sm text-gray-500">UID</span>
+      <DetailCard>
+        <DetailRow label="UID">
           <span class="text-xs font-mono text-gray-600">{{ customer.uid }}</span>
-        </div>
-        <div class="flex justify-between px-5 py-4">
-          <span class="text-sm text-gray-500">Created</span>
+        </DetailRow>
+        <DetailRow label="Created">
           <span class="text-sm">{{ formatDate(customer.created_at) }}</span>
-        </div>
-        <div v-if="customer.deleted_at" class="flex justify-between px-5 py-4">
-          <span class="text-sm text-gray-500">Deleted</span>
+        </DetailRow>
+        <DetailRow v-if="customer.deleted_at" label="Deleted">
           <span class="text-sm text-red-500">{{ formatDate(customer.deleted_at) }}</span>
-        </div>
+        </DetailRow>
         <template v-if="Object.keys(customer.metadata ?? {}).length > 0">
-          <div
-            v-for="(value, key) in customer.metadata"
-            :key="key"
-            class="flex justify-between px-5 py-4"
-          >
-            <span class="text-sm text-gray-500 font-mono">{{ key }}</span>
+          <DetailRow v-for="(value, key) in customer.metadata" :key="key" :label="String(key)" label-class="font-mono">
             <span class="text-sm text-gray-700 font-mono">{{ value }}</span>
-          </div>
+          </DetailRow>
         </template>
-      </div>
+      </DetailCard>
 
-      <!-- Edit section -->
       <div v-if="!customer.deleted_at" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-4">
         <div class="flex items-center justify-between">
           <h2 class="font-semibold">Edit</h2>
@@ -73,7 +62,6 @@
         </form>
       </div>
 
-      <!-- Delete section -->
       <div v-if="!customer.deleted_at" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
         <h2 class="font-semibold">Delete Customer</h2>
         <p class="text-sm text-gray-500">Soft-deletes the customer. Existing payment records are preserved.</p>
@@ -91,6 +79,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCustomer, updateCustomer, deleteCustomer } from '../api/customers'
 import { formatDate } from '../utils/format'
+import { useAsyncAction } from '../composables/useAsyncAction'
+import DetailCard from '../components/ui/DetailCard.vue'
+import DetailRow from '../components/ui/DetailRow.vue'
 import type { Customer } from '../api/types'
 
 const route = useRoute()
@@ -101,34 +92,20 @@ const customer = ref<Customer | null>(null)
 const showEdit = ref(false)
 const editForm = reactive({ name: '', email: '' })
 
-const updating = ref(false)
-const updateError = ref('')
-const deleting = ref(false)
-const deleteError = ref('')
+const { loading: updating, error: updateError, run: runUpdate } = useAsyncAction()
+const { loading: deleting, error: deleteError, run: runDelete } = useAsyncAction()
 
 async function handleUpdate() {
-  updating.value = true
-  updateError.value = ''
-  try {
+  await runUpdate(async () => {
     customer.value = await updateCustomer(uid, { name: editForm.name, email: editForm.email })
     showEdit.value = false
-  } catch (e: any) {
-    updateError.value = e.errors?.join(', ') ?? e.error ?? 'Something went wrong'
-  } finally {
-    updating.value = false
-  }
+  })
 }
 
 async function handleDelete() {
-  deleting.value = true
-  deleteError.value = ''
-  try {
+  await runDelete(async () => {
     customer.value = await deleteCustomer(uid)
-  } catch (e: any) {
-    deleteError.value = e.error ?? 'Something went wrong'
-  } finally {
-    deleting.value = false
-  }
+  })
 }
 
 onMounted(async () => {

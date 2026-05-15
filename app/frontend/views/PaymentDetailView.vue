@@ -5,99 +5,60 @@
     <div v-if="!payment" class="text-gray-400 text-sm">Loading...</div>
 
     <template v-else>
-      <!-- Header -->
       <div class="flex items-start justify-between">
         <div class="flex flex-col gap-1">
           <h1 class="text-xl font-bold font-mono">{{ payment.uid }}</h1>
           <p class="text-xs text-gray-400">{{ formatDate(payment.created_at) }}</p>
         </div>
-        <span :class="statusClass(payment.status)">{{ payment.status }}</span>
+        <StatusBadge :status="payment.status" />
       </div>
 
-      <!-- Details card -->
-      <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        <div class="flex justify-between px-5 py-4">
-          <span class="text-sm text-gray-500">Amount</span>
+      <DetailCard>
+        <DetailRow label="Amount">
           <span class="text-sm font-medium">{{ formatAmount(payment.amount, payment.currency) }}</span>
-        </div>
-        <div class="flex justify-between px-5 py-4">
-          <span class="text-sm text-gray-500">Captured</span>
+        </DetailRow>
+        <DetailRow label="Captured">
           <span class="text-sm font-medium">
             {{ payment.captured_amount != null ? formatAmount(payment.captured_amount, payment.currency) : '—' }}
           </span>
-        </div>
-        <div class="flex justify-between px-5 py-4">
-          <span class="text-sm text-gray-500">Currency</span>
+        </DetailRow>
+        <DetailRow label="Currency">
           <span class="text-sm font-medium">{{ payment.currency }}</span>
-        </div>
-        <div class="flex justify-between px-5 py-4">
-          <span class="text-sm text-gray-500">Idempotency key</span>
+        </DetailRow>
+        <DetailRow label="Idempotency key">
           <span class="text-xs font-mono text-gray-600">{{ payment.idempotency_key }}</span>
-        </div>
-        <div v-if="payment.expires_at" class="flex justify-between px-5 py-4">
-          <span class="text-sm text-gray-500">Expires</span>
+        </DetailRow>
+        <DetailRow v-if="payment.expires_at" label="Expires">
           <span class="text-sm font-medium">{{ formatDate(payment.expires_at) }}</span>
-        </div>
+        </DetailRow>
         <template v-if="payment.customer">
-          <div class="flex justify-between px-5 py-4">
-            <span class="text-sm text-gray-500">Customer</span>
-            <RouterLink
-              :to="`/customers/${payment.customer.uid}`"
-              class="text-sm text-indigo-600 hover:underline"
-            >{{ payment.customer.name }}</RouterLink>
-          </div>
-          <div class="flex justify-between px-5 py-4">
-            <span class="text-sm text-gray-500">Customer email</span>
+          <DetailRow label="Customer">
+            <RouterLink :to="`/customers/${payment.customer.uid}`" class="text-sm text-indigo-600 hover:underline">
+              {{ payment.customer.name }}
+            </RouterLink>
+          </DetailRow>
+          <DetailRow label="Customer email">
             <span class="text-sm text-gray-600">{{ payment.customer.email }}</span>
-          </div>
+          </DetailRow>
         </template>
         <template v-if="Object.keys(payment.metadata ?? {}).length > 0">
-          <div
-            v-for="(value, key) in payment.metadata"
-            :key="key"
-            class="flex justify-between px-5 py-4"
-          >
-            <span class="text-sm text-gray-500 font-mono">{{ key }}</span>
+          <DetailRow v-for="(value, key) in payment.metadata" :key="key" :label="String(key)" label-class="font-mono">
             <span class="text-sm text-gray-700 font-mono">{{ value }}</span>
-          </div>
+          </DetailRow>
         </template>
-      </div>
+      </DetailCard>
 
-      <!-- Polling indicator -->
       <div v-if="isPolling" class="flex items-center gap-2 text-sm text-amber-600">
         <span class="animate-pulse">●</span> {{ pollingMessage }}
       </div>
 
-      <!-- Capture section (only when authorized) -->
-      <div v-if="payment.status === 'authorized'" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-4">
-        <h2 class="font-semibold">Capture Payment</h2>
-        <form @submit.prevent="handleCapture" class="flex flex-col gap-3">
-          <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">
-              Amount
-              <span class="text-gray-400 font-normal">— leave blank to capture full amount</span>
-            </label>
-            <div class="flex gap-2">
-              <input
-                v-model.number="captureAmount"
-                type="number"
-                :min="isZeroDecimal ? 1 : 0.01"
-                :step="isZeroDecimal ? 1 : 0.01"
-                :max="naturalPaymentAmount"
-                :placeholder="String(naturalPaymentAmount)"
-                class="input flex-1"
-              />
-              <span class="input bg-gray-50 text-gray-500 min-w-16 text-center">{{ payment.currency }}</span>
-            </div>
-          </div>
-          <p v-if="captureError" class="text-sm text-red-500">{{ captureError }}</p>
-          <button type="submit" :disabled="capturing" class="btn-primary">
-            {{ capturing ? 'Capturing...' : `Capture ${formatAmount(toMinorUnits(captureAmount ?? naturalPaymentAmount), payment.currency)}` }}
-          </button>
-        </form>
-      </div>
+      <CaptureForm
+        v-if="payment.status === 'authorized'"
+        :amount="payment.amount"
+        :currency="payment.currency"
+        :on-capture="handleCapture"
+      />
 
-      <!-- Cancel section (pending or authorized) -->
       <div v-if="payment.status === 'pending' || payment.status === 'authorized'" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
         <h2 class="font-semibold">Cancel Payment</h2>
         <p class="text-sm text-gray-500">Void this payment and release any reserved funds. This cannot be undone.</p>
@@ -107,146 +68,42 @@
         </button>
       </div>
 
-      <!-- Refunds section (only when succeeded) -->
-      <div v-if="payment.status === 'succeeded'" class="flex flex-col gap-4">
-        <h2 class="font-semibold">Refunds</h2>
+      <RefundsSection
+        v-if="payment.status === 'succeeded'"
+        :captured-amount="payment.captured_amount!"
+        :currency="payment.currency"
+        :refunds="paymentStore.currentRefunds"
+        :on-refund="handleRefund"
+      />
 
-        <div v-if="paymentStore.currentRefunds.length > 0" class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-          <div
-            v-for="refund in paymentStore.currentRefunds"
-            :key="refund.uid"
-            class="flex items-center justify-between px-5 py-4"
-          >
-            <div class="flex flex-col gap-0.5">
-              <span class="text-sm font-medium">{{ formatAmount(refund.amount, payment.currency) }}</span>
-              <span class="text-xs text-gray-400">{{ formatDate(refund.created_at) }}</span>
-            </div>
-            <span :class="statusClass(refund.status)">{{ refund.status }}</span>
-          </div>
-        </div>
-
-        <p v-else class="text-sm text-gray-400">No refunds yet.</p>
-
-        <div v-if="remainingAmount > 0" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-4">
-          <h3 class="font-semibold text-sm">Issue Refund</h3>
-          <form @submit.prevent="handleRefund" class="flex flex-col gap-3">
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium">
-                Amount
-                <span class="text-gray-400 font-normal">— max {{ formatAmount(remainingAmount, payment.currency) }}</span>
-              </label>
-              <div class="flex gap-2">
-                <input
-                  v-model.number="refundAmount"
-                  type="number"
-                  min="1"
-                  :max="remainingAmount"
-                  :placeholder="String(remainingAmount)"
-                  class="input flex-1"
-                />
-                <span class="input bg-gray-50 text-gray-500 min-w-16 text-center">{{ payment.currency }}</span>
-              </div>
-            </div>
-            <p v-if="refundError" class="text-sm text-red-500">{{ refundError }}</p>
-            <button type="submit" :disabled="refunding" class="btn-primary">
-              {{ refunding ? 'Refunding...' : 'Issue Refund' }}
-            </button>
-          </form>
-        </div>
-
-        <p v-else class="text-sm text-gray-500">Fully refunded.</p>
-      </div>
-
-      <!-- Webhook Events panel -->
-      <div class="flex flex-col gap-4">
-        <h2 class="font-semibold">Webhook Events</h2>
-
-        <div v-if="webhookEvents.length > 0" class="flex flex-col gap-3">
-          <div v-for="capture in webhookEvents" :key="capture.id" class="bg-white rounded-xl border border-gray-200">
-            <button
-              class="w-full px-5 py-4 flex items-center justify-between cursor-pointer"
-              @click="toggleEvent(capture.id)"
-            >
-              <span class="text-sm font-mono font-medium">{{ capture.event_type }}</span>
-              <div class="flex items-center gap-3">
-                <span class="text-xs text-gray-400">{{ formatDate(capture.created_at) }}</span>
-                <span class="text-gray-400 text-xs">{{ expandedEvents.has(capture.id) ? '▲' : '▼' }}</span>
-              </div>
-            </button>
-            <div v-if="expandedEvents.has(capture.id)" class="px-5 pb-4">
-              <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto text-gray-600">{{ JSON.stringify(capture.payload, null, 2) }}</pre>
-            </div>
-          </div>
-        </div>
-
-        <p v-else class="text-sm text-gray-400">No webhook events yet — fire a capture or refund to see events here.</p>
-      </div>
+      <WebhookEventsPanel :uid="uid" />
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
-import { formatAmount, formatDate, statusClass, ZERO_DECIMAL_CURRENCIES } from '../utils/format'
-import { listPaymentWebhookEvents } from '../api/webhook_events'
-import type { WebhookEvent } from '../api/types'
+import { formatAmount, formatDate } from '../utils/format'
+import { useAsyncAction } from '../composables/useAsyncAction'
+import { usePolling } from '../composables/usePolling'
+import StatusBadge from '../components/ui/StatusBadge.vue'
+import DetailCard from '../components/ui/DetailCard.vue'
+import DetailRow from '../components/ui/DetailRow.vue'
+import CaptureForm from '../components/features/CaptureForm.vue'
+import RefundsSection from '../components/features/RefundsSection.vue'
+import WebhookEventsPanel from '../components/features/WebhookEventsPanel.vue'
 
-const POLL_PAYMENT_STATUSES = ['pending', 'processing']
+const POLL_STATUSES = ['pending', 'processing']
 
 const route = useRoute()
 const router = useRouter()
 const paymentStore = usePaymentStore()
-
 const uid = route.params.uid as string
 const payment = computed(() => paymentStore.currentPayment)
 
-const isPolling = ref(false)
-const captureAmount = ref<number | null>(null)
-const captureError = ref('')
-
-const isZeroDecimal = computed(() =>
-  ZERO_DECIMAL_CURRENCIES.includes(payment.value?.currency?.toUpperCase() ?? '')
-)
-
-function toMinorUnits(amount: number): number {
-  return isZeroDecimal.value ? Math.round(amount) : Math.round(amount * 100)
-}
-
-const naturalPaymentAmount = computed(() => {
-  if (!payment.value) return 0
-  return isZeroDecimal.value ? payment.value.amount : payment.value.amount / 100
-})
-const capturing = ref(false)
-const refundAmount = ref<number | null>(null)
-const refundError = ref('')
-const refunding = ref(false)
-const cancelling = ref(false)
-const cancelError = ref('')
-
-const webhookEvents = ref<WebhookEvent[]>([])
-const expandedEvents = ref<Set<number>>(new Set())
-let webhookPollTimeout: ReturnType<typeof setTimeout> | null = null
-
-function toggleEvent(id: number) {
-  const next = new Set(expandedEvents.value)
-  next.has(id) ? next.delete(id) : next.add(id)
-  expandedEvents.value = next
-}
-
-async function pollWebhooks() {
-  const { webhook_events } = await listPaymentWebhookEvents(uid)
-  webhookEvents.value = webhook_events
-  webhookPollTimeout = setTimeout(pollWebhooks, 3000)
-}
-
-function stopWebhookPolling() {
-  if (webhookPollTimeout) {
-    clearTimeout(webhookPollTimeout)
-    webhookPollTimeout = null
-  }
-}
+const { loading: cancelling, error: cancelError, run: runCancel } = useAsyncAction()
 
 const pollingMessage = computed(() => {
   if (payment.value?.status === 'pending') return 'Simulating card network authorization...'
@@ -255,108 +112,42 @@ const pollingMessage = computed(() => {
   return 'Waiting...'
 })
 
-const remainingAmount = computed(() => {
-  if (!payment.value?.captured_amount) return 0
-  const refunded = paymentStore.currentRefunds
-    .filter(r => r.status === 'succeeded')
-    .reduce((sum, r) => sum + r.amount, 0)
-  return payment.value.captured_amount - refunded
+function needsPolling() {
+  return POLL_STATUSES.includes(payment.value?.status ?? '') ||
+    paymentStore.currentRefunds.some(r => r.status === 'pending')
+}
+
+const { active: isPolling, start: startPolling, stop: stopPolling } = usePolling(async () => {
+  if (POLL_STATUSES.includes(payment.value?.status ?? '')) await paymentStore.fetchPayment(uid)
+  if (payment.value?.status === 'succeeded') await paymentStore.fetchRefunds(uid)
+  return needsPolling()
 })
 
-let pollTimeout: ReturnType<typeof setTimeout> | null = null
-
-function needsPolling(): boolean {
-  const paymentPending = POLL_PAYMENT_STATUSES.includes(payment.value?.status ?? '')
-  const refundPending = paymentStore.currentRefunds.some(r => r.status === 'pending')
-  return paymentPending || refundPending
-}
-
-function startPollingIfNeeded() {
-  if (!pollTimeout && needsPolling()) schedulePoll()
-}
-
-async function poll() {
-  if (POLL_PAYMENT_STATUSES.includes(payment.value?.status ?? '')) {
-    await paymentStore.fetchPayment(uid)
-  }
-  if (payment.value?.status === 'succeeded') {
-    await paymentStore.fetchRefunds(uid)
-  }
-  if (needsPolling()) {
-    pollTimeout = setTimeout(poll, 2000)
-  } else {
-    isPolling.value = false
-    pollTimeout = null
-  }
-}
-
-function schedulePoll() {
-  isPolling.value = true
-  pollTimeout = setTimeout(poll, 2000)
-}
-
-function stopPolling() {
-  isPolling.value = false
-  if (pollTimeout) {
-    clearTimeout(pollTimeout)
-    pollTimeout = null
-  }
-}
-
-async function handleCapture() {
-  capturing.value = true
-  captureError.value = ''
-  try {
-    const minor = captureAmount.value != null ? toMinorUnits(captureAmount.value) : undefined
-    await paymentStore.capture(uid, minor)
-    startPollingIfNeeded()
-  } catch (e: any) {
-    captureError.value = e.error ?? 'Something went wrong'
-  } finally {
-    capturing.value = false
-  }
+async function handleCapture(amount?: number) {
+  await paymentStore.capture(uid, amount)
+  if (needsPolling()) startPolling()
 }
 
 async function handleCancel() {
-  cancelling.value = true
-  cancelError.value = ''
-  try {
+  await runCancel(async () => {
     await paymentStore.cancel(uid)
     stopPolling()
-  } catch (e: any) {
-    cancelError.value = e.error ?? 'Something went wrong'
-  } finally {
-    cancelling.value = false
-  }
+  })
 }
 
-async function handleRefund() {
-  refunding.value = true
-  refundError.value = ''
-  try {
-    await paymentStore.submitRefund(uid, {
-      amount: refundAmount.value!,
-      idempotency_key: crypto.randomUUID(),
-    })
-    refundAmount.value = null
-    startPollingIfNeeded()
-  } catch (e: any) {
-    refundError.value = e.error ?? 'Something went wrong'
-  } finally {
-    refunding.value = false
-  }
+async function handleRefund(amount: number) {
+  await paymentStore.submitRefund(uid, { amount, idempotency_key: crypto.randomUUID() })
+  if (needsPolling()) startPolling()
 }
 
 onMounted(async () => {
   await paymentStore.fetchPayment(uid)
   await paymentStore.fetchRefunds(uid)
-  startPollingIfNeeded()
-  pollWebhooks()
+  if (needsPolling()) startPolling()
 })
 
 onUnmounted(() => {
   stopPolling()
-  stopWebhookPolling()
   paymentStore.currentPayment = null
   paymentStore.currentRefunds = []
 })
