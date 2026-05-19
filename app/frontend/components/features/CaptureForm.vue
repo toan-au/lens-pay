@@ -21,17 +21,22 @@
         </div>
       </div>
       <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
-      <button type="submit" :disabled="loading" class="btn-primary">
-        {{ loading ? 'Capturing...' : `Capture ${formatAmount(toMinorUnits(naturalAmount ?? naturalMax, currency), currency)}` }}
-      </button>
+      <AmountButton
+        label="Capture"
+        loading-label="Capturing..."
+        :amount="toMinorUnits(naturalAmount ?? naturalMax, currency)"
+        :currency="currency"
+        :loading="loading"
+      />
     </form>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ZERO_DECIMAL_CURRENCIES, formatAmount, toMinorUnits, fromMinorUnits } from '../../utils/format'
+import { ZERO_DECIMAL_CURRENCIES, toMinorUnits, fromMinorUnits } from '../../utils/format'
 import { useAsyncAction } from '../../composables/useAsyncAction'
+import AmountButton from '../ui/AmountButton.vue'
 
 const props = defineProps<{
   amount: number

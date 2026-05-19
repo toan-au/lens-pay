@@ -63,9 +63,13 @@
 
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
 
-        <button type="submit" :disabled="loading" class="btn-primary">
-          {{ loading ? 'Creating...' : 'Create Payment' }}
-        </button>
+        <AmountButton
+          label="Create Payment"
+          loading-label="Creating..."
+          :amount="form.amount != null ? toMinorUnits(form.amount, currency) : null"
+          :currency="currency"
+          :loading="loading"
+        />
       </form>
     </div>
   </div>
@@ -78,6 +82,7 @@ import { useMerchantStore } from '../stores/merchant'
 import { usePaymentStore } from '../stores/payments'
 import { ZERO_DECIMAL_CURRENCIES, formatAmount, toMinorUnits } from '../utils/format'
 import CustomerPicker from '../components/features/CustomerPicker.vue'
+import AmountButton from '../components/ui/AmountButton.vue'
 
 const router = useRouter()
 const merchantStore = useMerchantStore()

@@ -31,18 +31,23 @@
               <input
                 v-model.number="refundAmount"
                 type="number"
-                min="1"
-                :max="remainingAmount"
-                :placeholder="String(remainingAmount)"
+                :min="isZeroDecimal ? 1 : 0.01"
+                :step="isZeroDecimal ? 1 : 0.01"
+                :max="naturalRemaining"
+                :placeholder="String(naturalRemaining)"
                 class="input flex-1"
               />
               <span class="input bg-gray-50 text-gray-500 min-w-16 text-center">{{ currency }}</span>
             </div>
           </div>
           <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
-          <button type="submit" :disabled="loading" class="btn-primary">
-            {{ loading ? 'Refunding...' : 'Issue Refund' }}
-          </button>
+          <AmountButton
+            label="Refund"
+            loading-label="Refunding..."
+            :amount="toMinorUnits(refundAmount ?? naturalRemaining, props.currency)"
+            :currency="props.currency"
+            :loading="loading"
+          />
         </form>
       </div>
     </template>
@@ -53,9 +58,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { formatAmount, formatDate } from '../../utils/format'
+import { formatAmount, formatDate, toMinorUnits, fromMinorUnits, ZERO_DECIMAL_CURRENCIES } from '../../utils/format'
 import { useAsyncAction } from '../../composables/useAsyncAction'
 import StatusBadge from '../ui/StatusBadge.vue'
+import AmountButton from '../ui/AmountButton.vue'
 import type { Refund } from '../../api/types'
 
 const props = defineProps<{
@@ -68,6 +74,8 @@ const props = defineProps<{
 const { loading, error, run } = useAsyncAction()
 const refundAmount = ref<number | null>(null)
 
+const isZeroDecimal = computed(() => ZERO_DECIMAL_CURRENCIES.includes(props.currency.toUpperCase()))
+
 const remainingAmount = computed(() => {
   const refunded = props.refunds
     .filter(r => r.status === 'succeeded')
@@ -75,9 +83,11 @@ const remainingAmount = computed(() => {
   return props.capturedAmount - refunded
 })
 
+const naturalRemaining = computed(() => fromMinorUnits(remainingAmount.value, props.currency))
+
 function handle() {
   run(async () => {
-    await props.onRefund(refundAmount.value!)
+    await props.onRefund(toMinorUnits(refundAmount.value!, props.currency))
     refundAmount.value = null
   })
 }
