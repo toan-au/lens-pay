@@ -154,6 +154,32 @@ RSpec.describe 'Payments API', type: :request do
     end
   end
 
+  path '/api/v1/payments/{uid}/webhook-events' do
+    parameter name: :uid, in: :path, type: :string, description: 'Payment UID'
+
+    get 'List webhook events for a payment' do
+      tags 'Webhooks'
+      produces 'application/json'
+      security [ { bearer_auth: [] } ]
+
+      response '200', 'webhook events listed' do
+        let(:uid) { create(:transaction, merchant: merchant).uid }
+        run_test!
+      end
+
+      response '404', 'payment not found' do
+        let(:uid) { 'tr_nonexistent' }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid' }
+        let(:uid) { 'tr_any' }
+        run_test!
+      end
+    end
+  end
+
   path '/api/v1/payments/{payment_uid}/refunds' do
     parameter name: :payment_uid, in: :path, type: :string, description: 'Payment UID'
 

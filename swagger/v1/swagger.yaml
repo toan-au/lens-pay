@@ -355,6 +355,27 @@ paths:
           description: payment not found
         '401':
           description: unauthorized
+  "/api/v1/payments/{uid}/webhook-events":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    get:
+      summary: List webhook events for a payment
+      tags:
+      - Webhooks
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: webhook events listed
+        '404':
+          description: payment not found
+        '401':
+          description: unauthorized
   "/api/v1/payments/{payment_uid}/refunds":
     parameters:
     - name: payment_uid
@@ -484,6 +505,70 @@ paths:
                     nullable: true
         '401':
           description: unauthorized
+  "/api/v1/webhooks":
+    get:
+      summary: List webhook events
+      tags:
+      - Webhooks
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: webhook events listed
+        '401':
+          description: unauthorized
+  "/api/v1/webhooks/ping":
+    post:
+      summary: Fire a test ping webhook
+      tags:
+      - Webhooks
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: ping enqueued
+        '401':
+          description: unauthorized
+  "/api/v1/webhooks/{merchant_uid}":
+    parameters:
+    - name: merchant_uid
+      in: path
+      description: Merchant UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Receive a signed webhook event
+      tags:
+      - Webhooks
+      parameters:
+      - name: X-LensPay-Signature
+        in: header
+        required: false
+        description: 'HMAC-SHA256 signature: sha256=<hex digest of raw body using
+          webhook_secret>'
+        schema:
+          type: string
+      responses:
+        '200':
+          description: event stored
+        '401':
+          description: invalid signature
+        '404':
+          description: merchant not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  example: payment.succeeded
+                data:
+                  type: object
+              required:
+              - type
 servers:
 - url: http://{defaultHost}
   variables:

@@ -1,5 +1,15 @@
 export const ZERO_DECIMAL_CURRENCIES = ['JPY', 'KRW', 'VND', 'IDR', 'HUF', 'TWD', 'CLP', 'ISK']
 
+export function toMinorUnits(amount: number, currency: string): number {
+  return ZERO_DECIMAL_CURRENCIES.includes(currency.toUpperCase())
+    ? Math.round(amount)
+    : Math.round(amount * 100)
+}
+
+export function fromMinorUnits(amount: number, currency: string): number {
+  return ZERO_DECIMAL_CURRENCIES.includes(currency.toUpperCase()) ? amount : amount / 100
+}
+
 export function formatAmount(amount: number, currency: string): string {
   const value = ZERO_DECIMAL_CURRENCIES.includes(currency.toUpperCase())
     ? amount
