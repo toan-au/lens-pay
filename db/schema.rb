@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_13_030304) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_25_035619) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,13 +34,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_13_030304) do
     t.string "country", limit: 2, null: false
     t.datetime "created_at", null: false
     t.string "currency", limit: 3, null: false
+    t.datetime "demo_expires_at"
     t.string "email", null: false
+    t.boolean "is_demo", default: false, null: false
     t.string "name", null: false
     t.integer "status", default: 0, null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.string "webhook_secret"
     t.string "webhook_url"
+    t.index ["demo_expires_at"], name: "index_merchants_on_demo_expires_at"
     t.index ["email"], name: "index_merchants_on_email", unique: true
     t.index ["status"], name: "index_merchants_on_status"
     t.index ["uid"], name: "index_merchants_on_uid", unique: true
