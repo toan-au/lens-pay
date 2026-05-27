@@ -1,9 +1,17 @@
 # LensPay
 
-A payment gateway API built with Ruby on Rails, modelled on Komoju's API design. Covers merchant onboarding, customer management, the full payment lifecycle, partial captures, refunds, cancellations, payment expiry, and outbound webhook delivery.
+A payment gateway API built with Ruby on Rails. Covers merchant onboarding, customer management, the full payment lifecycle, partial captures, refunds, cancellations, payment expiry, and outbound webhook delivery — alongside a Vue 3 dashboard for exploring the system in real time.
 
 Live demo: [lenspay.toanau.com](https://lenspay.toanau.com)  
-API docs: `http://localhost:3000/api-docs`
+API docs: [lenspay.toanau.com/api-docs](https://lenspay.toanau.com/api-docs)
+
+---
+
+## Demo
+
+Click **Try the demo** on the landing page. A fresh merchant account is created with pre-seeded customers, payments in every state (pending, authorized, succeeded, declined, cancelled), refunds, and webhook events. No signup required.
+
+Demo accounts are ephemeral — they expire after 24 hours and are cleaned up by a nightly scheduled job.
 
 ---
 
@@ -63,13 +71,14 @@ bundle exec rake rswag:specs:swaggerize
 
 ## API Overview
 
-All endpoints except `POST /merchants` and `POST /webhooks/:merchant_uid` require `Authorization: Bearer <api_key>`.
+All endpoints except the ones marked public require `Authorization: Bearer <api_key>`.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/v1/merchants` | Register a merchant. Returns API key and webhook secret (shown once) |
+| `POST` | `/api/v1/merchants` | Register a merchant. Returns API key and webhook secret (shown once). **Public** |
 | `GET` | `/api/v1/merchants/me` | Fetch merchant profile |
 | `PATCH` | `/api/v1/merchants/me` | Update merchant profile |
+| `POST` | `/api/v1/demo/sessions` | Create an ephemeral demo merchant pre-seeded with data. Returns API key. **Public** |
 | `POST` | `/api/v1/customers` | Create a customer |
 | `GET` | `/api/v1/customers` | List customers (cursor pagination) |
 | `GET` | `/api/v1/customers/:uid` | Fetch a customer |
@@ -86,7 +95,7 @@ All endpoints except `POST /merchants` and `POST /webhooks/:merchant_uid` requir
 | `GET` | `/api/v1/refunds` | List all refunds |
 | `GET` | `/api/v1/webhooks` | List all received webhook events |
 | `POST` | `/api/v1/webhooks/ping` | Fire a test ping webhook |
-| `POST` | `/api/v1/webhooks/:merchant_uid` | Receive and store a signed webhook event (public sink) |
+| `POST` | `/api/v1/webhooks/:merchant_uid` | Receive and store a signed webhook event (public sink). **Public** |
 
 ---
 

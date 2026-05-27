@@ -23,6 +23,7 @@ module Middleware
 
     PUBLIC_ROUTES = [
       [ "POST", "/api/v1/merchants" ],
+      [ "POST", "/api/v1/demo/sessions" ],
       [ "POST", %r{\A/api/v1/webhooks/mch_} ]
     ].freeze
 

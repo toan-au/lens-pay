@@ -5,7 +5,7 @@
     </AppLayout>
   </template>
   <template v-else>
-    <LandingView @get-started="showOnboarding = true" />
+    <LandingView :demo-loading="demoLoading" @get-started="showOnboarding = true" @try-demo="handleTryDemo" />
   </template>
 
   <OnboardingModal v-model="showOnboarding" />
@@ -20,9 +20,20 @@ import { useMerchantStore } from './stores/merchant'
 
 const merchantStore = useMerchantStore()
 const showOnboarding = ref(false)
+const demoLoading = ref(false)
 
 function handleUnauthorized() {
   merchantStore.logout()
+}
+
+async function handleTryDemo() {
+  demoLoading.value = true
+  try {
+    await merchantStore.loginAsDemo()
+    await merchantStore.fetchMe()
+  } finally {
+    demoLoading.value = false
+  }
 }
 
 onMounted(async () => {
