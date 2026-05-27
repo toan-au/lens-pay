@@ -14,3 +14,7 @@ export function getMe(): Promise<Merchant> {
   return api.get<Merchant>('/merchants/me')
 }
 
+export function createDemoSession(): Promise<{ api_key: string; merchant_uid: string }> {
+  return api.post('/demo/sessions', {})
+}
+
