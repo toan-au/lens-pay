@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { createMerchant, getMe } from '../api/merchants'
+import { createMerchant, createDemoSession, getMe } from '../api/merchants'
 import type { Merchant, MerchantCreateResponse } from '../api/types'
 
 export const useMerchantStore = defineStore('merchant', () => {
@@ -31,9 +31,14 @@ export const useMerchantStore = defineStore('merchant', () => {
     return result
   }
 
+  async function loginAsDemo(): Promise<void> {
+    const result = await createDemoSession()
+    setApiKey(result.api_key)
+  }
+
   async function fetchMe(): Promise<void> {
     merchant.value = await getMe()
   }
 
-  return { merchant, apiKey, isAuthenticated, register, fetchMe, logout, setApiKey }
+  return { merchant, apiKey, isAuthenticated, register, loginAsDemo, fetchMe, logout, setApiKey }
 })
