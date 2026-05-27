@@ -113,7 +113,7 @@
           <div class="text-gray-500 mt-1">Authorization: Bearer sk_...</div>
           <div class="mt-3 text-gray-400">{</div>
           <div class="ml-4"><span class="text-green-400">"amount"</span>: <span class="text-amber-400">1500</span>,</div>
-          <div class="ml-4"><span class="text-green-400">"currency"</span>: <span class="text-orange-400">"USD"</span>,</div>
+          <div class="ml-4"><span class="text-green-400">"currency"</span>: <span class="text-orange-400">"JPY"</span>,</div>
           <div class="ml-4"><span class="text-green-400">"idempotency_key"</span>: <span class="text-orange-400">"order_42"</span></div>
           <div class="text-gray-400">}</div>
           <div class="mt-4 border-t border-gray-700 pt-4 text-gray-500"># Response</div>

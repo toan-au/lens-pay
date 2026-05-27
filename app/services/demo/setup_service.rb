@@ -6,8 +6,8 @@ module Demo
       @merchant = Merchant.create!(
         name: "Demo Store",
         email: "demo_#{SecureRandom.hex(8)}@lenspay.demo",
-        country: "US",
-        currency: "USD",
+        country: "JP",
+        currency: "JPY",
         is_demo: true,
         demo_expires_at: 24.hours.from_now
       )
@@ -33,7 +33,7 @@ module Demo
     def seed_payments
       # Succeeded payment with a full refund
       succeeded_with_refund = @merchant.transactions.create!(
-        amount: 15000, currency: "USD", status: :succeeded, captured_amount: 15000,
+        amount: 15000, currency: "JPY", status: :succeeded, captured_amount: 15000,
         idempotency_key: SecureRandom.uuid,
         customer: @alice, customer_name: @alice.name, customer_email: @alice.email,
         metadata: { order_id: "order_001" },
@@ -51,7 +51,7 @@ module Demo
 
       # Succeeded payment with a partial refund
       succeeded_partial = @merchant.transactions.create!(
-        amount: 8999, currency: "USD", status: :succeeded, captured_amount: 8999,
+        amount: 8999, currency: "JPY", status: :succeeded, captured_amount: 8999,
         idempotency_key: SecureRandom.uuid,
         customer: @bob, customer_name: @bob.name, customer_email: @bob.email,
         metadata: { order_id: "order_002" },
@@ -69,7 +69,7 @@ module Demo
 
       # Authorized payment waiting to be captured
       authorized = @merchant.transactions.create!(
-        amount: 20000, currency: "USD", status: :authorized, captured_amount: nil,
+        amount: 20000, currency: "JPY", status: :authorized, captured_amount: nil,
         idempotency_key: SecureRandom.uuid,
         metadata: { order_id: "order_003" },
         created_at: 1.hour.ago
@@ -78,7 +78,7 @@ module Demo
 
       # Cancelled payment
       cancelled = @merchant.transactions.create!(
-        amount: 5000, currency: "USD", status: :cancelled, captured_amount: nil,
+        amount: 5000, currency: "JPY", status: :cancelled, captured_amount: nil,
         idempotency_key: SecureRandom.uuid,
         customer: @alice, customer_name: @alice.name, customer_email: @alice.email,
         created_at: 4.days.ago
@@ -88,7 +88,7 @@ module Demo
 
       # Declined payment (rejected by card network)
       declined = @merchant.transactions.create!(
-        amount: 9999, currency: "USD", status: :declined, captured_amount: nil,
+        amount: 9999, currency: "JPY", status: :declined, captured_amount: nil,
         idempotency_key: SecureRandom.uuid,
         customer: @bob, customer_name: @bob.name, customer_email: @bob.email,
         metadata: { order_id: "order_004" },
