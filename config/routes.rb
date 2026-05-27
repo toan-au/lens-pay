@@ -20,6 +20,8 @@ Rails.application.routes.draw do
         end
         resources :refunds, only: [ :index, :create ], controller: "payment_refunds"
       end
+      post "demo/sessions", to: "demo_sessions#create"
+
       resources :merchants, only: [ :create ] do
         collection do
           get :me
