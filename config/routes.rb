@@ -19,6 +19,13 @@ Rails.application.routes.draw do
           get "webhook-events", to: "webhooks#payment_events"
         end
         resources :refunds, only: [ :index, :create ], controller: "payment_refunds"
+        resources :disputes, only: [ :create ], param: :uid
+      end
+
+      resources :disputes, only: [], param: :uid do
+        member do
+          patch :respond
+        end
       end
       post "demo/sessions", to: "demo_sessions#create"
 
