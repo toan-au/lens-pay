@@ -16,6 +16,22 @@ class Api::V1::DisputesController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_content
   end
 
+  def index
+    result = Disputes::ListService.call(
+      current_merchant,
+      cursor: list_params[:cursor],
+      status: list_params[:status],
+      limit:  list_params[:limit]&.to_i
+    )
+
+    render json: { disputes: result.disputes, next_cursor: result.next_cursor }, status: result.status
+  end
+
+  def show
+    dispute = Disputes::FindService.call(current_merchant, params[:uid]).dispute
+    render json: dispute, status: :ok
+  end
+
   def create
     payment = Payments::FindService.call(current_merchant, params[:payment_uid]).transaction
     result  = Disputes::CreateService.call(payment, dispute_params)
@@ -29,6 +45,10 @@ class Api::V1::DisputesController < ApplicationController
   end
 
   private
+
+  def list_params
+    params.permit(:cursor, :status, :limit)
+  end
 
   def dispute_params
     params.permit(:reason, :amount, :currency)

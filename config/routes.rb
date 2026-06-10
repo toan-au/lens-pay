@@ -22,7 +22,7 @@ Rails.application.routes.draw do
         resources :disputes, only: [ :create ], param: :uid
       end
 
-      resources :disputes, only: [], param: :uid do
+      resources :disputes, only: [ :index, :show ], param: :uid do
         member do
           patch :respond
         end
