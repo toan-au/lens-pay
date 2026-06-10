@@ -74,3 +74,27 @@ export interface WebhookEvent {
   payload: Record<string, any>
   created_at: string
 }
+
+export interface DisputeResponse {
+  id: number
+  evidence: Record<string, string>
+  created_at: string
+}
+
+export interface Dispute {
+  uid: string
+  status: 'open' | 'merchant_responded' | 'won' | 'lost'
+  reason: string
+  amount: number
+  currency: string
+  respond_by: string
+  resolved_at: string | null
+  transaction_id: number
+  merchant_id: number
+  created_at: string
+}
+
+export interface DisputeListResponse {
+  disputes: Dispute[]
+  next_cursor: string | null
+}
