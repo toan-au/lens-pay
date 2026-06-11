@@ -60,6 +60,7 @@ group :development, :test do
   gem "webmock"
 
   gem "rswag-specs"
+  gem "climate_control"
 end
 
 gem "vite_rails", "~> 3.10"
