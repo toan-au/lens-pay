@@ -8,6 +8,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       post "webhooks/ping", to: "webhooks#ping"
       get  "webhooks", to: "webhooks#index"
+      post "webhooks/network/disputes", to: "network_disputes#create"
       post "webhooks/:merchant_uid", to: "webhooks#create"
 
       resources :customers, only: [ :index, :create, :show, :update, :destroy ], param: :uid
@@ -19,7 +20,6 @@ Rails.application.routes.draw do
           get "webhook-events", to: "webhooks#payment_events"
         end
         resources :refunds, only: [ :index, :create ], controller: "payment_refunds"
-        resources :disputes, only: [ :create ], param: :uid
       end
 
       resources :disputes, only: [], param: :uid do

@@ -7,19 +7,9 @@ class Api::V1::DisputesController < ApplicationController
     render json: { errors: e.messages }, status: :unprocessable_content
   end
 
-  rescue_from DisputeError::InvalidPayment,
-              DisputeError::MismatchedCurrency,
-              DisputeError::InvalidReason,
-              DisputeError::AlreadyDisputed,
-              DisputeError::InvalidTransition,
+  rescue_from DisputeError::InvalidTransition,
               DisputeError::RespondByPassed do |e|
     render json: { error: e.message }, status: :unprocessable_content
-  end
-
-  def create
-    payment = Payments::FindService.call(current_merchant, params[:payment_uid]).transaction
-    result  = Disputes::CreateService.call(payment, dispute_params)
-    render json: result.dispute, status: result.status
   end
 
   def respond
@@ -29,10 +19,6 @@ class Api::V1::DisputesController < ApplicationController
   end
 
   private
-
-  def dispute_params
-    params.permit(:reason, :amount, :currency)
-  end
 
   def evidence_params
     params.permit(evidence: {}).to_h.fetch("evidence", {})
