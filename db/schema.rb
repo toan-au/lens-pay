@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_25_035619) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_09_034217) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -27,6 +27,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_035619) do
     t.index ["merchant_id", "uid"], name: "index_customers_on_merchant_id_and_uid"
     t.index ["merchant_id"], name: "index_customers_on_merchant_id"
     t.index ["uid"], name: "index_customers_on_uid", unique: true
+  end
+
+  create_table "dispute_responses", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "dispute_id", null: false
+    t.jsonb "evidence", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["dispute_id", "created_at"], name: "index_dispute_responses_on_dispute_id_and_created_at"
+    t.index ["dispute_id"], name: "index_dispute_responses_on_dispute_id"
+  end
+
+  create_table "disputes", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.datetime "created_at", null: false
+    t.string "currency", null: false
+    t.bigint "merchant_id", null: false
+    t.string "reason", null: false
+    t.datetime "resolved_at"
+    t.datetime "respond_by"
+    t.integer "status", default: 0, null: false
+    t.bigint "transaction_id", null: false
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.index ["merchant_id", "created_at"], name: "index_disputes_on_merchant_id_and_created_at"
+    t.index ["merchant_id"], name: "index_disputes_on_merchant_id"
+    t.index ["transaction_id"], name: "index_disputes_on_transaction_id"
+    t.index ["uid"], name: "index_disputes_on_uid", unique: true
   end
 
   create_table "merchants", force: :cascade do |t|
@@ -96,6 +123,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_035619) do
   end
 
   add_foreign_key "customers", "merchants"
+  add_foreign_key "dispute_responses", "disputes"
+  add_foreign_key "disputes", "merchants"
+  add_foreign_key "disputes", "transactions"
   add_foreign_key "refunds", "transactions"
   add_foreign_key "transactions", "customers"
   add_foreign_key "transactions", "merchants"
