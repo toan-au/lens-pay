@@ -49,4 +49,8 @@ module DisputeError
       super("Cannot transition dispute from '#{from}' to '#{to}'")
     end
   end
+
+  class AlreadyResolved < StandardError
+    def initialize = super("Dispute is already resolved")
+  end
 end

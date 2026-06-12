@@ -25,6 +25,7 @@ module Middleware
       [ "POST", "/api/v1/merchants" ],
       [ "POST", "/api/v1/demo/sessions" ],
       [ "POST", "/api/v1/webhooks/network/disputes" ],
+      [ "POST", %r{\A/api/v1/webhooks/network/disputes/.+/resolve\z} ],
       [ "POST", %r{\A/api/v1/webhooks/mch_} ]
     ].freeze
 

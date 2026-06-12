@@ -8,7 +8,8 @@ class Api::V1::NetworkDisputesController < ApplicationController
   rescue_from DisputeError::InvalidPayment,
               DisputeError::MismatchedCurrency,
               DisputeError::InvalidReason,
-              DisputeError::AlreadyDisputed do |e|
+              DisputeError::AlreadyDisputed,
+              DisputeError::AlreadyResolved do |e|
     render json: { error: e.message }, status: :unprocessable_content
   end
 
@@ -17,6 +18,14 @@ class Api::V1::NetworkDisputesController < ApplicationController
     return render json: { error: "Payment not found" }, status: :not_found unless transaction
 
     result = Disputes::CreateService.call(transaction, dispute_params)
+    render json: result.dispute, status: result.status
+  end
+
+  def resolve
+    dispute = Dispute.find_by(uid: params[:uid])
+    return render json: { error: "Dispute not found" }, status: :not_found unless dispute
+
+    result = Disputes::ResolveService.call(dispute, params[:outcome])
     render json: result.dispute, status: result.status
   end
 
