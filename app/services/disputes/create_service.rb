@@ -37,8 +37,8 @@ module Disputes
 
     def validate!
       raise DisputeError::InvalidPayment unless @transaction.succeeded?
-      raise DisputeError::ValidationFailed, ["Amount must be greater than 0"] if @params[:amount].to_i <= 0
-      raise DisputeError::ValidationFailed, ["Amount exceeds transaction amount"] if @params[:amount].to_i > @transaction.amount
+      raise DisputeError::ValidationFailed, [ "Amount must be greater than 0" ] if @params[:amount].to_i <= 0
+      raise DisputeError::ValidationFailed, [ "Amount exceeds transaction amount" ] if @params[:amount].to_i > @transaction.amount
       raise DisputeError::MismatchedCurrency if @params[:currency] != @transaction.currency
       raise DisputeError::InvalidReason unless Dispute::REASONS.include?(@params[:reason])
       raise DisputeError::AlreadyDisputed if @transaction.disputes.where(status: %i[open merchant_responded]).exists?

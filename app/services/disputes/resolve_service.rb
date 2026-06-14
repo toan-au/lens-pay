@@ -28,7 +28,7 @@ module Disputes
     private
 
     def validate!
-      raise DisputeError::ValidationFailed, ["Outcome must be 'won' or 'lost'"] unless VALID_OUTCOMES.include?(@outcome)
+      raise DisputeError::ValidationFailed, [ "Outcome must be 'won' or 'lost'" ] unless VALID_OUTCOMES.include?(@outcome)
       raise DisputeError::AlreadyResolved if @dispute.won? || @dispute.lost?
     end
   end

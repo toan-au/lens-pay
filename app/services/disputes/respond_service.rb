@@ -29,8 +29,8 @@ module Disputes
     private
 
     def validate!
-      raise DisputeError::ValidationFailed, ["Evidence must be a Hash"] unless @evidence.is_a?(Hash)
-      raise DisputeError::ValidationFailed, ["Evidence cannot be empty"] if @evidence.empty?
+      raise DisputeError::ValidationFailed, [ "Evidence must be a Hash" ] unless @evidence.is_a?(Hash)
+      raise DisputeError::ValidationFailed, [ "Evidence cannot be empty" ] if @evidence.empty?
       raise DisputeError::InvalidTransition.new(from: @dispute.status, to: "merchant_responded") if @dispute.won? || @dispute.lost?
       raise DisputeError::RespondByPassed if Time.current >= @dispute.respond_by
     end
