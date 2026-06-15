@@ -2,6 +2,7 @@ class Merchant < ApplicationRecord
   has_many :transactions, dependent: :destroy
   has_many :customers, dependent: :destroy
   has_many :webhook_events, dependent: :destroy
+  has_many :disputes
 
   enum :status, { pending: 0, active: 1, suspended: 2 }
 
