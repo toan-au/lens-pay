@@ -26,7 +26,9 @@ class Api::V1::PaymentsController < ApplicationController
     )
 
     render json: {
-      payments: result.transactions,
+      payments: result.transactions.map { |t|
+        t.as_json.merge(dispute_status: t.disputes.find { |d| d.open? || d.merchant_responded? }&.status)
+      },
       next_cursor: result.next_cursor
     }, status: result.status
   end

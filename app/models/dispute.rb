@@ -13,6 +13,8 @@ class Dispute < ApplicationRecord
   validates :currency,   presence: true
   validates :respond_by, presence: true
 
+  scope :open_or_responded, -> { where(status: %i[open merchant_responded]) }
+
   before_create :setup_dispute
 
   enum :status, { open: 0, merchant_responded: 1, won: 2, lost: 3 }

@@ -12,7 +12,7 @@ module Payments
     end
 
     def perform
-      @transactions = @merchant.transactions
+      @transactions = @merchant.transactions.includes(:disputes)
 
       @transactions = @transactions.where(status: @status) if @status.present?
 
