@@ -31,6 +31,7 @@ export interface Payment {
   merchant_uid: string
   metadata: Record<string, string>
   customer: PaymentCustomer | null
+  dispute_status: 'open' | 'merchant_responded' | 'won' | 'lost' | null
   created_at: string
   expires_at: string | null
 }

@@ -1,6 +1,6 @@
 # LensPay
 
-A payment gateway API built with Ruby on Rails. Covers merchant onboarding, customer management, the full payment lifecycle, partial captures, refunds, cancellations, payment expiry, and outbound webhook delivery — alongside a Vue 3 dashboard for exploring the system in real time.
+A payment gateway API built with Ruby on Rails. Covers merchant onboarding, customer management, the full payment lifecycle, partial captures, refunds, disputes, cancellations, payment expiry, and outbound webhook delivery — alongside a Vue 3 dashboard for exploring the system in real time.
 
 Live demo: [lenspay.toanau.com](https://lenspay.toanau.com)  
 API docs: [lenspay.toanau.com/api-docs](https://lenspay.toanau.com/api-docs)
@@ -9,7 +9,7 @@ API docs: [lenspay.toanau.com/api-docs](https://lenspay.toanau.com/api-docs)
 
 ## Demo
 
-Click **Try the demo** on the landing page. A fresh merchant account is created with pre-seeded customers, payments in every state (pending, authorized, succeeded, declined, cancelled), refunds, and webhook events. No signup required.
+Click **Try the demo** on the landing page. A fresh merchant account is created with pre-seeded customers, payments in every state (pending, authorized, succeeded, declined, cancelled), refunds, disputes across all stages (open, responded, won, lost), and webhook events. No signup required.
 
 Demo accounts are ephemeral — they expire after 24 hours and are cleaned up by a nightly scheduled job.
 
@@ -73,6 +73,8 @@ bundle exec rake rswag:specs:swaggerize
 
 All endpoints except the ones marked public require `Authorization: Bearer <api_key>`.
 
+Network-only endpoints (`POST /webhooks/network/...`) require an `X-Network-Secret` header matching the `NETWORK_SECRET` environment variable instead of an API key. These are not part of the merchant-facing API.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/v1/merchants` | Register a merchant. Returns API key and webhook secret (shown once). **Public** |
@@ -93,9 +95,14 @@ All endpoints except the ones marked public require `Authorization: Bearer <api_
 | `GET` | `/api/v1/payments/:payment_uid/refunds` | List refunds for a payment |
 | `GET` | `/api/v1/payments/:uid/webhook-events` | List webhook events for a specific payment |
 | `GET` | `/api/v1/refunds` | List all refunds |
+| `GET` | `/api/v1/disputes` | List disputes (cursor pagination, status filter) |
+| `GET` | `/api/v1/disputes/:uid` | Fetch a dispute |
+| `PATCH` | `/api/v1/disputes/:uid/respond` | Submit evidence for a dispute |
 | `GET` | `/api/v1/webhooks` | List all received webhook events |
 | `POST` | `/api/v1/webhooks/ping` | Fire a test ping webhook |
 | `POST` | `/api/v1/webhooks/:merchant_uid` | Receive and store a signed webhook event (public sink). **Public** |
+| `POST` | `/api/v1/webhooks/network/disputes` | Card network opens a dispute (`X-Network-Secret` auth). **Network only** |
+| `POST` | `/api/v1/webhooks/network/disputes/:uid/resolve` | Card network resolves a dispute as won or lost. **Network only** |
 
 ---
 
@@ -114,10 +121,26 @@ Merchants create a payment via `POST /payments`. The lifecycle from there is mos
 - **`SettlePaymentJob`** — simulates settlement after capture. `processing → succeeded` or `processing → declined`.
 - **`SettleRefundJob`** — simulates refund processing. `pending → succeeded` or `pending → declined`.
 - **`ExpirePaymentsJob`** — runs on a schedule every 5 minutes (production). Finds pending payments past their `expires_at` and transitions them to `expired`. Models payment methods like konbini where a customer has a fixed window to pay.
+- **`CleanupDemoMerchantsJob`** — runs nightly. Destroys demo merchant accounts whose 24-hour window has passed, cascading to all associated data.
 
 Merchant-facing transitions: `capture` and `cancel`. Everything else is processor-driven.
 
 Each payment gets an `expires_at` of 3 days from creation. This can be extended in future to support per-payment-method windows.
+
+---
+
+## Dispute Lifecycle
+
+```
+open → merchant_responded → won
+open → merchant_responded → lost
+open → won
+open → lost
+```
+
+Disputes are opened by the card network against succeeded payments. The merchant has 7 days to submit evidence via `PATCH /disputes/:uid/respond`. The network then resolves the dispute as `won` (merchant keeps the funds) or `lost` (funds returned to the cardholder).
+
+Merchants can submit evidence multiple times before the deadline — each submission creates a new `DisputeResponse` record. Once resolved, the dispute cannot be reopened.
 
 ---
 
@@ -146,6 +169,10 @@ The signature is computed over the raw request body using the merchant's `webhoo
 | `payment.refund.created` | Merchant initiates a refund |
 | `payment.refunded` | Refund settles successfully |
 | `payment.refund.failed` | Refund fails to settle |
+| `dispute.opened` | Card network opens a dispute on a payment |
+| `dispute.responded` | Merchant submits evidence |
+| `dispute.won` | Card network rules in the merchant's favour |
+| `dispute.lost` | Card network rules in the cardholder's favour |
 | `ping` | Merchant tests their webhook endpoint |
 
 Delivery runs in `WebhookDeliveryJob` on an isolated `:webhooks` queue so a slow merchant endpoint cannot back up payment processing. Failed deliveries retry with exponential backoff (30s, then 5 minutes). After 3 attempts the failure is written to the audit log.
@@ -201,6 +228,14 @@ Authentication runs in `Middleware::ApiKeyAuthenticator` before the request reac
 ### Service objects and audit logging
 
 Business logic lives in `app/services/`, not in controllers or models. Each service inherits `ApplicationService`, which wraps `perform` with structured JSON audit logging. Controllers call a service and render the result.
+
+### Disputes
+
+Disputes are opened by the card network, not by merchants. This reflects how chargebacks actually work — a cardholder contacts their bank, the bank notifies the processor, and the processor notifies the merchant. The merchant's role is to respond with evidence; the network decides the outcome.
+
+This is modelled with two separate endpoints: one for the network to open a dispute (`POST /webhooks/network/disputes`) and one for the network to send the outcome (`POST /webhooks/network/disputes/:uid/resolve`). Both are protected by a shared `NETWORK_SECRET` rather than merchant API keys. Merchants can read and respond to their disputes but cannot create or resolve them.
+
+The dispute lifecycle (`open → merchant_responded → won/lost`) runs through AASM with the same pessimistic locking as payment transitions. Each transition fires a signed webhook to the merchant.
 
 ### Rate limiting
 

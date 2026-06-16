@@ -26,6 +26,7 @@ module Webhooks
       case @resource
       when Transaction then PaymentPayloadService.call(@resource)
       when Refund      then RefundPayloadService.call(@resource)
+      when Dispute     then DisputePayloadService.call(@resource)
       when Merchant    then {}
       end
     end
