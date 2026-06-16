@@ -27,7 +27,14 @@
         >
           <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ payment.uid.slice(0, 12) }}</td>
           <td class="px-4 py-3 font-medium">{{ formatAmount(payment.amount, payment.currency) }}</td>
-          <td class="px-4 py-3"><StatusBadge :status="payment.status" /></td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1.5">
+              <StatusBadge :status="payment.status" />
+              <span v-if="payment.dispute_status" :class="DISPUTE_CLASSES[payment.dispute_status]">
+                {{ DISPUTE_LABELS[payment.dispute_status] }}
+              </span>
+            </div>
+          </td>
           <td class="px-4 py-3 text-gray-500 text-xs">{{ formatDate(payment.created_at) }}</td>
         </tr>
       </template>
@@ -60,6 +67,16 @@ const STATUS_TABS = [
   { label: 'Cancelled', value: 'cancelled' },
   { label: 'Expired', value: 'expired' },
 ]
+
+const DISPUTE_LABELS: Record<string, string> = {
+  open: 'Dispute',
+  merchant_responded: 'Responded',
+}
+
+const DISPUTE_CLASSES: Record<string, string> = {
+  open: 'status-badge status-declined',
+  merchant_responded: 'status-badge status-processing',
+}
 
 const router = useRouter()
 const paymentStore = usePaymentStore()

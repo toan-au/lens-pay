@@ -1,0 +1,185 @@
+require 'swagger_helper'
+
+RSpec.describe 'Disputes API', type: :request do
+  let(:merchant) { create(:merchant) }
+  let(:Authorization) { "Bearer #{merchant.raw_api_key}" }
+
+  path '/api/v1/disputes' do
+    get 'List disputes' do
+      tags 'Disputes'
+      produces 'application/json'
+      security [ { bearer_auth: [] } ]
+
+      parameter name: :cursor, in: :query, type: :string, required: false, description: 'Pagination cursor'
+      parameter name: :status, in: :query, type: :string, required: false, description: 'Filter by status (open, merchant_responded, won, lost)'
+      parameter name: :limit, in: :query, type: :integer, required: false, description: 'Results per page (default: 25, max: 100)'
+
+      response '200', 'disputes listed' do
+        before { create(:dispute, merchant: merchant) }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/disputes/{uid}' do
+    parameter name: :uid, in: :path, type: :string, description: 'Dispute UID'
+
+    get 'Fetch a dispute' do
+      tags 'Disputes'
+      produces 'application/json'
+      security [ { bearer_auth: [] } ]
+
+      response '200', 'dispute found' do
+        let(:uid) { create(:dispute, merchant: merchant).uid }
+        run_test!
+      end
+
+      response '404', 'dispute not found' do
+        let(:uid) { 'dis_nonexistent' }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid' }
+        let(:uid) { 'dis_any' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/disputes/{uid}/respond' do
+    parameter name: :uid, in: :path, type: :string, description: 'Dispute UID'
+
+    patch 'Submit evidence for a dispute' do
+      tags 'Disputes'
+      consumes 'application/json'
+      produces 'application/json'
+      security [ { bearer_auth: [] } ]
+
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        properties: {
+          evidence: {
+            type: :object,
+            description: 'Free-form key-value evidence (tracking numbers, order confirmations, etc.)',
+            example: { tracking_number: '1Z999AA', order_date: '2026-01-01' }
+          }
+        },
+        required: %w[evidence]
+      }
+
+      response '200', 'evidence submitted' do
+        let(:uid) { create(:dispute, merchant: merchant).uid }
+        let(:body) { { evidence: { tracking_number: '1Z999AA' } } }
+        run_test!
+      end
+
+      response '422', 'invalid submission' do
+        let(:uid) { create(:dispute, :won, merchant: merchant).uid }
+        let(:body) { { evidence: { tracking_number: '1Z999AA' } } }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        let(:Authorization) { 'Bearer invalid' }
+        let(:uid) { 'dis_any' }
+        let(:body) { { evidence: {} } }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/webhooks/network/disputes' do
+    post 'Open a dispute (card network)' do
+      tags 'Network'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :'X-Network-Secret', in: :header, type: :string, required: true,
+                description: 'Shared secret authenticating the card network'
+
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        properties: {
+          payment_uid: { type: :string, example: 'tr_abc123' },
+          reason:      { type: :string, enum: %w[fraudulent unrecognized duplicate product_not_received product_unacceptable] },
+          amount:      { type: :integer, example: 5000 },
+          currency:    { type: :string, example: 'JPY' }
+        },
+        required: %w[payment_uid reason amount currency]
+      }
+
+      around { |ex| ClimateControl.modify(NETWORK_SECRET: 'test-secret') { ex.run } }
+
+      response '201', 'dispute opened' do
+        let(:payment) { create(:transaction, :succeeded, amount: 5000, currency: 'JPY') }
+        let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
+        let(:'X-Network-Secret') { 'test-secret' }
+        run_test!
+      end
+
+      response '401', 'invalid network secret' do
+        let(:payment) { create(:transaction, :succeeded, amount: 5000, currency: 'JPY') }
+        let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
+        let(:'X-Network-Secret') { 'wrong-secret' }
+        run_test!
+      end
+
+      response '422', 'invalid dispute' do
+        let(:payment) { create(:transaction, amount: 5000, currency: 'JPY') }
+        let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
+        let(:'X-Network-Secret') { 'test-secret' }
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/webhooks/network/disputes/{uid}/resolve' do
+    parameter name: :uid, in: :path, type: :string, description: 'Dispute UID'
+
+    post 'Resolve a dispute (card network)' do
+      tags 'Network'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :'X-Network-Secret', in: :header, type: :string, required: true,
+                description: 'Shared secret authenticating the card network'
+
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        properties: {
+          outcome: { type: :string, enum: %w[won lost], example: 'won' }
+        },
+        required: %w[outcome]
+      }
+
+      around { |ex| ClimateControl.modify(NETWORK_SECRET: 'test-secret') { ex.run } }
+
+      response '200', 'dispute resolved' do
+        let(:uid) { create(:dispute, merchant: merchant).uid }
+        let(:body) { { outcome: 'won' } }
+        let(:'X-Network-Secret') { 'test-secret' }
+        run_test!
+      end
+
+      response '401', 'invalid network secret' do
+        let(:uid) { create(:dispute, merchant: merchant).uid }
+        let(:body) { { outcome: 'won' } }
+        let(:'X-Network-Secret') { 'wrong-secret' }
+        run_test!
+      end
+
+      response '422', 'already resolved' do
+        let(:uid) { create(:dispute, :won, merchant: merchant).uid }
+        let(:body) { { outcome: 'lost' } }
+        let(:'X-Network-Secret') { 'test-secret' }
+        run_test!
+      end
+    end
+  end
+end

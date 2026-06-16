@@ -131,6 +131,182 @@ paths:
           description: customer not found
         '401':
           description: unauthorized
+  "/api/v1/disputes":
+    get:
+      summary: List disputes
+      tags:
+      - Disputes
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        description: Pagination cursor
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        description: Filter by status (open, merchant_responded, won, lost)
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 'Results per page (default: 25, max: 100)'
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: disputes listed
+        '401':
+          description: unauthorized
+  "/api/v1/disputes/{uid}":
+    parameters:
+    - name: uid
+      in: path
+      description: Dispute UID
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Fetch a dispute
+      tags:
+      - Disputes
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: dispute found
+        '404':
+          description: dispute not found
+        '401':
+          description: unauthorized
+  "/api/v1/disputes/{uid}/respond":
+    parameters:
+    - name: uid
+      in: path
+      description: Dispute UID
+      required: true
+      schema:
+        type: string
+    patch:
+      summary: Submit evidence for a dispute
+      tags:
+      - Disputes
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '200':
+          description: evidence submitted
+        '422':
+          description: invalid submission
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evidence:
+                  type: object
+                  description: Free-form key-value evidence (tracking numbers, order
+                    confirmations, etc.)
+                  example:
+                    tracking_number: 1Z999AA
+                    order_date: '2026-01-01'
+              required:
+              - evidence
+  "/api/v1/webhooks/network/disputes":
+    post:
+      summary: Open a dispute (card network)
+      tags:
+      - Network
+      parameters:
+      - name: X-Network-Secret
+        in: header
+        required: true
+        description: Shared secret authenticating the card network
+        schema:
+          type: string
+      responses:
+        '201':
+          description: dispute opened
+        '401':
+          description: invalid network secret
+        '422':
+          description: invalid dispute
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_uid:
+                  type: string
+                  example: tr_abc123
+                reason:
+                  type: string
+                  enum:
+                  - fraudulent
+                  - unrecognized
+                  - duplicate
+                  - product_not_received
+                  - product_unacceptable
+                amount:
+                  type: integer
+                  example: 5000
+                currency:
+                  type: string
+                  example: JPY
+              required:
+              - payment_uid
+              - reason
+              - amount
+              - currency
+  "/api/v1/webhooks/network/disputes/{uid}/resolve":
+    parameters:
+    - name: uid
+      in: path
+      description: Dispute UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Resolve a dispute (card network)
+      tags:
+      - Network
+      parameters:
+      - name: X-Network-Secret
+        in: header
+        required: true
+        description: Shared secret authenticating the card network
+        schema:
+          type: string
+      responses:
+        '200':
+          description: dispute resolved
+        '401':
+          description: invalid network secret
+        '422':
+          description: already resolved
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                outcome:
+                  type: string
+                  enum:
+                  - won
+                  - lost
+                  example: won
+              required:
+              - outcome
   "/api/v1/merchants":
     post:
       summary: Create a merchant
