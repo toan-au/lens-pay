@@ -57,7 +57,11 @@ class Api::V1::PaymentsController < ApplicationController
   private
 
   def serialize(transaction)
-    transaction.as_json.merge(customer: transaction.customer_snapshot)
+    dispute = transaction.disputes.open_or_responded.first
+    transaction.as_json.merge(
+      customer: transaction.customer_snapshot,
+      dispute: dispute&.as_json(only: %i[uid status reason amount currency respond_by resolved_at])
+    )
   end
 
   def find_payment
