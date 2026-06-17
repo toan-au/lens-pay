@@ -32,6 +32,7 @@ export interface Payment {
   metadata: Record<string, string>
   customer: PaymentCustomer | null
   dispute_status: 'open' | 'merchant_responded' | 'won' | 'lost' | null
+  dispute: Pick<Dispute, 'uid' | 'status' | 'reason' | 'amount' | 'currency' | 'respond_by' | 'resolved_at'> | null
   created_at: string
   expires_at: string | null
 }
@@ -74,4 +75,27 @@ export interface WebhookEvent {
   event_type: string
   payload: Record<string, any>
   created_at: string
+}
+
+export interface DisputeResponse {
+  id: number
+  evidence: Record<string, string>
+  created_at: string
+}
+
+export interface Dispute {
+  uid: string
+  status: 'open' | 'merchant_responded' | 'won' | 'lost'
+  reason: string
+  amount: number
+  currency: string
+  respond_by: string
+  resolved_at: string | null
+  created_at: string
+  dispute_responses: DisputeResponse[]
+}
+
+export interface DisputeListResponse {
+  disputes: Dispute[]
+  next_cursor: string | null
 }
