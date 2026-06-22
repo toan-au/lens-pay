@@ -69,6 +69,22 @@ bundle exec rake rswag:specs:swaggerize
 
 ---
 
+## Resource IDs
+
+Every major resource is assigned a prefixed UID at creation time:
+
+| Prefix | Resource |
+|--------|----------|
+| `mch_` | Merchant |
+| `tr_` | Transaction (payment) |
+| `cus_` | Customer |
+| `re_` | Refund |
+| `dis_` | Dispute |
+
+The prefix makes IDs self-describing — the resource type is identifiable from the ID alone, without inspecting the payload or querying the database. All public-facing endpoints use these UIDs rather than integer primary keys.
+
+---
+
 ## API Overview
 
 All endpoints except the ones marked public require `Authorization: Bearer <api_key>`.
@@ -86,7 +102,7 @@ Network-only endpoints (`POST /webhooks/network/...`) require an `X-Network-Secr
 | `GET` | `/api/v1/customers/:uid` | Fetch a customer |
 | `PATCH` | `/api/v1/customers/:uid` | Update a customer |
 | `DELETE` | `/api/v1/customers/:uid` | Soft-delete a customer |
-| `POST` | `/api/v1/payments` | Create a payment (optional `customer_uid`) |
+| `POST` | `/api/v1/payments` | Create a payment (optional `customer_uid`, optional `metadata`) |
 | `GET` | `/api/v1/payments` | List payments (cursor pagination, status filter) |
 | `GET` | `/api/v1/payments/:uid` | Fetch a payment |
 | `POST` | `/api/v1/payments/:uid/capture` | Capture an authorized payment (supports partial capture) |
@@ -203,6 +219,10 @@ This means the payment record is immutable with respect to the customer: if the 
 
 Customers support soft deletion via a `deleted_at` column. Deleted customers are excluded from list endpoints and cannot be attached to new payments, but their historical payment records and the snapshot data remain intact.
 
+### Payment metadata
+
+Payments accept an optional `metadata` field — a free-form JSON object merchants can use to attach their own context (order IDs, customer references, purpose codes, etc.). It is stored as `jsonb` in PostgreSQL and returned as-is in the payment payload. LensPay does not interpret or validate its contents.
+
 ### Idempotency keys
 
 Payment creation requires an `idempotency_key`. Retrying with the same key returns the existing payment rather than creating a duplicate, preventing double charges on network timeouts. Refund creation uses the same pattern.
@@ -224,6 +244,8 @@ All queries are scoped through `current_merchant` at the service layer. A mercha
 ### API key authentication via middleware
 
 Authentication runs in `Middleware::ApiKeyAuthenticator` before the request reaches Rails routing. The raw API key is hashed with SHA256 on every request and compared against `api_key_digest` in the database. The plaintext key is never stored.
+
+The webhook secret is intentionally stored in plaintext. It is used to compute an HMAC-SHA256 signature on every outgoing webhook delivery — which requires the actual secret value, not a hash of it. Hashing is one-way and would make signing impossible. The API key can be hashed because the server only needs to verify a match; the webhook secret must be retrievable because the server uses it as a signing key.
 
 ### Service objects and audit logging
 
