@@ -38,6 +38,10 @@ export function statusClass(status: string): string {
     expired: 'status-expired',
     failed: 'status-failed',
     active: 'status-succeeded',
+    open: 'status-declined',
+    merchant_responded: 'status-processing',
+    won: 'status-succeeded',
+    lost: 'status-declined',
   }
   return `status-badge ${map[status] ?? 'status-pending'}`
 }

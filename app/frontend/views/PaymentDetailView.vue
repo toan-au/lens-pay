@@ -48,6 +48,33 @@
         </template>
       </DetailCard>
 
+      <!-- Dispute section -->
+      <div v-if="payment.dispute" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">Dispute</h2>
+          <StatusBadge :status="payment.dispute.status" />
+        </div>
+        <div class="flex flex-col gap-1 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Reason</span>
+            <span class="font-medium">{{ DISPUTE_REASON_LABELS[payment.dispute.reason] ?? payment.dispute.reason }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Amount</span>
+            <span class="font-medium">{{ formatAmount(payment.dispute.amount, payment.dispute.currency) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Respond by</span>
+            <span :class="isDisputeOverdue ? 'text-red-500 font-medium' : ''">
+              {{ formatDate(payment.dispute.respond_by) }}
+            </span>
+          </div>
+        </div>
+        <RouterLink :to="`/disputes/${payment.dispute.uid}`" class="text-sm text-indigo-600 hover:underline w-fit">
+          View dispute →
+        </RouterLink>
+      </div>
+
       <div v-if="isPolling" class="flex items-center gap-2 text-sm text-amber-600">
         <span class="animate-pulse">●</span> {{ pollingMessage }}
       </div>
@@ -97,11 +124,22 @@ import WebhookEventsPanel from '../components/features/WebhookEventsPanel.vue'
 
 const POLL_STATUSES = ['pending', 'processing']
 
+const DISPUTE_REASON_LABELS: Record<string, string> = {
+  fraudulent: 'Fraudulent',
+  unrecognized: 'Unrecognized',
+  duplicate: 'Duplicate',
+  product_not_received: 'Product not received',
+  product_unacceptable: 'Product unacceptable',
+}
+
 const route = useRoute()
 const router = useRouter()
 const paymentStore = usePaymentStore()
 const uid = route.params.uid as string
 const payment = computed(() => paymentStore.currentPayment)
+const isDisputeOverdue = computed(() =>
+  payment.value?.dispute ? new Date(payment.value.dispute.respond_by) < new Date() : false
+)
 
 const { loading: cancelling, error: cancelError, run: runCancel } = useAsyncAction()
 

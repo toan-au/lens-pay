@@ -13,6 +13,8 @@ const router = createRouter({
     { path: '/customers', component: () => import('../views/CustomersView.vue') },
     { path: '/customers/:uid', component: () => import('../views/CustomerDetailView.vue') },
     { path: '/refunds', component: () => import('../views/RefundsView.vue') },
+    { path: '/disputes', component: () => import('../views/DisputesView.vue') },
+    { path: '/disputes/:uid', component: () => import('../views/DisputeDetailView.vue') },
     { path: '/webhooks', component: () => import('../views/WebhookEventsView.vue') },
     { path: '/profile', component: () => import('../views/ProfileView.vue') },
   ],
