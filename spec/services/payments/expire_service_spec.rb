@@ -17,7 +17,7 @@ RSpec.describe Payments::ExpireService do
       expect {
         described_class.call(transaction)
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        transaction.merchant_id, "payment.expired", "Transaction", transaction.id
+        transaction.merchant_id, "payment.expired", "Transaction", transaction.id, request_id: nil
       )
     end
 

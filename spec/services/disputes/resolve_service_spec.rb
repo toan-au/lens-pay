@@ -50,7 +50,7 @@ RSpec.describe Disputes::ResolveService do
       expect {
         described_class.call(dispute, "won")
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        dispute.merchant_id, "dispute.won", "Dispute", dispute.id
+        dispute.merchant_id, "dispute.won", "Dispute", dispute.id, request_id: nil
       )
     end
 
@@ -60,7 +60,7 @@ RSpec.describe Disputes::ResolveService do
       expect {
         described_class.call(dispute, "lost")
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        dispute.merchant_id, "dispute.lost", "Dispute", dispute.id
+        dispute.merchant_id, "dispute.lost", "Dispute", dispute.id, request_id: nil
       )
     end
 

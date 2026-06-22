@@ -237,6 +237,22 @@ This is modelled with two separate endpoints: one for the network to open a disp
 
 The dispute lifecycle (`open → merchant_responded → won/lost`) runs through AASM with the same pessimistic locking as payment transitions. Each transition fires a signed webhook to the merchant.
 
+### Request tracing
+
+Every HTTP request is assigned a UUID by `ActionDispatch::RequestId` (built into Rails) and returned to the caller in the `X-Request-ID` response header. The ID is stored in `Current.request_id` — a thread-isolated attribute via `ActiveSupport::CurrentAttributes` — and included in every structured audit log line produced during that request.
+
+When a request triggers background jobs (`AuthorizePaymentJob`, `SettlePaymentJob`, `SettleRefundJob`, `WebhookDeliveryJob`), the request ID is passed as a keyword argument and restored on the job thread. This means a single UUID ties together the original API call, every state transition it causes, and every webhook delivery it triggers — across thread boundaries.
+
+```json
+{"event":"payment.created","status":"succeeded","request_id":"a3f1-...","merchant_uid":"mch_..."}
+{"event":"payment.authorized","status":"succeeded","request_id":"a3f1-...","merchant_uid":"mch_..."}
+{"event":"webhook.delivered","status":"succeeded","request_id":"a3f1-...","event_type":"payment.authorized"}
+```
+
+Grepping a single `request_id` reconstructs the full chain of events from one API call.
+
+`CurrentAttributes` was chosen over `Thread.current` because Rails owns the lifecycle — attributes reset automatically at the end of each request via `ActiveSupport::Executor` hooks, eliminating the need for manual `ensure` cleanup blocks and avoiding state bleed between requests on a reused thread.
+
 ### Rate limiting
 
 Three tiers via Rack::Attack:

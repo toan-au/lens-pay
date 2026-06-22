@@ -41,7 +41,7 @@ RSpec.describe Disputes::RespondService do
       expect {
         described_class.call(dispute, evidence)
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        payment.merchant_id, "dispute.responded", "Dispute", anything
+        payment.merchant_id, "dispute.responded", "Dispute", anything, request_id: nil
       )
     end
 

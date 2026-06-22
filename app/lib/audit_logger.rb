@@ -3,6 +3,7 @@ class AuditLogger
     payload = {
       event: event,
       status: status,
+      request_id: Current.request_id,
       timestamp: Time.current.iso8601,
       **context
     }
