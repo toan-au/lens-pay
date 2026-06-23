@@ -25,7 +25,7 @@ RSpec.describe Payments::CancelService do
       expect {
         described_class.call(transaction)
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        transaction.merchant_id, "payment.cancelled", "Transaction", transaction.id
+        transaction.merchant_id, "payment.cancelled", "Transaction", transaction.id, request_id: nil
       )
     end
 

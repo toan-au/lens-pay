@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::API
+  before_action { Current.request_id = request.request_id }
+
   rescue_from ActionController::ParameterMissing do |e|
     render json: { error: "Missing parameter: #{e.param}" }, status: :bad_request
   end

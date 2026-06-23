@@ -91,6 +91,36 @@ RSpec.describe WebhookDeliveryJob do
       end
     end
 
+    context "when a request_id is provided" do
+      before { stub_request(:post, merchant.webhook_url).to_return(status: 200) }
+
+      it "includes the request_id in the audit log" do
+        expect(AuditLogger).to receive(:log).with(
+          hash_including(event: "webhook.delivered", status: "succeeded")
+        ) do
+          expect(Current.request_id).to eq("trace-abc-123")
+        end
+
+        described_class.perform_now(merchant.id, "payment.succeeded", "Transaction", transaction.id, request_id: "trace-abc-123")
+      end
+
+      it "resets Current.request_id after the job completes" do
+        described_class.perform_now(merchant.id, "payment.succeeded", "Transaction", transaction.id, request_id: "trace-abc-123")
+
+        expect(Current.request_id).to be_nil
+      end
+
+      it "resets Current.request_id even when the job raises" do
+        stub_request(:post, merchant.webhook_url).to_return(status: 500)
+        job = described_class.new
+
+        expect { job.perform(merchant.id, "payment.succeeded", "Transaction", transaction.id, request_id: "trace-abc-123") }
+          .to raise_error(WebhookError::DeliveryFailed)
+
+        expect(Current.request_id).to be_nil
+      end
+    end
+
     context "when all retries are exhausted" do
       let(:exhausted_job) do
         job = described_class.new(merchant.id, "payment.succeeded", "Transaction", transaction.id)

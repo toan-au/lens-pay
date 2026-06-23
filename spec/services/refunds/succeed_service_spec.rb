@@ -23,7 +23,7 @@ RSpec.describe Refunds::SucceedService do
       expect {
         described_class.call(refund)
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        refund.payment.merchant_id, "payment.refunded", "Refund", refund.id
+        refund.payment.merchant_id, "payment.refunded", "Refund", refund.id, request_id: nil
       )
     end
 

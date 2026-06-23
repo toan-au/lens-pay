@@ -92,7 +92,7 @@ RSpec.describe Disputes::CreateService do
       expect {
         described_class.call(successful_payment, dispute_params)
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        successful_payment.merchant_id, "dispute.opened", "Dispute", anything
+        successful_payment.merchant_id, "dispute.opened", "Dispute", anything, request_id: nil
       )
     end
   end

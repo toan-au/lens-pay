@@ -6,10 +6,11 @@ RSpec.describe "Webhooks API", type: :request do
 
   describe "POST /api/v1/webhooks/ping" do
     it "enqueues a ping webhook delivery and returns 200" do
-      expect {
-        post "/api/v1/webhooks/ping", headers: auth_headers
-      }.to have_enqueued_job(WebhookDeliveryJob).with(merchant.id, "ping", "Merchant", merchant.id)
+      post "/api/v1/webhooks/ping", headers: auth_headers
 
+      expect(WebhookDeliveryJob).to have_been_enqueued.with(
+        merchant.id, "ping", "Merchant", merchant.id, request_id: response.headers["X-Request-ID"]
+      )
       expect(response).to have_http_status(:ok)
     end
 

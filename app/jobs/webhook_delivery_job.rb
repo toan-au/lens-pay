@@ -19,7 +19,9 @@ class WebhookDeliveryJob < ApplicationJob
     )
   end
 
-  def perform(merchant_id, event_type, resource_class, resource_id)
+  def perform(merchant_id, event_type, resource_class, resource_id, request_id: nil)
+    Current.request_id = request_id
+
     merchant = Merchant.find(merchant_id)
     return unless merchant.webhook_url.present?
 
@@ -37,6 +39,8 @@ class WebhookDeliveryJob < ApplicationJob
       webhook_url: merchant.webhook_url,
       resource_uid: resource.uid
     )
+  ensure
+    Current.reset
   end
 
   private

@@ -24,7 +24,7 @@ module Payments
 
       raise PaymentError::ValidationFailed, @transaction.errors.full_messages unless @transaction.save
 
-      AuthorizePaymentJob.perform_later(@transaction.id)
+      AuthorizePaymentJob.perform_later(@transaction.id, request_id: Current.request_id)
 
       Result.new(transaction: @transaction, status: :created)
     end

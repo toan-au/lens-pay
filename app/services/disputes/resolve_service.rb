@@ -17,7 +17,7 @@ module Disputes
         @dispute.update!(resolved_at: Time.current)
       end
 
-      WebhookDeliveryJob.perform_later(@dispute.merchant_id, "dispute.#{@outcome}", "Dispute", @dispute.id)
+      WebhookDeliveryJob.perform_later(@dispute.merchant_id, "dispute.#{@outcome}", "Dispute", @dispute.id, request_id: Current.request_id)
 
       Result.new(dispute: @dispute, status: :ok)
     end

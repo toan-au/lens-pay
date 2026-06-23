@@ -18,8 +18,8 @@ module Refunds
         raise RefundError::ValidationFailed, @refund.errors.full_messages unless @refund.save
       end
 
-      SettleRefundJob.perform_later(@refund.id)
-      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "payment.refund.created", "Refund", @refund.id)
+      SettleRefundJob.perform_later(@refund.id, request_id: Current.request_id)
+      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "payment.refund.created", "Refund", @refund.id, request_id: Current.request_id)
 
       Result.new(refund: @refund, status: :created)
     end
