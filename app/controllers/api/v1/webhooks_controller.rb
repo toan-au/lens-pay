@@ -1,6 +1,6 @@
 class Api::V1::WebhooksController < ApplicationController
   def ping
-    WebhookDeliveryJob.perform_later(current_merchant.id, "ping", "Merchant", current_merchant.id)
+    WebhookDeliveryJob.perform_later(current_merchant.id, "ping", "Merchant", current_merchant.id, request_id: Current.request_id)
     render json: {}, status: :ok
   end
 

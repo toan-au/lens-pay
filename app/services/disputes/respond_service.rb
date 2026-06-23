@@ -13,7 +13,7 @@ module Disputes
       @dispute_response = @dispute.dispute_responses.create!(evidence: @evidence)
       @dispute.respond! if @dispute.open?
 
-      WebhookDeliveryJob.perform_later(@dispute.merchant_id, "dispute.responded", "Dispute", @dispute.id)
+      WebhookDeliveryJob.perform_later(@dispute.merchant_id, "dispute.responded", "Dispute", @dispute.id, request_id: Current.request_id)
 
       Result.new(dispute_response: @dispute_response, status: :ok)
     end

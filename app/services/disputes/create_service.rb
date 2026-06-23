@@ -20,7 +20,7 @@ module Disputes
 
       raise DisputeError::ValidationFailed, @dispute.errors.full_messages unless @dispute.save
 
-      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "dispute.opened", "Dispute", @dispute.id)
+      WebhookDeliveryJob.perform_later(@transaction.merchant_id, "dispute.opened", "Dispute", @dispute.id, request_id: Current.request_id)
 
       Result.new(dispute: @dispute, status: :created)
     end

@@ -25,7 +25,7 @@ class Api::V1::DisputesController < ApplicationController
 
   def show
     dispute = Disputes::FindService.call(current_merchant, params[:uid]).dispute
-    render json: dispute, status: :ok
+    render json: dispute.as_json(include: { dispute_responses: { only: %i[id evidence created_at] } }), status: :ok
   end
 
   def respond
