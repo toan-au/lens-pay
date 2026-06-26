@@ -105,6 +105,9 @@ GEM
       reline (>= 0.3.8)
     diff-lcs (1.6.2)
     dotenv (3.2.0)
+    dotenv-rails (3.2.0)
+      dotenv (= 3.2.0)
+      railties (>= 6.1)
     drb (2.2.3)
     dry-cli (1.4.1)
     ed25519 (1.4.0)
@@ -155,6 +158,17 @@ GEM
       activesupport (>= 4)
       railties (>= 4)
       request_store (~> 1.0)
+    logtail (0.1.17)
+      msgpack (~> 1.0)
+    logtail-rack (0.2.6)
+      logtail (~> 0.1)
+      rack (>= 1.2, < 4.0)
+    logtail-rails (0.2.12)
+      actionpack (>= 5.0.0)
+      activerecord (>= 5.0.0)
+      logtail (~> 0.1, >= 0.1.14)
+      logtail-rack (~> 0.1)
+      railties (>= 5.0.0)
     loofah (2.25.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
@@ -412,10 +426,12 @@ DEPENDENCIES
   bundler-audit
   climate_control
   debug
+  dotenv-rails (~> 3.2)
   factory_bot_rails
   image_processing (~> 2.0)
   kamal
   lograge (~> 0.14.0)
+  logtail-rails (~> 0.2.12)
   money (~> 7.0)
   pg (~> 1.1)
   puma (>= 5.0)
@@ -468,6 +484,7 @@ CHECKSUMS
   debug (1.11.1) sha256=2e0b0ac6119f2207a6f8ac7d4a73ca8eb4e440f64da0a3136c30343146e952b6
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   dotenv (3.2.0) sha256=e375b83121ea7ca4ce20f214740076129ab8514cd81378161f11c03853fe619d
+  dotenv-rails (3.2.0) sha256=657e25554ba622ffc95d8c4f1670286510f47f2edda9f68293c3f661b303beab
   drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
   dry-cli (1.4.1) sha256=b8015bb76c708aa8705a36faf694973e75eeeffca39b89c8e172dc6f66a7d874
   ed25519 (1.4.0) sha256=16e97f5198689a154247169f3453ef4cfd3f7a47481fde0ae33206cdfdcac506
@@ -490,6 +507,9 @@ CHECKSUMS
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   lograge (0.14.0) sha256=42371a75823775f166f727639f5ddce73dd149452a55fc94b90c303213dc9ae1
+  logtail (0.1.17) sha256=866d05690453b3d0c4088e236054a0497ae07380690f565d0c6132eb2d523a48
+  logtail-rack (0.2.6) sha256=a7959441efd43cf7fe198516bbb358be806e4686de9492d51f7b8ed87617808d
+  logtail-rails (0.2.12) sha256=2685b10779a1d733cde9e35da6fb123ae275e754741036c206dd58a73e3a8955
   loofah (2.25.1) sha256=d436c73dbd0c1147b16c4a41db097942d217303e1f7728704b37e4df9f6d2e04
   mail (2.9.0) sha256=6fa6673ecd71c60c2d996260f9ee3dd387d4673b8169b502134659ece6d34941
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
