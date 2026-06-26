@@ -64,3 +64,5 @@ group :development, :test do
 end
 
 gem "vite_rails", "~> 3.10"
+
+gem "lograge", "~> 0.14.0"
