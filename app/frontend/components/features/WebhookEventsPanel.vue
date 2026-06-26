@@ -30,7 +30,9 @@ import { listPaymentWebhookEvents } from '../../api/webhook_events'
 import { formatDate } from '../../utils/format'
 import type { WebhookEvent } from '../../api/types'
 
-const props = defineProps<{ uid: string }>()
+const TERMINAL_STATUSES = ['succeeded', 'declined', 'cancelled', 'expired']
+
+const props = defineProps<{ uid: string, status: string }>()
 
 const events = ref<WebhookEvent[]>([])
 const expanded = ref<Set<number>>(new Set())
@@ -45,7 +47,9 @@ function toggle(id: number) {
 async function poll() {
   const { webhook_events } = await listPaymentWebhookEvents(props.uid)
   events.value = webhook_events
-  timeout = setTimeout(poll, 3000)
+  if (!TERMINAL_STATUSES.includes(props.status)) {
+    timeout = setTimeout(poll, 3000)
+  }
 }
 
 onUnmounted(() => { if (timeout) clearTimeout(timeout) })
