@@ -29,7 +29,7 @@ Rails.application.configure do
 
   config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
-  config.logger    = ActiveSupport::Logger.new(STDOUT)
+  config.logger    = Logtail::Logger.new(Logtail::LogDevices::HTTP.new(ENV["BETTER_STACK_SOURCE_TOKEN"]))
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
   config.lograge.enabled    = true
