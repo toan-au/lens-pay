@@ -21,6 +21,7 @@ env:
   secret:
     - RAILS_MASTER_KEY
     - LENS_PAY_DATABASE_PASSWORD
+    - BETTER_STACK_SOURCE_TOKEN
   clear:
     # Runs Solid Queue inside the Puma process — fine for a single server.
     # Split into a dedicated job host when you need to scale.

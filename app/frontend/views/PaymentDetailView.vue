@@ -103,7 +103,7 @@
         :on-refund="handleRefund"
       />
 
-      <WebhookEventsPanel :uid="uid" />
+      <WebhookEventsPanel :uid="uid" :status="payment.status" />
     </template>
   </div>
 </template>

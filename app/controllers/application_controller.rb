@@ -12,4 +12,9 @@ class ApplicationController < ActionController::API
   def current_merchant
     request.env["current_merchant"]
   end
+
+  def append_info_to_payload(payload)
+    super
+    payload[:merchant_uid] = current_merchant&.uid
+  end
 end
