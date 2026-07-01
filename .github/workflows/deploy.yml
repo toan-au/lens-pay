@@ -23,11 +23,7 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add server to known hosts
-        run: |
-          ssh-keygen -R 159.223.59.162 2>/dev/null || true
-          ssh-keyscan -H 159.223.59.162 >> ~/.ssh/known_hosts
+          known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
 
       - name: Deploy with Kamal
         env:
