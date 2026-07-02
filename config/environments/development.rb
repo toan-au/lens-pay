@@ -70,6 +70,12 @@ Rails.application.configure do
 
   config.app_host = "http://localhost:3000"
 
+  config.after_initialize do
+    Bullet.enable        = true
+    Bullet.rails_logger  = true
+    Bullet.add_footer    = false
+  end
+
   config.lograge.enabled   = true
   config.lograge.formatter = Lograge::Formatters::Json.new
   config.lograge.custom_options = lambda do |event|
