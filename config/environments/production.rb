@@ -29,12 +29,17 @@ Rails.application.configure do
 
   config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
-  # Log to STDOUT with the current request id as a default log tag.
-  config.log_tags = [ :request_id ]
-  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
-
-  # Change to "debug" to log everything (including potentially personally-identifiable information!).
+  config.logger    = Logtail::Logger.new(Logtail::LogDevices::HTTP.new(ENV["BETTER_STACK_SOURCE_TOKEN"]))
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+
+  config.lograge.enabled    = true
+  config.lograge.formatter  = Lograge::Formatters::Json.new
+  config.lograge.custom_options = lambda do |event|
+    {
+      request_id: Current.request_id,
+      merchant_uid: event.payload[:merchant_uid]
+    }.compact
+  end
 
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"

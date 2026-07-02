@@ -26,7 +26,9 @@ class Api::V1::PaymentsController < ApplicationController
     )
 
     render json: {
-      payments: result.transactions,
+      payments: result.transactions.map { |t|
+        t.as_json.merge(dispute_status: t.disputes.find { |d| d.open? || d.merchant_responded? }&.status)
+      },
       next_cursor: result.next_cursor
     }, status: result.status
   end
@@ -34,32 +36,40 @@ class Api::V1::PaymentsController < ApplicationController
   def create
     params.require([ :amount, :currency, :idempotency_key ])
     result = Payments::CreateService.call(current_merchant, create_payment_params)
-    render json: result.transaction, status: result.status
+    render json: serialize(result.transaction), status: result.status
   end
 
   def show
     result = Payments::FindService.call(current_merchant, params[:uid])
-    render json: result.transaction, status: result.status
+    render json: serialize(result.transaction), status: result.status
   end
 
   def capture
     result = Payments::CaptureService.call(find_payment, captured_amount: params[:captured_amount]&.to_i)
-    render json: result.transaction, status: result.status
+    render json: serialize(result.transaction), status: result.status
   end
 
   def cancel
     result = Payments::CancelService.call(find_payment)
-    render json: result.transaction, status: result.status
+    render json: serialize(result.transaction), status: result.status
   end
 
   private
+
+  def serialize(transaction)
+    dispute = transaction.disputes.open_or_responded.first
+    transaction.as_json.merge(
+      customer: transaction.customer_snapshot,
+      dispute: dispute&.as_json(only: %i[uid status reason amount currency respond_by resolved_at])
+    )
+  end
 
   def find_payment
     Payments::FindService.call(current_merchant, params[:uid]).transaction
   end
 
   def create_payment_params
-    params.permit(:amount, :currency, :idempotency_key, metadata: {})
+    params.permit(:amount, :currency, :idempotency_key, :customer_uid, metadata: {})
   end
 
   def list_params

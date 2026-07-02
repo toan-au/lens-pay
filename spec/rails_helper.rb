@@ -39,6 +39,7 @@ RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   config.include ActiveJob::TestHelper
   config.include ActiveSupport::Testing::TimeHelpers
+  config.include ActiveSupport::CurrentAttributes::TestHelper
 
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [

@@ -5,6 +5,308 @@ info:
   version: v1
   description: Payment processing API for LensPay
 paths:
+  "/api/v1/customers":
+    post:
+      summary: Create a customer
+      tags:
+      - Customers
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '201':
+          description: customer created
+        '422':
+          description: validation failed
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Jane Doe
+                email:
+                  type: string
+                  example: jane@example.com
+                metadata:
+                  type: object
+                  example:
+                    tier: gold
+                  description: Arbitrary key-value data
+              required:
+              - name
+              - email
+    get:
+      summary: List customers
+      tags:
+      - Customers
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        description: Pagination cursor (uid of last customer in previous page)
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 'Number of results per page (default: 25)'
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: customers listed
+        '401':
+          description: unauthorized
+  "/api/v1/customers/{uid}":
+    parameters:
+    - name: uid
+      in: path
+      description: Customer UID
+      example: cus_abc123
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Fetch a customer
+      tags:
+      - Customers
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: customer found
+        '404':
+          description: customer not found
+        '401':
+          description: unauthorized
+    patch:
+      summary: Update a customer
+      tags:
+      - Customers
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '200':
+          description: customer updated
+        '422':
+          description: validation failed
+        '404':
+          description: customer not found
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Jane Smith
+                email:
+                  type: string
+                  example: jane.smith@example.com
+                metadata:
+                  type: object
+                  example:
+                    tier: platinum
+    delete:
+      summary: Delete a customer
+      tags:
+      - Customers
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: customer deleted
+        '404':
+          description: customer not found
+        '401':
+          description: unauthorized
+  "/api/v1/disputes":
+    get:
+      summary: List disputes
+      tags:
+      - Disputes
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        description: Pagination cursor
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        description: Filter by status (open, merchant_responded, won, lost)
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: 'Results per page (default: 25, max: 100)'
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: disputes listed
+        '401':
+          description: unauthorized
+  "/api/v1/disputes/{uid}":
+    parameters:
+    - name: uid
+      in: path
+      description: Dispute UID
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Fetch a dispute
+      tags:
+      - Disputes
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: dispute found
+        '404':
+          description: dispute not found
+        '401':
+          description: unauthorized
+  "/api/v1/disputes/{uid}/respond":
+    parameters:
+    - name: uid
+      in: path
+      description: Dispute UID
+      required: true
+      schema:
+        type: string
+    patch:
+      summary: Submit evidence for a dispute
+      tags:
+      - Disputes
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '200':
+          description: evidence submitted
+        '422':
+          description: invalid submission
+        '401':
+          description: unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evidence:
+                  type: object
+                  description: Free-form key-value evidence (tracking numbers, order
+                    confirmations, etc.)
+                  example:
+                    tracking_number: 1Z999AA
+                    order_date: '2026-01-01'
+              required:
+              - evidence
+  "/api/v1/webhooks/network/disputes":
+    post:
+      summary: Open a dispute (card network)
+      tags:
+      - Network
+      parameters:
+      - name: X-Network-Secret
+        in: header
+        required: true
+        description: Shared secret authenticating the card network
+        schema:
+          type: string
+      responses:
+        '201':
+          description: dispute opened
+        '401':
+          description: invalid network secret
+        '422':
+          description: invalid dispute
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_uid:
+                  type: string
+                  example: tr_abc123
+                reason:
+                  type: string
+                  enum:
+                  - fraudulent
+                  - unrecognized
+                  - duplicate
+                  - product_not_received
+                  - product_unacceptable
+                amount:
+                  type: integer
+                  example: 5000
+                currency:
+                  type: string
+                  example: JPY
+              required:
+              - payment_uid
+              - reason
+              - amount
+              - currency
+  "/api/v1/webhooks/network/disputes/{uid}/resolve":
+    parameters:
+    - name: uid
+      in: path
+      description: Dispute UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Resolve a dispute (card network)
+      tags:
+      - Network
+      parameters:
+      - name: X-Network-Secret
+        in: header
+        required: true
+        description: Shared secret authenticating the card network
+        schema:
+          type: string
+      responses:
+        '200':
+          description: dispute resolved
+        '401':
+          description: invalid network secret
+        '422':
+          description: already resolved
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                outcome:
+                  type: string
+                  enum:
+                  - won
+                  - lost
+                  example: won
+              required:
+              - outcome
   "/api/v1/merchants":
     post:
       summary: Create a merchant
@@ -104,7 +406,7 @@ paths:
                 amount:
                   type: integer
                   example: 1000
-                  description: Amount in smallest currency unit (e.g. yen)
+                  description: Amount in smallest currency unit (e.g. yen, cents)
                 currency:
                   type: string
                   example: JPY
@@ -113,6 +415,10 @@ paths:
                   type: string
                   example: order_abc_123
                   description: Unique key to prevent duplicate payments
+                customer_uid:
+                  type: string
+                  example: cus_abc123
+                  description: UID of an existing customer to attach to this payment
               required:
               - amount
               - currency
@@ -221,6 +527,27 @@ paths:
           description: payment cancelled
         '422':
           description: invalid transition
+        '404':
+          description: payment not found
+        '401':
+          description: unauthorized
+  "/api/v1/payments/{uid}/webhook-events":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    get:
+      summary: List webhook events for a payment
+      tags:
+      - Webhooks
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: webhook events listed
         '404':
           description: payment not found
         '401':
@@ -354,6 +681,70 @@ paths:
                     nullable: true
         '401':
           description: unauthorized
+  "/api/v1/webhooks":
+    get:
+      summary: List webhook events
+      tags:
+      - Webhooks
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: webhook events listed
+        '401':
+          description: unauthorized
+  "/api/v1/webhooks/ping":
+    post:
+      summary: Fire a test ping webhook
+      tags:
+      - Webhooks
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: ping enqueued
+        '401':
+          description: unauthorized
+  "/api/v1/webhooks/{merchant_uid}":
+    parameters:
+    - name: merchant_uid
+      in: path
+      description: Merchant UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Receive a signed webhook event
+      tags:
+      - Webhooks
+      parameters:
+      - name: X-LensPay-Signature
+        in: header
+        required: false
+        description: 'HMAC-SHA256 signature: sha256=<hex digest of raw body using
+          webhook_secret>'
+        schema:
+          type: string
+      responses:
+        '200':
+          description: event stored
+        '401':
+          description: invalid signature
+        '404':
+          description: merchant not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  example: payment.succeeded
+                data:
+                  type: object
+              required:
+              - type
 servers:
 - url: http://{defaultHost}
   variables:

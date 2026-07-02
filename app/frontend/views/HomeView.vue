@@ -5,56 +5,40 @@
       <RouterLink to="/payments/new" class="btn-primary">+ New Payment</RouterLink>
     </div>
 
-    <!-- Status filter -->
-    <div class="flex gap-2 flex-wrap">
-      <button
-        v-for="tab in STATUS_TABS"
-        :key="tab.value"
-        @click="setFilter(tab.value)"
-        class="btn-ghost text-xs"
-        :class="{ 'bg-gray-100 border-gray-400': activeFilter === tab.value }"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
+    <StatusFilterBar :tabs="STATUS_TABS" :model-value="activeFilter" @update:model-value="setFilter" />
 
-    <!-- Table -->
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="border-b border-gray-100 bg-gray-50">
-          <tr>
-            <th class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
-            <th class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
-            <th class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
-            <th class="text-left px-4 py-3 font-medium text-gray-500">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading && paymentStore.payments.length === 0">
-            <td colspan="4" class="px-4 py-10 text-center text-gray-400">Loading...</td>
-          </tr>
-          <tr v-else-if="paymentStore.payments.length === 0">
-            <td colspan="4" class="px-4 py-10 text-center text-gray-400">
-              No payments yet.
-              <RouterLink to="/payments/new" class="text-indigo-500 underline ml-1">Create one</RouterLink>
-            </td>
-          </tr>
-          <tr
-            v-for="payment in paymentStore.payments"
-            :key="payment.uid"
-            @click="router.push(`/payments/${payment.uid}`)"
-            class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-          >
-            <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ payment.uid.slice(0, 12) }}</td>
-            <td class="px-4 py-3 font-medium">{{ formatAmount(payment.amount, payment.currency) }}</td>
-            <td class="px-4 py-3">
-              <span :class="statusClass(payment.status)">{{ payment.status }}</span>
-            </td>
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ formatDate(payment.created_at) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ResourceTable :loading="loading" :is-empty="paymentStore.payments.length === 0" :cols="4">
+      <template #head>
+        <th class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
+        <th class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
+        <th class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
+        <th class="text-left px-4 py-3 font-medium text-gray-500">Date</th>
+      </template>
+      <template #empty>
+        No payments yet.
+        <RouterLink to="/payments/new" class="text-indigo-500 underline ml-1">Create one</RouterLink>
+      </template>
+      <template #body>
+        <tr
+          v-for="payment in paymentStore.payments"
+          :key="payment.uid"
+          @click="router.push(`/payments/${payment.uid}`)"
+          class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+        >
+          <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ payment.uid.slice(0, 12) }}</td>
+          <td class="px-4 py-3 font-medium">{{ formatAmount(payment.amount, payment.currency) }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1.5">
+              <StatusBadge :status="payment.status" />
+              <span v-if="payment.dispute_status" :class="DISPUTE_CLASSES[payment.dispute_status]">
+                {{ DISPUTE_LABELS[payment.dispute_status] }}
+              </span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ formatDate(payment.created_at) }}</td>
+        </tr>
+      </template>
+    </ResourceTable>
 
     <div v-if="paymentStore.nextCursor" class="flex justify-center">
       <button @click="loadMore" :disabled="loading" class="btn-ghost">
@@ -68,7 +52,10 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
-import { formatAmount, formatDate, statusClass } from '../utils/format'
+import { formatAmount, formatDate } from '../utils/format'
+import ResourceTable from '../components/ui/ResourceTable.vue'
+import StatusBadge from '../components/ui/StatusBadge.vue'
+import StatusFilterBar from '../components/ui/StatusFilterBar.vue'
 
 const STATUS_TABS = [
   { label: 'All', value: '' },
@@ -80,6 +67,16 @@ const STATUS_TABS = [
   { label: 'Cancelled', value: 'cancelled' },
   { label: 'Expired', value: 'expired' },
 ]
+
+const DISPUTE_LABELS: Record<string, string> = {
+  open: 'Dispute',
+  merchant_responded: 'Responded',
+}
+
+const DISPUTE_CLASSES: Record<string, string> = {
+  open: 'status-badge status-declined',
+  merchant_responded: 'status-badge status-processing',
+}
 
 const router = useRouter()
 const paymentStore = usePaymentStore()
@@ -101,9 +98,7 @@ async function setFilter(value: string) {
 }
 
 async function loadMore() {
-  if (paymentStore.nextCursor) {
-    await load(activeFilter.value, paymentStore.nextCursor)
-  }
+  if (paymentStore.nextCursor) await load(activeFilter.value, paymentStore.nextCursor)
 }
 
 onMounted(() => load(''))

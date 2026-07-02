@@ -54,7 +54,7 @@ RSpec.describe Payments::CaptureService do
       expect {
         described_class.call(transaction)
       }.to have_enqueued_job(WebhookDeliveryJob).with(
-        transaction.merchant_id, "payment.captured", "Transaction", transaction.id
+        transaction.merchant_id, "payment.captured", "Transaction", transaction.id, request_id: nil
       )
     end
 

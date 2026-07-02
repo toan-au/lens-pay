@@ -13,11 +13,18 @@ module Payments
       existing = @merchant.transactions.find_by(idempotency_key: @params[:idempotency_key])
       return Result.new(transaction: existing, status: :ok) if existing
 
-      @transaction = @merchant.transactions.new(@params)
+      transaction_params = @params.except(:customer_uid)
+      if @params[:customer_uid]
+        customer = @merchant.customers.active.find_by(uid: @params[:customer_uid])
+        raise CustomerError::NotFound unless customer
+        transaction_params = transaction_params.merge(customer:)
+      end
+
+      @transaction = @merchant.transactions.new(transaction_params)
 
       raise PaymentError::ValidationFailed, @transaction.errors.full_messages unless @transaction.save
 
-      AuthorizePaymentJob.perform_later(@transaction.id)
+      AuthorizePaymentJob.perform_later(@transaction.id, request_id: Current.request_id)
 
       Result.new(transaction: @transaction, status: :created)
     end

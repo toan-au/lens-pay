@@ -33,7 +33,7 @@ gem "money", "~> 7.0"
 gem "aasm"
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 2.0"
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
@@ -60,6 +60,13 @@ group :development, :test do
   gem "webmock"
 
   gem "rswag-specs"
+  gem "climate_control"
 end
 
 gem "vite_rails", "~> 3.11"
+
+gem "lograge", "~> 0.14.0"
+gem "logtail-rails", "~> 0.2.12"
+
+gem "dotenv-rails", "~> 3.2", group: :development
+

@@ -10,22 +10,67 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_11_070234) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_09_034217) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "customers", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.string "email"
+    t.bigint "merchant_id", null: false
+    t.jsonb "metadata"
+    t.string "name"
+    t.string "uid"
+    t.datetime "updated_at", null: false
+    t.index ["merchant_id", "email"], name: "index_customers_on_merchant_id_and_email"
+    t.index ["merchant_id", "uid"], name: "index_customers_on_merchant_id_and_uid"
+    t.index ["merchant_id"], name: "index_customers_on_merchant_id"
+    t.index ["uid"], name: "index_customers_on_uid", unique: true
+  end
+
+  create_table "dispute_responses", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "dispute_id", null: false
+    t.jsonb "evidence", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["dispute_id", "created_at"], name: "index_dispute_responses_on_dispute_id_and_created_at"
+    t.index ["dispute_id"], name: "index_dispute_responses_on_dispute_id"
+  end
+
+  create_table "disputes", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.datetime "created_at", null: false
+    t.string "currency", null: false
+    t.bigint "merchant_id", null: false
+    t.string "reason", null: false
+    t.datetime "resolved_at"
+    t.datetime "respond_by"
+    t.integer "status", default: 0, null: false
+    t.bigint "transaction_id", null: false
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.index ["merchant_id", "created_at"], name: "index_disputes_on_merchant_id_and_created_at"
+    t.index ["merchant_id"], name: "index_disputes_on_merchant_id"
+    t.index ["transaction_id"], name: "index_disputes_on_transaction_id"
+    t.index ["uid"], name: "index_disputes_on_uid", unique: true
+  end
 
   create_table "merchants", force: :cascade do |t|
     t.string "api_key_digest", null: false
     t.string "country", limit: 2, null: false
     t.datetime "created_at", null: false
     t.string "currency", limit: 3, null: false
+    t.datetime "demo_expires_at"
     t.string "email", null: false
+    t.boolean "is_demo", default: false, null: false
     t.string "name", null: false
     t.integer "status", default: 0, null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.string "webhook_secret"
     t.string "webhook_url"
+    t.index ["demo_expires_at"], name: "index_merchants_on_demo_expires_at"
     t.index ["email"], name: "index_merchants_on_email", unique: true
     t.index ["status"], name: "index_merchants_on_status"
     t.index ["uid"], name: "index_merchants_on_uid", unique: true
@@ -49,6 +94,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_070234) do
     t.bigint "captured_amount"
     t.datetime "created_at", null: false
     t.string "currency", limit: 3, null: false
+    t.string "customer_email"
+    t.bigint "customer_id"
+    t.string "customer_name"
     t.datetime "expires_at"
     t.string "idempotency_key", null: false
     t.bigint "merchant_id", null: false
@@ -57,6 +105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_070234) do
     t.integer "status", default: 0, null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_transactions_on_customer_id"
     t.index ["idempotency_key"], name: "index_transactions_on_idempotency_key", unique: true
     t.index ["merchant_id", "created_at"], name: "index_transactions_on_merchant_id_and_created_at"
     t.index ["merchant_id", "status"], name: "index_transactions_on_merchant_id_and_status"
@@ -73,7 +122,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_070234) do
     t.index ["merchant_id"], name: "index_webhook_events_on_merchant_id"
   end
 
+  add_foreign_key "customers", "merchants"
+  add_foreign_key "dispute_responses", "disputes"
+  add_foreign_key "disputes", "merchants"
+  add_foreign_key "disputes", "transactions"
   add_foreign_key "refunds", "transactions"
+  add_foreign_key "transactions", "customers"
   add_foreign_key "transactions", "merchants"
   add_foreign_key "webhook_events", "merchants"
 end
