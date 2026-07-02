@@ -2,12 +2,13 @@ name: Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'production' || github.ref_name }}
+    environment: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'dev' && 'production' || github.ref_name }}
 
     steps:
       - name: Checkout code
@@ -22,9 +23,7 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add server to known hosts
-        run: ssh-keyscan -H 159.223.59.162 >> ~/.ssh/known_hosts
+          known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
 
       - name: Deploy with Kamal
         env:
