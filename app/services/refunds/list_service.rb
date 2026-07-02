@@ -12,7 +12,7 @@ module Refunds
   end
 
   def perform
-    @refunds = Refund.joins(:payment).where(transactions: { merchant_id: @merchant.id })
+    @refunds = Refund.joins(:payment).includes(:payment).where(transactions: { merchant_id: @merchant.id })
 
     @refunds = @refunds.where(status: @status) if @status.present?
 
