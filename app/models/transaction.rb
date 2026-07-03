@@ -3,8 +3,8 @@ class Transaction < ApplicationRecord
 
   belongs_to :merchant
   belongs_to :customer, optional: true
-  has_many :refunds
-  has_many :disputes, foreign_key: :transaction_id
+  has_many :refunds, dependent: :destroy
+  has_many :disputes, foreign_key: :transaction_id, dependent: :destroy
 
   validates :amount, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :currency, presence: true, inclusion: { in: Money::Currency.all.map(&:iso_code), message: "%{value} is not a supported currency" }

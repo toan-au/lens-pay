@@ -24,4 +24,18 @@ RSpec.describe CleanupDemoMerchantsJob, type: :job do
 
     expect(Merchant.find_by(id: regular.id)).to be_present
   end
+
+  it "deletes a fully-seeded demo merchant and all associated data" do
+    merchant = Demo::SetupService.call.merchant
+    merchant.update!(demo_expires_at: 1.hour.ago)
+
+    described_class.perform_now
+
+    expect(Merchant.find_by(id: merchant.id)).to be_nil
+    expect(Transaction.where(merchant_id: merchant.id)).to be_empty
+    expect(Customer.where(merchant_id: merchant.id)).to be_empty
+    expect(WebhookEvent.where(merchant_id: merchant.id)).to be_empty
+    expect(Dispute.where(merchant_id: merchant.id)).to be_empty
+    expect(Refund.joins(:payment).where(transactions: { merchant_id: merchant.id })).to be_empty
+  end
 end
