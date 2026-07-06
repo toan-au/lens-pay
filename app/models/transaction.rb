@@ -50,6 +50,11 @@ class Transaction < ApplicationRecord
     end
   end
 
+  # Public payloads identify records by uid; integer PKs/FKs stay internal.
+  def as_json(options = nil)
+    super({ except: %i[id merchant_id customer_id] }.merge(options || {}))
+  end
+
   def refundable_amount
     captured_amount - self.refunds.where(status: [ :pending, :succeeded ]).sum(:amount)
   end
