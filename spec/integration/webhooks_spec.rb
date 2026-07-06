@@ -11,11 +11,13 @@ RSpec.describe 'Webhooks API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'webhook events listed' do
+        schema '$ref' => '#/components/schemas/webhook_event_list'
         before { create(:webhook_event, merchant: merchant) }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         run_test!
       end
@@ -33,6 +35,7 @@ RSpec.describe 'Webhooks API', type: :request do
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         run_test!
       end
@@ -69,6 +72,7 @@ RSpec.describe 'Webhooks API', type: :request do
       end
 
       response '401', 'invalid signature' do
+        schema '$ref' => '#/components/schemas/error'
         let(:merchant_uid) { merchant.uid }
         let(:body) { { type: 'payment.succeeded', data: {} } }
         let(:'X-LensPay-Signature') { 'sha256=invalidsignature' }
@@ -76,6 +80,7 @@ RSpec.describe 'Webhooks API', type: :request do
       end
 
       response '404', 'merchant not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:merchant_uid) { 'mer_nonexistent' }
         let(:body) { { type: 'payment.succeeded', data: {} } }
         run_test!

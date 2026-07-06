@@ -23,16 +23,19 @@ RSpec.describe 'Payments API', type: :request do
       }
 
       response '201', 'payment created' do
+        schema '$ref' => '#/components/schemas/payment'
         let(:payment) { { amount: 1000, currency: 'JPY', idempotency_key: 'order_123' } }
         run_test!
       end
 
       response '400', 'invalid currency' do
+        schema '$ref' => '#/components/schemas/error'
         let(:payment) { { amount: 1000, currency: 'INVALID', idempotency_key: 'order_123' } }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:payment) { { amount: 1000, currency: 'JPY', idempotency_key: 'order_123' } }
         run_test!
@@ -49,12 +52,33 @@ RSpec.describe 'Payments API', type: :request do
       parameter name: :limit, in: :query, type: :integer, required: false, description: 'Number of results per page (default: 25, max: 100)'
 
       response '200', 'payments listed' do
+        schema '$ref' => '#/components/schemas/payment_list'
         before { create_list(:transaction, 3, merchant: merchant) }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
+        run_test!
+      end
+
+      response '429', 'rate limit exceeded (300 requests per 5 minutes per API key or IP)' do
+        schema '$ref' => '#/components/schemas/error'
+
+        around do |example|
+          original = Rack::Attack.cache.store
+          # Test env caches with :null_store, which never accumulates counters
+          Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+          example.run
+        ensure
+          Rack::Attack.cache.store = original
+        end
+
+        before do
+          300.times { get '/api/v1/payments', headers: { 'Authorization' => send(:Authorization) } }
+        end
+
         run_test!
       end
     end
@@ -69,16 +93,19 @@ RSpec.describe 'Payments API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'payment found' do
+        schema '$ref' => '#/components/schemas/payment'
         let(:uid) { create(:transaction, merchant: merchant).uid }
         run_test!
       end
 
       response '404', 'payment not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { 'tr_nonexistent' }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'tr_any' }
         run_test!
@@ -103,18 +130,21 @@ RSpec.describe 'Payments API', type: :request do
       }
 
       response '200', 'payment captured' do
+        schema '$ref' => '#/components/schemas/payment'
         let(:uid) { create(:transaction, :authorized, amount: 1000, merchant: merchant).uid }
         let(:body) { { captured_amount: 800 } }
         run_test!
       end
 
       response '422', 'invalid transition' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { create(:transaction, merchant: merchant).uid }
         let(:body) { {} }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'tr_any' }
         let(:body) { {} }
@@ -132,21 +162,25 @@ RSpec.describe 'Payments API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'payment cancelled' do
+        schema '$ref' => '#/components/schemas/payment'
         let(:uid) { create(:transaction, merchant: merchant).uid }
         run_test!
       end
 
       response '422', 'invalid transition' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { create(:transaction, :succeeded, merchant: merchant).uid }
         run_test!
       end
 
       response '404', 'payment not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { 'tr_nonexistent' }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'tr_any' }
         run_test!
@@ -163,16 +197,19 @@ RSpec.describe 'Payments API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'webhook events listed' do
+        schema '$ref' => '#/components/schemas/webhook_event_list'
         let(:uid) { create(:transaction, merchant: merchant).uid }
         run_test!
       end
 
       response '404', 'payment not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { 'tr_nonexistent' }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'tr_any' }
         run_test!
@@ -199,30 +236,35 @@ RSpec.describe 'Payments API', type: :request do
       }
 
       response '201', 'refund created' do
+        schema '$ref' => '#/components/schemas/refund'
         let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 1000, merchant: merchant).uid }
         let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
 
       response '400', 'missing required parameters' do
+        schema '$ref' => '#/components/schemas/error'
         let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 1000, merchant: merchant).uid }
         let(:refund) { { amount: 500 } }
         run_test!
       end
 
       response '422', 'payment not in a refundable state' do
+        schema '$ref' => '#/components/schemas/error'
         let(:payment_uid) { create(:transaction, merchant: merchant).uid }
         let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
 
       response '422', 'refund amount exceeds refundable amount' do
+        schema '$ref' => '#/components/schemas/error'
         let(:payment_uid) { create(:transaction, :succeeded, captured_amount: 100, merchant: merchant).uid }
         let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:payment_uid) { 'tr_any' }
         let(:refund) { { amount: 500, idempotency_key: "duck_duck_goose" } }
@@ -236,6 +278,7 @@ RSpec.describe 'Payments API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'refunds listed' do
+        schema '$ref' => '#/components/schemas/refund_list'
         let(:payment_uid) do
           payment = create(:transaction, :succeeded, captured_amount: 1000, merchant: merchant)
           create(:refund, payment: payment, amount: 500)
@@ -245,11 +288,13 @@ RSpec.describe 'Payments API', type: :request do
       end
 
       response '404', 'payment not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:payment_uid) { 'tr_nonexistent' }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:payment_uid) { 'tr_any' }
         run_test!
