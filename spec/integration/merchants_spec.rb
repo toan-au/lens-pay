@@ -23,11 +23,13 @@ RSpec.describe 'Merchants API', type: :request do
       }
 
       response '201', 'merchant created' do
+        schema '$ref' => '#/components/schemas/merchant_credentials'
         let(:body) { { name: 'Acme Store', email: 'store@acme.com', country: 'JP', currency: 'JPY' } }
         run_test!
       end
 
       response '422', 'validation failed' do
+        schema '$ref' => '#/components/schemas/validation_errors'
         let(:body) { { name: 'Acme Store', email: 'invalid-email', country: 'JP', currency: 'JPY' } }
         run_test!
       end
@@ -41,10 +43,12 @@ RSpec.describe 'Merchants API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'merchant found' do
+        schema '$ref' => '#/components/schemas/merchant'
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         run_test!
       end
@@ -64,16 +68,19 @@ RSpec.describe 'Merchants API', type: :request do
       }
 
       response '200', 'merchant updated' do
+        schema '$ref' => '#/components/schemas/merchant'
         let(:body) { { webhook_url: 'https://acme.com/webhooks' } }
         run_test!
       end
 
       response '422', 'validation failed' do
+        schema '$ref' => '#/components/schemas/validation_errors'
         let(:body) { { webhook_url: 'not-a-url' } }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:body) { {} }
         run_test!

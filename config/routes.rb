@@ -40,5 +40,7 @@ Rails.application.routes.draw do
   end
 
   root to: "frontend#index"
-  get "*path", to: "frontend#index"
+  # HTML only: the catch-all must not swallow scanner probes for .xml/.php/etc.,
+  # which would 500 with MissingTemplate instead of quietly 404ing.
+  get "*path", to: "frontend#index", constraints: ->(req) { req.format.html? }
 end

@@ -23,6 +23,11 @@ class Refund < ApplicationRecord
     end
   end
 
+  # Public payloads identify records by uid; integer PKs/FKs stay internal.
+  def as_json(options = nil)
+    super({ except: %i[id transaction_id] }.merge(options || {}))
+  end
+
   private def setup_refund
     self.uid = "re_#{SecureRandom.uuid}"
   end

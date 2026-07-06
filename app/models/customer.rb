@@ -9,6 +9,11 @@ class Customer < ApplicationRecord
 
   scope :active, -> { where(deleted_at: nil) }
 
+  # Public payloads identify records by uid; integer PKs/FKs stay internal.
+  def as_json(options = nil)
+    super({ except: %i[id merchant_id] }.merge(options || {}))
+  end
+
   def deleted? = deleted_at.present?
 
   def delete!

@@ -15,11 +15,13 @@ RSpec.describe 'Disputes API', type: :request do
       parameter name: :limit, in: :query, type: :integer, required: false, description: 'Results per page (default: 25, max: 100)'
 
       response '200', 'disputes listed' do
+        schema '$ref' => '#/components/schemas/dispute_list'
         before { create(:dispute, merchant: merchant) }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         run_test!
       end
@@ -35,16 +37,19 @@ RSpec.describe 'Disputes API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'dispute found' do
+        schema '$ref' => '#/components/schemas/dispute'
         let(:uid) { create(:dispute, merchant: merchant).uid }
         run_test!
       end
 
       response '404', 'dispute not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { 'dis_nonexistent' }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'dis_any' }
         run_test!
@@ -74,18 +79,21 @@ RSpec.describe 'Disputes API', type: :request do
       }
 
       response '200', 'evidence submitted' do
+        schema '$ref' => '#/components/schemas/dispute_response'
         let(:uid) { create(:dispute, merchant: merchant).uid }
         let(:body) { { evidence: { tracking_number: '1Z999AA' } } }
         run_test!
       end
 
       response '422', 'invalid submission' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { create(:dispute, :won, merchant: merchant).uid }
         let(:body) { { evidence: { tracking_number: '1Z999AA' } } }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'dis_any' }
         let(:body) { { evidence: {} } }
@@ -117,6 +125,7 @@ RSpec.describe 'Disputes API', type: :request do
       around { |ex| ClimateControl.modify(NETWORK_SECRET: 'test-secret') { ex.run } }
 
       response '201', 'dispute opened' do
+        schema '$ref' => '#/components/schemas/dispute'
         let(:payment) { create(:transaction, :succeeded, amount: 5000, currency: 'JPY') }
         let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
         let(:'X-Network-Secret') { 'test-secret' }
@@ -124,6 +133,7 @@ RSpec.describe 'Disputes API', type: :request do
       end
 
       response '401', 'invalid network secret' do
+        schema '$ref' => '#/components/schemas/error'
         let(:payment) { create(:transaction, :succeeded, amount: 5000, currency: 'JPY') }
         let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
         let(:'X-Network-Secret') { 'wrong-secret' }
@@ -131,6 +141,7 @@ RSpec.describe 'Disputes API', type: :request do
       end
 
       response '422', 'invalid dispute' do
+        schema '$ref' => '#/components/schemas/error'
         let(:payment) { create(:transaction, amount: 5000, currency: 'JPY') }
         let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
         let(:'X-Network-Secret') { 'test-secret' }
@@ -161,6 +172,7 @@ RSpec.describe 'Disputes API', type: :request do
       around { |ex| ClimateControl.modify(NETWORK_SECRET: 'test-secret') { ex.run } }
 
       response '200', 'dispute resolved' do
+        schema '$ref' => '#/components/schemas/dispute'
         let(:uid) { create(:dispute, merchant: merchant).uid }
         let(:body) { { outcome: 'won' } }
         let(:'X-Network-Secret') { 'test-secret' }
@@ -168,6 +180,7 @@ RSpec.describe 'Disputes API', type: :request do
       end
 
       response '401', 'invalid network secret' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { create(:dispute, merchant: merchant).uid }
         let(:body) { { outcome: 'won' } }
         let(:'X-Network-Secret') { 'wrong-secret' }
@@ -175,6 +188,7 @@ RSpec.describe 'Disputes API', type: :request do
       end
 
       response '422', 'already resolved' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { create(:dispute, :won, merchant: merchant).uid }
         let(:body) { { outcome: 'lost' } }
         let(:'X-Network-Secret') { 'test-secret' }

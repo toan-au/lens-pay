@@ -38,6 +38,11 @@ class Dispute < ApplicationRecord
     end
   end
 
+  # Public payloads identify records by uid; integer PKs/FKs stay internal.
+  def as_json(options = nil)
+    super({ except: %i[id merchant_id transaction_id] }.merge(options || {}))
+  end
+
   private
 
   def setup_dispute

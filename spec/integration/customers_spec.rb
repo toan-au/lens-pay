@@ -22,16 +22,19 @@ RSpec.describe 'Customers API', type: :request do
       }
 
       response '201', 'customer created' do
+        schema '$ref' => '#/components/schemas/customer'
         let(:customer) { { name: 'Jane Doe', email: 'jane@example.com' } }
         run_test!
       end
 
       response '422', 'validation failed' do
+        schema '$ref' => '#/components/schemas/validation_errors'
         let(:customer) { { name: 'Jane Doe' } }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:customer) { { name: 'Jane Doe', email: 'jane@example.com' } }
         run_test!
@@ -47,11 +50,13 @@ RSpec.describe 'Customers API', type: :request do
       parameter name: :limit, in: :query, type: :integer, required: false, description: 'Number of results per page (default: 25)'
 
       response '200', 'customers listed' do
+        schema '$ref' => '#/components/schemas/customer_list'
         before { create_list(:customer, 3, merchant: merchant) }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         run_test!
       end
@@ -67,16 +72,19 @@ RSpec.describe 'Customers API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'customer found' do
+        schema '$ref' => '#/components/schemas/customer'
         let(:uid) { create(:customer, merchant: merchant).uid }
         run_test!
       end
 
       response '404', 'customer not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { 'cus_nonexistent' }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'cus_any' }
         run_test!
@@ -99,24 +107,28 @@ RSpec.describe 'Customers API', type: :request do
       }
 
       response '200', 'customer updated' do
+        schema '$ref' => '#/components/schemas/customer'
         let(:uid) { create(:customer, merchant: merchant).uid }
         let(:customer) { { name: 'Jane Smith' } }
         run_test!
       end
 
       response '422', 'validation failed' do
+        schema '$ref' => '#/components/schemas/validation_errors'
         let(:uid) { create(:customer, merchant: merchant).uid }
         let(:customer) { { email: 'not-an-email' } }
         run_test!
       end
 
       response '404', 'customer not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { 'cus_nonexistent' }
         let(:customer) { { name: 'X' } }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'cus_any' }
         let(:customer) { { name: 'X' } }
@@ -130,16 +142,19 @@ RSpec.describe 'Customers API', type: :request do
       security [ { bearer_auth: [] } ]
 
       response '200', 'customer deleted' do
+        schema '$ref' => '#/components/schemas/customer'
         let(:uid) { create(:customer, merchant: merchant).uid }
         run_test!
       end
 
       response '404', 'customer not found' do
+        schema '$ref' => '#/components/schemas/error'
         let(:uid) { 'cus_nonexistent' }
         run_test!
       end
 
       response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
         let(:Authorization) { 'Bearer invalid' }
         let(:uid) { 'cus_any' }
         run_test!
