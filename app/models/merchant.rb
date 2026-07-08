@@ -25,7 +25,11 @@ class Merchant < ApplicationRecord
     self.api_key_digest = Digest::SHA256.hexdigest(@raw_api_key)
     self.webhook_secret = "whs_#{SecureRandom.hex(24)}"
 
-    self.webhook_url = "http://localhost:3000/api/v1/webhooks/#{self.uid}"
+    # Default to the built-in webhook sink so the delivery loop is visible in
+    # the dashboard; merchants who registered with their own URL keep it.
+    if webhook_url.blank?
+      self.webhook_url = "#{Rails.application.config.app_host}/api/v1/webhooks/#{self.uid}"
+    end
 
     # We'll just make all accounts active
     self.status = :active
