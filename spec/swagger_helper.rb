@@ -59,15 +59,10 @@ RSpec.configure do |config|
         description: API_DESCRIPTION
       },
       paths: {},
+      # Relative so Swagger UI's "Try it out" targets whichever host serves
+      # the docs — localhost in development, the real domain in production.
       servers: [
-        {
-          url: 'http://{defaultHost}',
-          variables: {
-            defaultHost: {
-              default: 'localhost:3000'
-            }
-          }
-        }
+        { url: '/' }
       ],
       components: {
         securitySchemes: {
