@@ -29,8 +29,10 @@ module LensPay
     config.autoload_lib(ignore: %w[assets tasks middleware])
 
     require_relative "../lib/middleware/api_key_authenticator"
-    config.middleware.use Middleware::ApiKeyAuthenticator
+    # Rack::Attack must run before authentication so throttles count rejected
+    # requests too — otherwise invalid-key brute forcing is never rate limited.
     config.middleware.use Rack::Attack
+    config.middleware.use Middleware::ApiKeyAuthenticator
 
     # Configuration for the application, engines, and railties goes here.
     #

@@ -7,6 +7,10 @@ servers:
 
 # Kamal proxy handles TLS termination via Let's Encrypt and zero-downtime deploys.
 # Set encryption mode to "Full" in Cloudflare if using CF in front.
+# 1GB droplet: the old and new containers overlap during deploy and the new
+# one boots while paging to swap, so allow well beyond the 30s default.
+deploy_timeout: 120
+
 proxy:
   ssl: true
   host: lenspay.toanau.com
