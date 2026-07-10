@@ -113,6 +113,19 @@ RSpec.describe "Payments API", type: :request do
       expect(response).to have_http_status(:ok)
       expect(Transaction.count).to eq(1)
     end
+
+    it "allows different merchants to use the same idempotency key" do
+      Transaction.create!(amount: 500, currency: "JPY", idempotency_key: "test_key_1", merchant: other_merchant)
+
+      post "/api/v1/payments", params: {
+        amount: 1000,
+        currency: "JPY",
+        idempotency_key: "test_key_1"
+      }, headers: auth_headers
+
+      expect(response).to have_http_status(:created)
+      expect(merchant.transactions.count).to eq(1)
+    end
   end
 
   describe "GET /api/v1/payments/:payment_uid" do

@@ -48,6 +48,33 @@ RSpec.describe Refunds::CreateService do
       expect(Refund.count).to eq(1)
     end
 
+    it "allows different payments to use the same refund idempotency key" do
+      transaction = create(:transaction, :succeeded, captured_amount: 1000)
+      other_transaction = create(:transaction, :succeeded, captured_amount: 1000)
+      described_class.call(other_transaction, { amount: 500, idempotency_key: "refund_key_1111" })
+
+      result = described_class.call(transaction, { amount: 500, idempotency_key: "refund_key_1111" })
+
+      expect(result.status).to eq(:created)
+      expect(Refund.count).to eq(2)
+    end
+
+    it "returns the existing refund when the insert loses to a concurrent duplicate" do
+      transaction = create(:transaction, :succeeded, captured_amount: 1000)
+      existing = create(:refund, payment: transaction, idempotency_key: "refund_key_1111")
+      service = described_class.new(transaction, { amount: 500, idempotency_key: "refund_key_1111" })
+
+      # Simulate the race: the pre-insert lookup misses (the winner hasn't
+      # committed yet), then the insert hits the unique index.
+      allow(service).to receive(:find_existing).and_return(nil, existing)
+      allow_any_instance_of(Refund).to receive(:save).and_raise(ActiveRecord::RecordNotUnique)
+
+      result = service.call
+
+      expect(result.status).to eq(:ok)
+      expect(result.refund).to eq(existing)
+    end
+
     it "raises PaymentAlreadyRefunded for payments that have already been refunded" do
       transaction = create(:transaction, :succeeded, captured_amount: 500)
       create(:refund, payment: transaction, amount: 500, status: :succeeded)

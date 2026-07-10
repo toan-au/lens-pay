@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_09_034217) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_09_040333) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -84,8 +84,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_034217) do
     t.bigint "transaction_id", null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
-    t.index ["idempotency_key"], name: "index_refunds_on_idempotency_key", unique: true
     t.index ["transaction_id", "created_at"], name: "index_refunds_on_transaction_id_and_created_at"
+    t.index ["transaction_id", "idempotency_key"], name: "index_refunds_on_transaction_id_and_idempotency_key", unique: true
     t.index ["uid"], name: "index_refunds_on_uid", unique: true
   end
 
@@ -106,8 +106,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_034217) do
     t.string "uid", null: false
     t.datetime "updated_at", null: false
     t.index ["customer_id"], name: "index_transactions_on_customer_id"
-    t.index ["idempotency_key"], name: "index_transactions_on_idempotency_key", unique: true
     t.index ["merchant_id", "created_at"], name: "index_transactions_on_merchant_id_and_created_at"
+    t.index ["merchant_id", "idempotency_key"], name: "index_transactions_on_merchant_id_and_idempotency_key", unique: true
     t.index ["merchant_id", "status"], name: "index_transactions_on_merchant_id_and_status"
     t.index ["merchant_id"], name: "index_transactions_on_merchant_id"
     t.index ["uid"], name: "index_transactions_on_uid", unique: true
