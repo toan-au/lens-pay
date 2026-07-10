@@ -3,7 +3,7 @@ class Refund < ApplicationRecord
 
   belongs_to :payment, class_name: "Transaction", foreign_key: :transaction_id
   validates :amount, presence: true, numericality: { only_integer: true, greater_than: 0 }
-  validates :idempotency_key, presence: true, uniqueness: true
+  validates :idempotency_key, presence: true, uniqueness: { scope: :transaction_id }
 
   before_create :setup_refund
 
