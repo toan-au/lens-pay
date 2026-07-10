@@ -10,7 +10,7 @@ module Payments
     def perform
       raise PaymentError::InvalidCurrency unless Money::Currency.find(@params[:currency])
 
-      existing = @merchant.transactions.find_by(idempotency_key: @params[:idempotency_key])
+      existing = find_existing
       return Result.new(transaction: existing, status: :ok) if existing
 
       transaction_params = @params.except(:customer_uid)
@@ -22,7 +22,13 @@ module Payments
 
       @transaction = @merchant.transactions.new(transaction_params)
 
-      raise PaymentError::ValidationFailed, @transaction.errors.full_messages unless @transaction.save
+      begin
+        raise PaymentError::ValidationFailed, @transaction.errors.full_messages unless @transaction.save
+      rescue ActiveRecord::RecordNotUnique
+        # Lost a race with an identical concurrent request; honour the
+        # idempotency contract by returning what the winner created.
+        return Result.new(transaction: find_existing, status: :ok)
+      end
 
       AuthorizePaymentJob.perform_later(@transaction.id, request_id: Current.request_id)
 
@@ -39,6 +45,12 @@ module Payments
         transaction_uid: @transaction&.uid,
         params: @params
       }
+    end
+
+    private
+
+    def find_existing
+      @merchant.transactions.find_by(idempotency_key: @params[:idempotency_key])
     end
   end
 end
