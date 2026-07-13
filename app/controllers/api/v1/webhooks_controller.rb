@@ -43,10 +43,24 @@ class Api::V1::WebhooksController < ApplicationController
     return render json: { error: "Invalid signature" }, status: :unauthorized unless request.headers["X-LensPay-Signature"]
 
     if ActiveSupport::SecurityUtils.secure_compare(request.headers["X-LensPay-Signature"], signature)
-      merchant.webhook_events.create!(
-        event_type: parsed_body["type"],
-        payload: parsed_body
-      )
+      external_id = request.headers["X-LensPay-Id"].presence
+
+      # Delivery retries reuse the same X-LensPay-Id; storing the event again
+      # would show duplicates in the dashboard. Replays are acknowledged with
+      # the same 200 the original got (idempotent consumer).
+      if external_id && merchant.webhook_events.exists?(external_id:)
+        return render json: {}, status: :ok
+      end
+
+      begin
+        merchant.webhook_events.create!(
+          event_type: parsed_body["type"],
+          payload: parsed_body,
+          external_id: external_id
+        )
+      rescue ActiveRecord::RecordNotUnique
+        # Concurrent retry beat us to the insert; same acknowledgement.
+      end
       render json: {}, status: :ok
     else render json: { error: "Invalid signature" }, status: :unauthorized
     end

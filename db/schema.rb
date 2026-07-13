@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_09_040333) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_065518) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -116,9 +116,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_040333) do
   create_table "webhook_events", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "event_type", null: false
+    t.string "external_id"
     t.bigint "merchant_id", null: false
     t.jsonb "payload", null: false
     t.datetime "updated_at", null: false
+    t.index ["merchant_id", "external_id"], name: "index_webhook_events_on_merchant_id_and_external_id", unique: true
     t.index ["merchant_id"], name: "index_webhook_events_on_merchant_id"
   end
 
