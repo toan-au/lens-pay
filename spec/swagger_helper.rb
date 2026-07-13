@@ -225,6 +225,7 @@ RSpec.configure do |config|
               id: { type: :integer },
               event_type: { type: :string, example: 'payment.succeeded' },
               payload: { type: :object },
+              external_id: { type: :string, nullable: true, description: "Sender's delivery id (X-LensPay-Id); retried deliveries with the same id are stored once" },
               created_at: { type: :string, format: 'date-time' },
               updated_at: { type: :string, format: 'date-time' }
             },

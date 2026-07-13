@@ -154,6 +154,34 @@ RSpec.describe "Webhooks API", type: :request do
       end
     end
 
+    context "when the same delivery is retried" do
+      let(:retry_headers) { valid_headers.merge("X-LensPay-Id" => "evt_abc123") }
+
+      it "stores the event once and returns 200 both times" do
+        2.times { post "/api/v1/webhooks/#{merchant.uid}", params: payload, headers: retry_headers }
+
+        expect(response).to have_http_status(:ok)
+        expect(WebhookEvent.count).to eq(1)
+      end
+
+      it "does not deduplicate across merchants" do
+        other = create(:merchant)
+        other_signature = "sha256=" + OpenSSL::HMAC.hexdigest("SHA256", other.webhook_secret, payload)
+
+        post "/api/v1/webhooks/#{merchant.uid}", params: payload, headers: retry_headers
+        post "/api/v1/webhooks/#{other.uid}", params: payload,
+          headers: retry_headers.merge("X-LensPay-Signature" => other_signature)
+
+        expect(WebhookEvent.count).to eq(2)
+      end
+
+      it "still stores events that arrive without a delivery id" do
+        2.times { post "/api/v1/webhooks/#{merchant.uid}", params: payload, headers: valid_headers }
+
+        expect(WebhookEvent.count).to eq(2)
+      end
+    end
+
     context "with a malformed JSON body" do
       let(:payload) { "{not json!!" }
 
