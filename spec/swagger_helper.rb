@@ -233,7 +233,8 @@ RSpec.configure do |config|
           webhook_event_list: {
             type: :object,
             properties: {
-              webhook_events: { type: :array, items: { '$ref' => '#/components/schemas/webhook_event' } }
+              webhook_events: { type: :array, items: { '$ref' => '#/components/schemas/webhook_event' } },
+              next_cursor: { type: :integer, nullable: true, description: 'id of the last event; null when no further pages. Absent on the per-payment event list.' }
             },
             required: %w[webhook_events]
           },

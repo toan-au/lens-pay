@@ -1,12 +1,21 @@
 class Api::V1::WebhooksController < ApplicationController
+  rescue_from JSON::ParserError do
+    render json: { error: "Malformed JSON body" }, status: :bad_request
+  end
+
   def ping
     WebhookDeliveryJob.perform_later(current_merchant.id, "ping", "Merchant", current_merchant.id, request_id: Current.request_id)
     render json: {}, status: :ok
   end
 
   def index
-    webhook_events = current_merchant.webhook_events.order(created_at: :desc)
-    render json: { webhook_events: }, status: :ok
+    result = Webhooks::ListService.call(
+      current_merchant,
+      cursor: list_params[:cursor],
+      limit: list_params[:limit]&.to_i
+    )
+
+    render json: { webhook_events: result.webhook_events, next_cursor: result.next_cursor }, status: result.status
   end
 
   def payment_events
@@ -41,5 +50,11 @@ class Api::V1::WebhooksController < ApplicationController
       render json: {}, status: :ok
     else render json: { error: "Invalid signature" }, status: :unauthorized
     end
+  end
+
+  private
+
+  def list_params
+    params.permit(:cursor, :limit)
   end
 end

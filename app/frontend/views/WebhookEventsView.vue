@@ -26,6 +26,12 @@
         </template>
       </template>
     </ResourceTable>
+
+    <div v-if="nextCursor" class="flex justify-center">
+      <button @click="loadMore" :disabled="loading" class="btn-ghost">
+        {{ loading ? 'Loading...' : 'Load more' }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -37,6 +43,7 @@ import ResourceTable from '../components/ui/ResourceTable.vue'
 import type { WebhookEvent } from '../api/types'
 
 const events = ref<WebhookEvent[]>([])
+const nextCursor = ref<number | null>(null)
 const loading = ref(false)
 const expandedId = ref<number | null>(null)
 
@@ -44,13 +51,20 @@ function toggleRow(id: number) {
   expandedId.value = expandedId.value === id ? null : id
 }
 
-onMounted(async () => {
+async function load(cursor?: number) {
   loading.value = true
   try {
-    const { webhook_events } = await listWebhookEvents()
-    events.value = webhook_events
+    const { webhook_events, next_cursor } = await listWebhookEvents({ cursor })
+    events.value = cursor ? [...events.value, ...webhook_events] : webhook_events
+    nextCursor.value = next_cursor
   } finally {
     loading.value = false
   }
-})
+}
+
+async function loadMore() {
+  if (nextCursor.value) await load(nextCursor.value)
+}
+
+onMounted(() => load())
 </script>
