@@ -10,6 +10,9 @@ RSpec.describe 'Webhooks API', type: :request do
       produces 'application/json'
       security [ { bearer_auth: [] } ]
 
+      parameter name: :cursor, in: :query, type: :integer, required: false, description: 'Pagination cursor (id of last event in previous page)'
+      parameter name: :limit, in: :query, type: :integer, required: false, description: 'Number of results per page (default: 25)'
+
       response '200', 'webhook events listed' do
         schema '$ref' => '#/components/schemas/webhook_event_list'
         before { create(:webhook_event, merchant: merchant) }
@@ -84,6 +87,23 @@ RSpec.describe 'Webhooks API', type: :request do
         let(:merchant_uid) { 'mer_nonexistent' }
         let(:body) { { type: 'payment.succeeded', data: {} } }
         run_test!
+      end
+
+      response '400', 'malformed JSON body' do
+        schema '$ref' => '#/components/schemas/error'
+        let(:merchant_uid) { merchant.uid }
+        let(:body) { nil }
+
+        # rswag serializes body params itself, so send the raw string directly
+        before do
+          post "/api/v1/webhooks/#{merchant.uid}",
+            params: "{not json!!",
+            headers: { "CONTENT_TYPE" => "application/json" }
+        end
+
+        it "returns a 400 response" do
+          expect(response).to have_http_status(:bad_request)
+        end
       end
     end
   end

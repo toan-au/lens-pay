@@ -77,6 +77,11 @@ export interface WebhookEvent {
   created_at: string
 }
 
+export interface WebhookEventListResponse {
+  webhook_events: WebhookEvent[]
+  next_cursor: number | null
+}
+
 export interface DisputeResponse {
   id: number
   evidence: Record<string, string>

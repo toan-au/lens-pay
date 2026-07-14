@@ -60,4 +60,17 @@ RSpec.describe Merchant, type: :model do
 
     expect(merchant).to be_valid
   end
+
+  it "defaults webhook_url to the app host, not a hardcoded address" do
+    merchant = create(:merchant)
+
+    expect(merchant.webhook_url)
+      .to eq("#{Rails.application.config.app_host}/api/v1/webhooks/#{merchant.uid}")
+  end
+
+  it "keeps a webhook_url provided at registration" do
+    merchant = create(:merchant, webhook_url: "https://example.com/hooks")
+
+    expect(merchant.webhook_url).to eq("https://example.com/hooks")
+  end
 end

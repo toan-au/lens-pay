@@ -47,6 +47,30 @@ RSpec.describe "Webhooks API", type: :request do
 
       expect(response).to have_http_status(:unauthorized)
     end
+
+    it "paginates with a cursor, newest first" do
+      oldest, middle, newest = 3.times.map { |i| create(:webhook_event, merchant: merchant, created_at: (3 - i).minutes.ago) }
+
+      get "/api/v1/webhooks", params: { limit: 2 }, headers: auth_headers
+
+      first_page = response.parsed_body
+      expect(first_page["webhook_events"].map { |e| e["id"] }).to eq([ newest.id, middle.id ])
+      expect(first_page["next_cursor"]).to eq(middle.id)
+
+      get "/api/v1/webhooks", params: { limit: 2, cursor: first_page["next_cursor"] }, headers: auth_headers
+
+      second_page = response.parsed_body
+      expect(second_page["webhook_events"].map { |e| e["id"] }).to eq([ oldest.id ])
+      expect(second_page["next_cursor"]).to be_nil
+    end
+
+    it "returns a null next_cursor when the results fit one page" do
+      create(:webhook_event, merchant: merchant)
+
+      get "/api/v1/webhooks", headers: auth_headers
+
+      expect(response.parsed_body["next_cursor"]).to be_nil
+    end
   end
 
   describe "GET /api/v1/payments/:uid/webhook-events" do
@@ -127,6 +151,45 @@ RSpec.describe "Webhooks API", type: :request do
         post "/api/v1/webhooks/mch_unknown", params: payload, headers: valid_headers
 
         expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context "when the same delivery is retried" do
+      let(:retry_headers) { valid_headers.merge("X-LensPay-Id" => "evt_abc123") }
+
+      it "stores the event once and returns 200 both times" do
+        2.times { post "/api/v1/webhooks/#{merchant.uid}", params: payload, headers: retry_headers }
+
+        expect(response).to have_http_status(:ok)
+        expect(WebhookEvent.count).to eq(1)
+      end
+
+      it "does not deduplicate across merchants" do
+        other = create(:merchant)
+        other_signature = "sha256=" + OpenSSL::HMAC.hexdigest("SHA256", other.webhook_secret, payload)
+
+        post "/api/v1/webhooks/#{merchant.uid}", params: payload, headers: retry_headers
+        post "/api/v1/webhooks/#{other.uid}", params: payload,
+          headers: retry_headers.merge("X-LensPay-Signature" => other_signature)
+
+        expect(WebhookEvent.count).to eq(2)
+      end
+
+      it "still stores events that arrive without a delivery id" do
+        2.times { post "/api/v1/webhooks/#{merchant.uid}", params: payload, headers: valid_headers }
+
+        expect(WebhookEvent.count).to eq(2)
+      end
+    end
+
+    context "with a malformed JSON body" do
+      let(:payload) { "{not json!!" }
+
+      it "returns 400 instead of crashing" do
+        post "/api/v1/webhooks/#{merchant.uid}", params: payload, headers: valid_headers
+
+        expect(response).to have_http_status(:bad_request)
+        expect(WebhookEvent.count).to eq(0)
       end
     end
   end

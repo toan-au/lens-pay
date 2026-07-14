@@ -59,15 +59,10 @@ RSpec.configure do |config|
         description: API_DESCRIPTION
       },
       paths: {},
+      # Relative so Swagger UI's "Try it out" targets whichever host serves
+      # the docs — localhost in development, the real domain in production.
       servers: [
-        {
-          url: 'http://{defaultHost}',
-          variables: {
-            defaultHost: {
-              default: 'localhost:3000'
-            }
-          }
-        }
+        { url: '/' }
       ],
       components: {
         securitySchemes: {
@@ -230,6 +225,7 @@ RSpec.configure do |config|
               id: { type: :integer },
               event_type: { type: :string, example: 'payment.succeeded' },
               payload: { type: :object },
+              external_id: { type: :string, nullable: true, description: "Sender's delivery id (X-LensPay-Id); retried deliveries with the same id are stored once" },
               created_at: { type: :string, format: 'date-time' },
               updated_at: { type: :string, format: 'date-time' }
             },
@@ -238,7 +234,8 @@ RSpec.configure do |config|
           webhook_event_list: {
             type: :object,
             properties: {
-              webhook_events: { type: :array, items: { '$ref' => '#/components/schemas/webhook_event' } }
+              webhook_events: { type: :array, items: { '$ref' => '#/components/schemas/webhook_event' } },
+              next_cursor: { type: :integer, nullable: true, description: 'id of the last event; null when no further pages. Absent on the per-payment event list.' }
             },
             required: %w[webhook_events]
           },

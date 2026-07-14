@@ -1,12 +1,21 @@
 class Api::V1::WebhooksController < ApplicationController
+  rescue_from JSON::ParserError do
+    render json: { error: "Malformed JSON body" }, status: :bad_request
+  end
+
   def ping
     WebhookDeliveryJob.perform_later(current_merchant.id, "ping", "Merchant", current_merchant.id, request_id: Current.request_id)
     render json: {}, status: :ok
   end
 
   def index
-    webhook_events = current_merchant.webhook_events.order(created_at: :desc)
-    render json: { webhook_events: }, status: :ok
+    result = Webhooks::ListService.call(
+      current_merchant,
+      cursor: list_params[:cursor],
+      limit: list_params[:limit]&.to_i
+    )
+
+    render json: { webhook_events: result.webhook_events, next_cursor: result.next_cursor }, status: result.status
   end
 
   def payment_events
@@ -34,12 +43,32 @@ class Api::V1::WebhooksController < ApplicationController
     return render json: { error: "Invalid signature" }, status: :unauthorized unless request.headers["X-LensPay-Signature"]
 
     if ActiveSupport::SecurityUtils.secure_compare(request.headers["X-LensPay-Signature"], signature)
-      merchant.webhook_events.create!(
-        event_type: parsed_body["type"],
-        payload: parsed_body
-      )
+      external_id = request.headers["X-LensPay-Id"].presence
+
+      # Delivery retries reuse the same X-LensPay-Id; storing the event again
+      # would show duplicates in the dashboard. Replays are acknowledged with
+      # the same 200 the original got (idempotent consumer).
+      if external_id && merchant.webhook_events.exists?(external_id:)
+        return render json: {}, status: :ok
+      end
+
+      begin
+        merchant.webhook_events.create!(
+          event_type: parsed_body["type"],
+          payload: parsed_body,
+          external_id: external_id
+        )
+      rescue ActiveRecord::RecordNotUnique
+        # Concurrent retry beat us to the insert; same acknowledgement.
+      end
       render json: {}, status: :ok
     else render json: { error: "Invalid signature" }, status: :unauthorized
     end
+  end
+
+  private
+
+  def list_params
+    params.permit(:cursor, :limit)
   end
 end
