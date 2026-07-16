@@ -18,6 +18,41 @@ RSpec.describe "Payments API", type: :request do
       expect(Transaction.last.amount).to eq(1000)
     end
 
+    it "defaults payment_method to card" do
+      post "/api/v1/payments", params: {
+        amount: 1000,
+        currency: "JPY",
+        idempotency_key: "test_key_1"
+      }, headers: auth_headers
+
+      expect(response.parsed_body["payment_method"]).to eq("card")
+    end
+
+    it "accepts konbini and bank_transfer payment methods" do
+      %w[konbini bank_transfer].each do |method|
+        post "/api/v1/payments", params: {
+          amount: 1000,
+          currency: "JPY",
+          idempotency_key: "test_key_#{method}",
+          payment_method: method
+        }, headers: auth_headers
+
+        expect(response).to have_http_status(:created)
+        expect(response.parsed_body["payment_method"]).to eq(method)
+      end
+    end
+
+    it "rejects an unknown payment_method" do
+      post "/api/v1/payments", params: {
+        amount: 1000,
+        currency: "JPY",
+        idempotency_key: "test_key_1",
+        payment_method: "cheque"
+      }, headers: auth_headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
     it "creates a transaction in the pending state" do
       post "/api/v1/payments", params: {
         amount: 1000,
@@ -36,11 +71,11 @@ RSpec.describe "Payments API", type: :request do
           idempotency_key: "test_key_1"
         }, headers: auth_headers
 
-        expect(Time.parse(response.parsed_body["expires_at"])).to be_within(1.second).of(Transaction::EXPIRY_WINDOW.from_now)
+        expect(Time.parse(response.parsed_body["expires_at"])).to be_within(1.second).of(Transaction::EXPIRY_WINDOWS.fetch("card").from_now)
       end
     end
 
-    it "enqueues an AuthorizePaymentJob when a payment is created" do
+    it "enqueues an AuthorizePaymentJob when a card payment is created" do
       expect {
         post "/api/v1/payments", params: {
           amount: 1000,
@@ -48,6 +83,21 @@ RSpec.describe "Payments API", type: :request do
           idempotency_key: "test_key_1"
         }, headers: auth_headers
       }.to have_enqueued_job(AuthorizePaymentJob)
+    end
+
+    it "does not enqueue authorization for konbini or bank transfer payments" do
+      %w[konbini bank_transfer].each do |method|
+        expect {
+          post "/api/v1/payments", params: {
+            amount: 1000,
+            currency: "JPY",
+            idempotency_key: "test_key_#{method}",
+            payment_method: method
+          }, headers: auth_headers
+        }.not_to have_enqueued_job(AuthorizePaymentJob)
+
+        expect(response.parsed_body["status"]).to eq("pending")
+      end
     end
 
     it "should respond with a Bad Request when amount is negative" do

@@ -1,5 +1,5 @@
 class Api::V1::NetworkDisputesController < ApplicationController
-  before_action :verify_network_secret
+  include NetworkAuthenticated
 
   rescue_from DisputeError::ValidationFailed do |e|
     render json: { errors: e.messages }, status: :unprocessable_content
@@ -14,7 +14,9 @@ class Api::V1::NetworkDisputesController < ApplicationController
   end
 
   def create
-    transaction = Transaction.find_by(uid: params[:payment_uid])
+    params.require([ :payment_reference, :case_reference ])
+
+    transaction = Transaction.find_by(provider_reference: params[:payment_reference])
     return render json: { error: "Payment not found" }, status: :not_found unless transaction
 
     result = Disputes::CreateService.call(transaction, dispute_params)
@@ -22,7 +24,9 @@ class Api::V1::NetworkDisputesController < ApplicationController
   end
 
   def resolve
-    dispute = Dispute.find_by(uid: params[:uid])
+    params.require(:case_reference)
+
+    dispute = Dispute.find_by(provider_reference: params[:case_reference])
     return render json: { error: "Dispute not found" }, status: :not_found unless dispute
 
     result = Disputes::ResolveService.call(dispute, params[:outcome])
@@ -31,16 +35,7 @@ class Api::V1::NetworkDisputesController < ApplicationController
 
   private
 
-  def verify_network_secret
-    expected = ENV["NETWORK_SECRET"]
-    provided = request.headers["X-Network-Secret"]
-
-    unless expected.present? && ActiveSupport::SecurityUtils.secure_compare(provided.to_s, expected)
-      render json: { error: "Unauthorized" }, status: :unauthorized
-    end
-  end
-
   def dispute_params
-    params.permit(:reason, :amount, :currency)
+    params.permit(:reason, :amount, :currency, :case_reference)
   end
 end

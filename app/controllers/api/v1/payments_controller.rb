@@ -69,7 +69,7 @@ class Api::V1::PaymentsController < ApplicationController
   end
 
   def create_payment_params
-    params.permit(:amount, :currency, :idempotency_key, :customer_uid, metadata: {})
+    params.permit(:amount, :currency, :idempotency_key, :customer_uid, :payment_method, metadata: {})
   end
 
   def list_params

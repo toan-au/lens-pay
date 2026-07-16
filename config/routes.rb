@@ -9,7 +9,8 @@ Rails.application.routes.draw do
       post "webhooks/ping", to: "webhooks#ping"
       get  "webhooks", to: "webhooks#index"
       post "webhooks/network/disputes", to: "network_disputes#create"
-      post "webhooks/network/disputes/:uid/resolve", to: "network_disputes#resolve"
+      post "webhooks/network/disputes/resolve", to: "network_disputes#resolve"
+      post "webhooks/network/payments/confirm", to: "network_payments#confirm"
       post "webhooks/:merchant_uid", to: "webhooks#create"
 
       resources :customers, only: [ :index, :create, :show, :update, :destroy ], param: :uid

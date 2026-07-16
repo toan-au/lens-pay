@@ -129,12 +129,43 @@ RSpec.describe Transaction, type: :model do
     end
   end
 
-  describe "expires_at" do
-    it "is set to EXPIRY_WINDOW from now on create" do
-      freeze_time do
-        transaction = create(:transaction)
+  describe "provider_reference" do
+    it "is generated at creation with a method-specific prefix" do
+      expect(create(:transaction).provider_reference).to start_with("CRD-")
+      expect(create(:transaction, :konbini).provider_reference).to start_with("KNB-")
+      expect(create(:transaction, :bank_transfer).provider_reference).to start_with("BNK-")
+    end
 
-        expect(transaction.expires_at).to be_within(1.second).of(Transaction::EXPIRY_WINDOW.from_now)
+    it "is unique per transaction" do
+      a = create(:transaction)
+      b = create(:transaction)
+
+      expect(a.provider_reference).not_to eq(b.provider_reference)
+    end
+  end
+
+  describe "expires_at" do
+    it "gives card payments a 7 day authorization window" do
+      freeze_time do
+        transaction = create(:transaction, payment_method: :card)
+
+        expect(transaction.expires_at).to be_within(1.second).of(7.days.from_now)
+      end
+    end
+
+    it "gives konbini payments a 3 day pay-by deadline" do
+      freeze_time do
+        transaction = create(:transaction, :konbini)
+
+        expect(transaction.expires_at).to be_within(1.second).of(3.days.from_now)
+      end
+    end
+
+    it "gives bank transfer payments a 7 day transfer deadline" do
+      freeze_time do
+        transaction = create(:transaction, :bank_transfer)
+
+        expect(transaction.expires_at).to be_within(1.second).of(7.days.from_now)
       end
     end
   end

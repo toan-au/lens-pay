@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_065518) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_16_071533) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,6 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_065518) do
     t.datetime "created_at", null: false
     t.string "currency", null: false
     t.bigint "merchant_id", null: false
+    t.string "provider_reference"
     t.string "reason", null: false
     t.datetime "resolved_at"
     t.datetime "respond_by"
@@ -52,6 +53,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_065518) do
     t.datetime "updated_at", null: false
     t.index ["merchant_id", "created_at"], name: "index_disputes_on_merchant_id_and_created_at"
     t.index ["merchant_id"], name: "index_disputes_on_merchant_id"
+    t.index ["provider_reference"], name: "index_disputes_on_provider_reference", unique: true
     t.index ["transaction_id"], name: "index_disputes_on_transaction_id"
     t.index ["uid"], name: "index_disputes_on_uid", unique: true
   end
@@ -101,6 +103,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_065518) do
     t.string "idempotency_key", null: false
     t.bigint "merchant_id", null: false
     t.jsonb "metadata", default: {}, null: false
+    t.integer "payment_method", default: 0, null: false
     t.string "provider_reference"
     t.integer "status", default: 0, null: false
     t.string "uid", null: false
@@ -108,8 +111,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_065518) do
     t.index ["customer_id"], name: "index_transactions_on_customer_id"
     t.index ["merchant_id", "created_at"], name: "index_transactions_on_merchant_id_and_created_at"
     t.index ["merchant_id", "idempotency_key"], name: "index_transactions_on_merchant_id_and_idempotency_key", unique: true
+    t.index ["merchant_id", "payment_method"], name: "index_transactions_on_merchant_id_and_payment_method"
     t.index ["merchant_id", "status"], name: "index_transactions_on_merchant_id_and_status"
     t.index ["merchant_id"], name: "index_transactions_on_merchant_id"
+    t.index ["provider_reference"], name: "index_transactions_on_provider_reference", unique: true
     t.index ["uid"], name: "index_transactions_on_uid", unique: true
   end
 
