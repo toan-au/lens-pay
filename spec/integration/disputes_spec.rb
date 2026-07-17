@@ -107,6 +107,7 @@ RSpec.describe 'Disputes API', type: :request do
       tags 'Network'
       consumes 'application/json'
       produces 'application/json'
+      security [ { network_secret: [] } ]
 
       parameter name: :'X-Network-Secret', in: :header, type: :string, required: true,
                 description: 'Shared secret authenticating the card network'
@@ -156,6 +157,7 @@ RSpec.describe 'Disputes API', type: :request do
       tags 'Network'
       consumes 'application/json'
       produces 'application/json'
+      security [ { network_secret: [] } ]
 
       parameter name: :'X-Network-Secret', in: :header, type: :string, required: true,
                 description: 'Shared secret authenticating the card network'
