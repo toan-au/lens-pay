@@ -2,6 +2,12 @@ module Demo
   class SetupService < ApplicationService
     Result = Data.define(:merchant, :api_key)
 
+    BULK_PAYMENT_COUNT = 60
+
+    def initialize(bulk_count: BULK_PAYMENT_COUNT)
+      @bulk_count = bulk_count
+    end
+
     def perform
       @merchant = Merchant.create!(
         name: "Demo Store",
@@ -17,6 +23,7 @@ module Demo
       seed_customers
       seed_payments
       seed_disputes
+      seed_bulk_payments
 
       Result.new(merchant: @merchant, api_key:)
     end
@@ -200,6 +207,64 @@ module Demo
       )
       emit_event("dispute.opened", lost_dispute, created_at: 10.days.ago)
       emit_event("dispute.lost",   lost_dispute, created_at: 1.day.ago)
+    end
+
+    # Randomized filler so lists paginate and filters have data on every tab.
+    def seed_bulk_payments
+      @bulk_count.times do
+        created_at = rand(0..29).days.ago - rand(0..23).hours - rand(0..59).minutes
+        customer = [ @alice, @bob, nil ].sample
+
+        payment = @merchant.transactions.create!(
+          amount: [ rand(5..30), rand(30..150), rand(150..800) ].sample * 100,
+          currency: "JPY",
+          payment_method: %w[card card card card card card konbini konbini bank_transfer].sample,
+          idempotency_key: SecureRandom.uuid,
+          customer:, customer_name: customer&.name, customer_email: customer&.email,
+          metadata: { order_id: "order_#{SecureRandom.hex(4)}" },
+          created_at:
+        )
+
+        payment.card? ? advance_bulk_card(payment, created_at) : advance_bulk_cash(payment, created_at)
+      end
+    end
+
+    def advance_bulk_card(payment, created_at)
+      case rand(100)
+      when 0..69
+        payment.update!(status: :succeeded, captured_amount: payment.amount)
+        emit_event("payment.authorized", payment, created_at: created_at + 2.seconds)
+        emit_event("payment.captured",   payment, created_at: created_at + 1.hour)
+        emit_event("payment.succeeded",  payment, created_at: created_at + 1.hour + 2.seconds)
+      when 70..84
+        payment.update!(status: :declined)
+        emit_event("payment.failed", payment, created_at: created_at + 2.seconds)
+      when 85..93
+        payment.update!(status: :cancelled)
+        emit_event("payment.authorized", payment, created_at: created_at + 2.seconds)
+        emit_event("payment.cancelled",  payment, created_at: created_at + 30.minutes)
+      else
+        payment.update!(status: :authorized)
+        emit_event("payment.authorized", payment, created_at: created_at + 2.seconds)
+      end
+    end
+
+    def advance_bulk_cash(payment, created_at)
+      case rand(100)
+      when 0..74
+        payment.update!(status: :succeeded, captured_amount: payment.amount)
+        emit_event("payment.confirmed", payment, created_at: created_at + 6.hours)
+        emit_event("payment.succeeded", payment, created_at: created_at + 6.hours + 2.seconds)
+      when 75..89
+        payment.update!(status: :expired)
+        emit_event("payment.expired", payment, created_at: created_at + 3.days)
+      else
+        # old unpaid cash payments would have expired by now, not still be pending
+        if created_at < 2.days.ago
+          payment.update!(status: :expired)
+          emit_event("payment.expired", payment, created_at: created_at + 3.days)
+        end
+      end
     end
 
     def emit_event(event_type, resource, created_at:)
