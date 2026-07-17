@@ -7,10 +7,11 @@
 
     <StatusFilterBar :tabs="STATUS_TABS" :model-value="activeFilter" @update:model-value="setFilter" />
 
-    <ResourceTable :loading="loading" :is-empty="paymentStore.payments.length === 0" :cols="4">
+    <ResourceTable :loading="loading" :is-empty="paymentStore.payments.length === 0" :cols="5">
       <template #head>
         <th class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
         <th class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
+        <th class="text-left px-4 py-3 font-medium text-gray-500">Method</th>
         <th class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
         <th class="text-left px-4 py-3 font-medium text-gray-500">Date</th>
       </template>
@@ -27,6 +28,7 @@
         >
           <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ payment.uid.slice(0, 12) }}</td>
           <td class="px-4 py-3 font-medium">{{ formatAmount(payment.amount, payment.currency) }}</td>
+          <td class="px-4 py-3 text-xs text-gray-500">{{ METHOD_LABELS[payment.payment_method] ?? payment.payment_method }}</td>
           <td class="px-4 py-3">
             <div class="flex items-center gap-1.5">
               <StatusBadge :status="payment.status" />
@@ -67,6 +69,12 @@ const STATUS_TABS = [
   { label: 'Cancelled', value: 'cancelled' },
   { label: 'Expired', value: 'expired' },
 ]
+
+const METHOD_LABELS: Record<string, string> = {
+  card: 'Card',
+  konbini: 'Konbini',
+  bank_transfer: 'Bank Transfer',
+}
 
 const DISPUTE_LABELS: Record<string, string> = {
   open: 'Dispute',
