@@ -97,6 +97,27 @@ module Demo
       )
       emit_event("payment.authorized", declined, created_at: 1.day.ago)
       emit_event("payment.failed",     declined, created_at: 1.day.ago + 3.seconds)
+
+      # Pending konbini payment — customer hasn't paid at the store yet
+      @merchant.transactions.create!(
+        amount: 4500, currency: "JPY", status: :pending, payment_method: :konbini,
+        idempotency_key: SecureRandom.uuid,
+        customer: @alice, customer_name: @alice.name, customer_email: @alice.email,
+        metadata: { order_id: "order_007" },
+        created_at: 2.hours.ago
+      )
+
+      # Succeeded bank transfer — network confirmed the funds arrived
+      bank_transfer = @merchant.transactions.create!(
+        amount: 32000, currency: "JPY", status: :succeeded, captured_amount: 32000,
+        payment_method: :bank_transfer,
+        idempotency_key: SecureRandom.uuid,
+        customer: @bob, customer_name: @bob.name, customer_email: @bob.email,
+        metadata: { order_id: "order_008" },
+        created_at: 2.days.ago
+      )
+      emit_event("payment.confirmed", bank_transfer, created_at: 1.day.ago)
+      emit_event("payment.succeeded", bank_transfer, created_at: 1.day.ago + 2.seconds)
     end
 
     def seed_disputes

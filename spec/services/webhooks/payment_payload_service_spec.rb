@@ -39,5 +39,15 @@ RSpec.describe Webhooks::PaymentPayloadService do
     it "includes created_at as an ISO8601 string" do
       expect(data[:created_at]).to eq(transaction.created_at.iso8601)
     end
+
+    it "includes the payment_method" do
+      konbini = create(:transaction, :konbini, merchant: merchant)
+
+      expect(described_class.call(konbini)[:payment_method]).to eq("konbini")
+    end
+
+    it "includes the provider_reference" do
+      expect(data[:provider_reference]).to eq(transaction.provider_reference)
+    end
   end
 end

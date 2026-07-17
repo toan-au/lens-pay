@@ -32,6 +32,27 @@ RSpec.describe Demo::SetupService do
       expect(statuses).to include("succeeded", "authorized", "cancelled", "declined")
     end
 
+    it "creates payments across payment methods" do
+      result = described_class.call
+      methods = result.merchant.transactions.pluck(:payment_method)
+      expect(methods).to include("card", "konbini", "bank_transfer")
+    end
+
+    it "seeds a pending konbini payment awaiting the customer" do
+      result = described_class.call
+      konbini = result.merchant.transactions.find_by(payment_method: :konbini, status: :pending)
+      expect(konbini).to be_present
+    end
+
+    it "seeds a succeeded bank transfer with confirmed and succeeded events" do
+      result = described_class.call
+      bank = result.merchant.transactions.find_by(payment_method: :bank_transfer, status: :succeeded)
+      event_types = result.merchant.webhook_events
+        .where("payload->'data'->>'id' = ?", bank.uid)
+        .pluck(:event_type)
+      expect(event_types).to include("payment.confirmed", "payment.succeeded")
+    end
+
     it "creates at least one refund" do
       result = described_class.call
       payment_ids = result.merchant.transactions.pluck(:id)
@@ -51,7 +72,8 @@ RSpec.describe Demo::SetupService do
 
     it "links webhook events to the correct payments via payload" do
       result = described_class.call
-      result.merchant.transactions.each do |payment|
+      # pending cash payments legitimately have no events yet
+      result.merchant.transactions.where.not(status: :pending).each do |payment|
         events = result.merchant.webhook_events
           .where("payload->'data'->>'id' = ?", payment.uid)
         expect(events.count).to be >= 1,
