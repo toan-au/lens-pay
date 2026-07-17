@@ -37,6 +37,10 @@ export function cancelPayment(uid: string): Promise<Payment> {
   return api.post<Payment>(`/payments/${uid}/cancel`, {})
 }
 
+export function simulateConfirmation(uid: string): Promise<Payment> {
+  return api.post<Payment>(`/payments/${uid}/simulate_confirmation`, {})
+}
+
 export function createRefund(paymentUid: string, params: {
   amount: number
   idempotency_key: string
