@@ -13,6 +13,8 @@ module Webhooks
         id: @transaction.uid,
         resource: "payment",
         status: @transaction.status,
+        payment_method: @transaction.payment_method,
+        provider_reference: @transaction.provider_reference,
         amount: @transaction.amount,
         currency: @transaction.currency,
         captured_amount: @transaction.captured_amount,

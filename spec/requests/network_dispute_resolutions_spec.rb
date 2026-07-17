@@ -7,12 +7,12 @@ RSpec.describe "Network Dispute Resolutions API", type: :request do
     ClimateControl.modify(NETWORK_SECRET: 'test-network-secret') { example.run }
   end
 
-  describe "POST /api/v1/webhooks/network/disputes/:uid/resolve" do
+  describe "POST /api/v1/webhooks/network/disputes/resolve" do
     it "resolves an open dispute as won" do
       dispute = create(:dispute)
 
-      post "/api/v1/webhooks/network/disputes/#{dispute.uid}/resolve",
-           params: { outcome: "won" },
+      post "/api/v1/webhooks/network/disputes/resolve",
+           params: { case_reference: dispute.provider_reference, outcome: "won" },
            headers: network_headers
 
       expect(response).to have_http_status(:ok)
@@ -23,8 +23,8 @@ RSpec.describe "Network Dispute Resolutions API", type: :request do
     it "resolves an open dispute as lost" do
       dispute = create(:dispute)
 
-      post "/api/v1/webhooks/network/disputes/#{dispute.uid}/resolve",
-           params: { outcome: "lost" },
+      post "/api/v1/webhooks/network/disputes/resolve",
+           params: { case_reference: dispute.provider_reference, outcome: "lost" },
            headers: network_headers
 
       expect(response).to have_http_status(:ok)
@@ -34,8 +34,8 @@ RSpec.describe "Network Dispute Resolutions API", type: :request do
     it "resolves a merchant_responded dispute" do
       dispute = create(:dispute, :merchant_responded)
 
-      post "/api/v1/webhooks/network/disputes/#{dispute.uid}/resolve",
-           params: { outcome: "won" },
+      post "/api/v1/webhooks/network/disputes/resolve",
+           params: { case_reference: dispute.provider_reference, outcome: "won" },
            headers: network_headers
 
       expect(response).to have_http_status(:ok)
@@ -45,8 +45,8 @@ RSpec.describe "Network Dispute Resolutions API", type: :request do
     it "returns 401 when the network secret is missing" do
       dispute = create(:dispute)
 
-      post "/api/v1/webhooks/network/disputes/#{dispute.uid}/resolve",
-           params: { outcome: "won" }
+      post "/api/v1/webhooks/network/disputes/resolve",
+           params: { case_reference: dispute.provider_reference, outcome: "won" }
 
       expect(response).to have_http_status(:unauthorized)
     end
@@ -54,16 +54,16 @@ RSpec.describe "Network Dispute Resolutions API", type: :request do
     it "returns 401 when the network secret is wrong" do
       dispute = create(:dispute)
 
-      post "/api/v1/webhooks/network/disputes/#{dispute.uid}/resolve",
-           params: { outcome: "won" },
+      post "/api/v1/webhooks/network/disputes/resolve",
+           params: { case_reference: dispute.provider_reference, outcome: "won" },
            headers: { 'X-Network-Secret' => 'wrong-secret' }
 
       expect(response).to have_http_status(:unauthorized)
     end
 
-    it "returns 404 when the dispute does not exist" do
-      post "/api/v1/webhooks/network/disputes/dis_nonexistent/resolve",
-           params: { outcome: "won" },
+    it "returns 404 when no dispute matches the case reference" do
+      post "/api/v1/webhooks/network/disputes/resolve",
+           params: { case_reference: "CASE-NOPE", outcome: "won" },
            headers: network_headers
 
       expect(response).to have_http_status(:not_found)
@@ -72,8 +72,8 @@ RSpec.describe "Network Dispute Resolutions API", type: :request do
     it "returns 422 when the outcome is invalid" do
       dispute = create(:dispute)
 
-      post "/api/v1/webhooks/network/disputes/#{dispute.uid}/resolve",
-           params: { outcome: "invalid" },
+      post "/api/v1/webhooks/network/disputes/resolve",
+           params: { case_reference: dispute.provider_reference, outcome: "invalid" },
            headers: network_headers
 
       expect(response).to have_http_status(:unprocessable_content)
@@ -82,8 +82,8 @@ RSpec.describe "Network Dispute Resolutions API", type: :request do
     it "returns 422 when the dispute is already resolved" do
       dispute = create(:dispute, :won)
 
-      post "/api/v1/webhooks/network/disputes/#{dispute.uid}/resolve",
-           params: { outcome: "lost" },
+      post "/api/v1/webhooks/network/disputes/resolve",
+           params: { case_reference: dispute.provider_reference, outcome: "lost" },
            headers: network_headers
 
       expect(response).to have_http_status(:unprocessable_content)

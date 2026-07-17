@@ -54,6 +54,12 @@ class Api::V1::PaymentsController < ApplicationController
     render json: serialize(result.transaction), status: result.status
   end
 
+  # Test helper: stands in for the network confirming a cash payment.
+  def simulate_confirmation
+    result = Payments::ConfirmService.call(find_payment)
+    render json: serialize(result.transaction), status: result.status
+  end
+
   private
 
   def serialize(transaction)
@@ -69,7 +75,7 @@ class Api::V1::PaymentsController < ApplicationController
   end
 
   def create_payment_params
-    params.permit(:amount, :currency, :idempotency_key, :customer_uid, metadata: {})
+    params.permit(:amount, :currency, :idempotency_key, :customer_uid, :payment_method, metadata: {})
   end
 
   def list_params

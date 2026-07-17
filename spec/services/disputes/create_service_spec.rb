@@ -6,6 +6,7 @@ RSpec.describe Disputes::CreateService do
       successful_payment = create(:transaction, status: :succeeded, amount: 5000)
       dispute_params = {
         reason: "fraudulent",
+        case_reference: "CASE-001",
         amount: 5000,
         currency: 'JPY'
       }
@@ -85,6 +86,7 @@ RSpec.describe Disputes::CreateService do
       successful_payment = create(:transaction, :succeeded, amount: 5000)
       dispute_params = {
         reason: "fraudulent",
+        case_reference: "CASE-001",
         amount: 5000,
         currency: "JPY"
       }

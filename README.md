@@ -107,6 +107,7 @@ Network-only endpoints (`POST /webhooks/network/...`) require an `X-Network-Secr
 | `GET` | `/api/v1/payments/:uid` | Fetch a payment |
 | `POST` | `/api/v1/payments/:uid/capture` | Capture an authorized payment (supports partial capture) |
 | `POST` | `/api/v1/payments/:uid/cancel` | Cancel a pending or authorized payment |
+| `POST` | `/api/v1/payments/:uid/simulate_confirmation` | Test helper: simulate the customer completing a konbini/bank transfer payment |
 | `POST` | `/api/v1/payments/:payment_uid/refunds` | Create a refund |
 | `GET` | `/api/v1/payments/:payment_uid/refunds` | List refunds for a payment |
 | `GET` | `/api/v1/payments/:uid/webhook-events` | List webhook events for a specific payment |
@@ -117,19 +118,24 @@ Network-only endpoints (`POST /webhooks/network/...`) require an `X-Network-Secr
 | `GET` | `/api/v1/webhooks` | List all received webhook events |
 | `POST` | `/api/v1/webhooks/ping` | Fire a test ping webhook |
 | `POST` | `/api/v1/webhooks/:merchant_uid` | Receive and store a signed webhook event (public sink). **Public** |
-| `POST` | `/api/v1/webhooks/network/disputes` | Card network opens a dispute (`X-Network-Secret` auth). **Network only** |
-| `POST` | `/api/v1/webhooks/network/disputes/:uid/resolve` | Card network resolves a dispute as won or lost. **Network only** |
+| `POST` | `/api/v1/webhooks/network/disputes` | Card network opens a dispute, identified by its own case reference (`X-Network-Secret` auth). **Network only** |
+| `POST` | `/api/v1/webhooks/network/disputes/resolve` | Card network resolves a dispute as won or lost by case reference. **Network only** |
+| `POST` | `/api/v1/webhooks/network/payments/confirm` | Network confirms a cash payment by provider reference. **Network only** |
 
 ---
 
 ## Payment Lifecycle
 
 ```
-pending → authorized → processing → succeeded
+card:          pending → authorized → processing → succeeded
+konbini/bank:  pending → processing → succeeded  (no authorization step)
+
 pending / authorized → cancelled
 pending / authorized / processing → declined
 pending → expired (via scheduled job)
 ```
+
+Payments carry a `payment_method` — `card` (default), `konbini`, or `bank_transfer`. Card payments go through authorization and merchant-triggered capture. Cash-based methods skip authorization entirely: the payment sits `pending` until the network confirms the customer paid (at a convenience store, or by bank transfer), then settles for the full amount. The state machine guards this per method — a card payment can never bypass capture, and a cash payment can never be captured.
 
 Merchants create a payment via `POST /payments`. The lifecycle from there is mostly processor-driven. LensPay simulates the processor with background jobs:
 
@@ -141,7 +147,7 @@ Merchants create a payment via `POST /payments`. The lifecycle from there is mos
 
 Merchant-facing transitions: `capture` and `cancel`. Everything else is processor-driven.
 
-Each payment gets an `expires_at` of 3 days from creation. This can be extended in future to support per-payment-method windows.
+Each payment gets an `expires_at` based on its method: 7 days for card (authorization hold) and bank transfer (funds arrival window), 3 days for konbini (pay-by deadline at the store).
 
 ---
 
@@ -178,6 +184,7 @@ The signature is computed over the raw request body using the merchant's `webhoo
 |-------|------|
 | `payment.authorized` | Payment authorized by processor |
 | `payment.captured` | Merchant captures an authorized payment |
+| `payment.confirmed` | Network confirms a konbini or bank transfer payment |
 | `payment.succeeded` | Captured payment fully settles |
 | `payment.failed` | Payment declined at any stage |
 | `payment.cancelled` | Merchant cancels a pending or authorized payment |
@@ -206,6 +213,12 @@ AASM enforces valid transitions at the model level. Invalid transitions raise ra
 ### Partial capture
 
 Each payment has a `captured_amount` column separate from `amount`. A merchant can capture less than the authorized amount (e.g. authorize ¥10,000, capture ¥8,000 if one item is out of stock). Only one capture per transaction is supported, which matches the standard acquirer model.
+
+### Payment methods and provider references
+
+Konbini and bank transfer aren't just labels — they have a different lifecycle (no authorization, no partial capture, settlement triggered by the network confirming the customer paid) and different expiry semantics. This mirrors how Japanese payment gateways actually work.
+
+Every payment is assigned a `provider_reference` at creation, simulating the reference the upstream network issues when a payment is registered with it. Inbound network webhooks (payment confirmation, dispute lifecycle) identify resources by these references — never by LensPay's internal uids, which the network wouldn't know. Disputes likewise store the network's own case reference, and retried network webhooks with a known reference are answered idempotently instead of duplicating records.
 
 ### Refunds as a separate model
 

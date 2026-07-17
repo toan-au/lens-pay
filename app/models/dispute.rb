@@ -12,6 +12,7 @@ class Dispute < ApplicationRecord
   validates :amount,     presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :currency,   presence: true
   validates :respond_by, presence: true
+  validates :provider_reference, presence: true, uniqueness: true
 
   scope :open_or_responded, -> { where(status: %i[open merchant_responded]) }
 

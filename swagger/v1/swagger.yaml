@@ -350,6 +350,8 @@ paths:
       summary: Open a dispute (card network)
       tags:
       - Network
+      security:
+      - network_secret: []
       parameters:
       - name: X-Network-Secret
         in: header
@@ -382,9 +384,16 @@ paths:
             schema:
               type: object
               properties:
-                payment_uid:
+                payment_reference:
                   type: string
-                  example: tr_abc123
+                  example: CRD-1A2B3C4D5E6F7788
+                  description: The network's reference for the payment (transaction
+                    provider_reference)
+                case_reference:
+                  type: string
+                  example: CASE-2026-0001
+                  description: The network's case number; retries with the same case
+                    return the existing dispute
                 reason:
                   type: string
                   enum:
@@ -400,22 +409,18 @@ paths:
                   type: string
                   example: JPY
               required:
-              - payment_uid
+              - payment_reference
+              - case_reference
               - reason
               - amount
               - currency
-  "/api/v1/webhooks/network/disputes/{uid}/resolve":
-    parameters:
-    - name: uid
-      in: path
-      description: Dispute UID
-      required: true
-      schema:
-        type: string
+  "/api/v1/webhooks/network/disputes/resolve":
     post:
       summary: Resolve a dispute (card network)
       tags:
       - Network
+      security:
+      - network_secret: []
       parameters:
       - name: X-Network-Secret
         in: header
@@ -448,6 +453,10 @@ paths:
             schema:
               type: object
               properties:
+                case_reference:
+                  type: string
+                  example: CASE-2026-0001
+                  description: The network's case number from dispute opening
                 outcome:
                   type: string
                   enum:
@@ -455,6 +464,7 @@ paths:
                   - lost
                   example: won
               required:
+              - case_reference
               - outcome
   "/api/v1/merchants":
     post:
@@ -559,6 +569,57 @@ paths:
                 webhook_url:
                   type: string
                   example: https://acme.com/webhooks
+  "/api/v1/webhooks/network/payments/confirm":
+    post:
+      summary: Confirm a cash payment (card network)
+      tags:
+      - Network
+      security:
+      - network_secret: []
+      parameters:
+      - name: X-Network-Secret
+        in: header
+        required: true
+        description: Shared secret authenticating the card network
+        schema:
+          type: string
+      responses:
+        '200':
+          description: payment confirmed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/payment"
+        '422':
+          description: not confirmable (card payment or wrong state)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+        '404':
+          description: unknown reference
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+        '401':
+          description: invalid network secret
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference:
+                  type: string
+                  example: KNB-1A2B3C4D5E6F7788
+                  description: The network's reference for the payment (provider_reference)
+              required:
+              - reference
   "/api/v1/payments":
     post:
       summary: Create a payment
@@ -608,6 +669,13 @@ paths:
                   type: string
                   example: cus_abc123
                   description: UID of an existing customer to attach to this payment
+                payment_method:
+                  type: string
+                  enum:
+                  - card
+                  - konbini
+                  - bank_transfer
+                  description: Defaults to card
               required:
               - amount
               - currency
@@ -759,6 +827,47 @@ paths:
                 "$ref": "#/components/schemas/payment"
         '422':
           description: invalid transition
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+        '404':
+          description: payment not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+  "/api/v1/payments/{uid}/simulate_confirmation":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Simulate the customer completing a cash payment (test helper)
+      tags:
+      - Payment Transitions
+      security:
+      - bearer_auth: []
+      description: Stands in for the network confirming a konbini or bank transfer
+        payment. Card payments are rejected.
+      responses:
+        '200':
+          description: payment confirmed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/payment"
+        '422':
+          description: not a confirmable payment
           content:
             application/json:
               schema:
@@ -1040,6 +1149,11 @@ components:
     bearer_auth:
       type: http
       scheme: bearer
+    network_secret:
+      type: apiKey
+      name: X-Network-Secret
+      in: header
+      description: Shared secret authenticating the simulated card network
   schemas:
     error:
       type: object
@@ -1135,6 +1249,14 @@ components:
           - declined
           - cancelled
           - expired
+        payment_method:
+          type: string
+          enum:
+          - card
+          - konbini
+          - bank_transfer
+          description: Cash methods (konbini, bank_transfer) skip authorization and
+            settle when the network confirms payment
         captured_amount:
           type: integer
           nullable: true
@@ -1153,6 +1275,8 @@ components:
         provider_reference:
           type: string
           nullable: true
+          description: The upstream network's reference for this payment; inbound
+            network webhooks identify payments by it
         metadata:
           type: object
           nullable: true
@@ -1337,6 +1461,10 @@ components:
           - merchant_responded
           - won
           - lost
+        provider_reference:
+          type: string
+          nullable: true
+          description: The network's case number
         respond_by:
           type: string
           format: date-time

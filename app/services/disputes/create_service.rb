@@ -8,6 +8,10 @@ module Disputes
     end
 
     def perform
+      # Networks retry their webhooks; the same case must not open twice.
+      existing = Dispute.find_by(provider_reference: @params[:case_reference])
+      return Result.new(dispute: existing, status: :ok) if existing
+
       validate!
 
       @dispute = @transaction.disputes.new(
@@ -15,6 +19,7 @@ module Disputes
         reason:     @params[:reason],
         amount:     @params[:amount],
         currency:   @params[:currency],
+        provider_reference: @params[:case_reference],
         respond_by: 7.days.from_now
       )
 

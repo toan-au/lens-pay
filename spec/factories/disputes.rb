@@ -5,6 +5,7 @@ FactoryBot.define do
     amount { 500 }
     currency { 'JPY' }
     reason { 'fraudulent' }
+    sequence(:provider_reference) { |n| "CASE-#{n.to_s.rjust(4, '0')}" }
     status { :open }
     respond_by { 7.days.from_now }
 

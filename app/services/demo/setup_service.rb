@@ -2,6 +2,12 @@ module Demo
   class SetupService < ApplicationService
     Result = Data.define(:merchant, :api_key)
 
+    BULK_PAYMENT_COUNT = 60
+
+    def initialize(bulk_count: BULK_PAYMENT_COUNT)
+      @bulk_count = bulk_count
+    end
+
     def perform
       @merchant = Merchant.create!(
         name: "Demo Store",
@@ -17,6 +23,7 @@ module Demo
       seed_customers
       seed_payments
       seed_disputes
+      seed_bulk_payments
 
       Result.new(merchant: @merchant, api_key:)
     end
@@ -97,11 +104,33 @@ module Demo
       )
       emit_event("payment.authorized", declined, created_at: 1.day.ago)
       emit_event("payment.failed",     declined, created_at: 1.day.ago + 3.seconds)
+
+      # Pending konbini payment — customer hasn't paid at the store yet
+      @merchant.transactions.create!(
+        amount: 4500, currency: "JPY", status: :pending, payment_method: :konbini,
+        idempotency_key: SecureRandom.uuid,
+        customer: @alice, customer_name: @alice.name, customer_email: @alice.email,
+        metadata: { order_id: "order_007" },
+        created_at: 2.hours.ago
+      )
+
+      # Succeeded bank transfer — network confirmed the funds arrived
+      bank_transfer = @merchant.transactions.create!(
+        amount: 32000, currency: "JPY", status: :succeeded, captured_amount: 32000,
+        payment_method: :bank_transfer,
+        idempotency_key: SecureRandom.uuid,
+        customer: @bob, customer_name: @bob.name, customer_email: @bob.email,
+        metadata: { order_id: "order_008" },
+        created_at: 2.days.ago
+      )
+      emit_event("payment.confirmed", bank_transfer, created_at: 1.day.ago)
+      emit_event("payment.succeeded", bank_transfer, created_at: 1.day.ago + 2.seconds)
     end
 
     def seed_disputes
       # Won dispute — fraudulent chargeback, merchant provided evidence, bank sided with merchant
       won_dispute = @succeeded_with_refund.disputes.create!(
+        provider_reference: "CASE-#{SecureRandom.hex(6).upcase}",
         merchant:   @merchant,
         reason:     "fraudulent",
         amount:     15000,
@@ -117,6 +146,7 @@ module Demo
 
       # Merchant responded — unrecognized charge, evidence submitted, awaiting bank decision
       responded_dispute = @succeeded_partial.disputes.create!(
+        provider_reference: "CASE-#{SecureRandom.hex(6).upcase}",
         merchant:   @merchant,
         reason:     "unrecognized",
         amount:     8999,
@@ -143,6 +173,7 @@ module Demo
       emit_event("payment.authorized", open_payment, created_at: 2.days.ago)
       emit_event("payment.captured",   open_payment, created_at: 2.days.ago + 2.seconds)
       open_dispute = open_payment.disputes.create!(
+        provider_reference: "CASE-#{SecureRandom.hex(6).upcase}",
         merchant:   @merchant,
         reason:     "product_not_received",
         amount:     12000,
@@ -164,6 +195,7 @@ module Demo
       emit_event("payment.authorized", lost_payment, created_at: 10.days.ago)
       emit_event("payment.captured",   lost_payment, created_at: 10.days.ago + 2.seconds)
       lost_dispute = lost_payment.disputes.create!(
+        provider_reference: "CASE-#{SecureRandom.hex(6).upcase}",
         merchant:   @merchant,
         reason:     "duplicate",
         amount:     6500,
@@ -175,6 +207,64 @@ module Demo
       )
       emit_event("dispute.opened", lost_dispute, created_at: 10.days.ago)
       emit_event("dispute.lost",   lost_dispute, created_at: 1.day.ago)
+    end
+
+    # Randomized filler so lists paginate and filters have data on every tab.
+    def seed_bulk_payments
+      @bulk_count.times do
+        created_at = rand(0..29).days.ago - rand(0..23).hours - rand(0..59).minutes
+        customer = [ @alice, @bob, nil ].sample
+
+        payment = @merchant.transactions.create!(
+          amount: [ rand(5..30), rand(30..150), rand(150..800) ].sample * 100,
+          currency: "JPY",
+          payment_method: %w[card card card card card card konbini konbini bank_transfer].sample,
+          idempotency_key: SecureRandom.uuid,
+          customer:, customer_name: customer&.name, customer_email: customer&.email,
+          metadata: { order_id: "order_#{SecureRandom.hex(4)}" },
+          created_at:
+        )
+
+        payment.card? ? advance_bulk_card(payment, created_at) : advance_bulk_cash(payment, created_at)
+      end
+    end
+
+    def advance_bulk_card(payment, created_at)
+      case rand(100)
+      when 0..69
+        payment.update!(status: :succeeded, captured_amount: payment.amount)
+        emit_event("payment.authorized", payment, created_at: created_at + 2.seconds)
+        emit_event("payment.captured",   payment, created_at: created_at + 1.hour)
+        emit_event("payment.succeeded",  payment, created_at: created_at + 1.hour + 2.seconds)
+      when 70..84
+        payment.update!(status: :declined)
+        emit_event("payment.failed", payment, created_at: created_at + 2.seconds)
+      when 85..93
+        payment.update!(status: :cancelled)
+        emit_event("payment.authorized", payment, created_at: created_at + 2.seconds)
+        emit_event("payment.cancelled",  payment, created_at: created_at + 30.minutes)
+      else
+        payment.update!(status: :authorized)
+        emit_event("payment.authorized", payment, created_at: created_at + 2.seconds)
+      end
+    end
+
+    def advance_bulk_cash(payment, created_at)
+      case rand(100)
+      when 0..74
+        payment.update!(status: :succeeded, captured_amount: payment.amount)
+        emit_event("payment.confirmed", payment, created_at: created_at + 6.hours)
+        emit_event("payment.succeeded", payment, created_at: created_at + 6.hours + 2.seconds)
+      when 75..89
+        payment.update!(status: :expired)
+        emit_event("payment.expired", payment, created_at: created_at + 3.days)
+      else
+        # old unpaid cash payments would have expired by now, not still be pending
+        if created_at < 2.days.ago
+          payment.update!(status: :expired)
+          emit_event("payment.expired", payment, created_at: created_at + 3.days)
+        end
+      end
     end
 
     def emit_event(event_type, resource, created_at:)

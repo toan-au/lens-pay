@@ -12,9 +12,25 @@ class Transaction < ApplicationRecord
 
   before_create :setup_transaction
 
-  EXPIRY_WINDOW = 3.days
+  # card: auth hold, konbini: pay-by deadline, bank_transfer: funds arrival window
+  EXPIRY_WINDOWS = {
+    "card" => 7.days,
+    "konbini" => 3.days,
+    "bank_transfer" => 7.days
+  }.freeze
+
+  # The upstream network's reference; inbound network webhooks identify payments by this.
+  PROVIDER_REFERENCE_PREFIXES = {
+    "card" => "CRD",
+    "konbini" => "KNB",
+    "bank_transfer" => "BNK"
+  }.freeze
 
   enum :status, { pending: 0, authorized: 1, processing: 2, succeeded: 3, declined: 4, cancelled: 5, expired: 6 }
+
+  # validate: true because this comes from user params — invalid values must
+  # be a 422, not an ArgumentError.
+  enum :payment_method, { card: 0, konbini: 1, bank_transfer: 2 }, validate: true
 
   aasm column: :status, enum: true, whiny_transitions: true do
     state :pending, initial: true
@@ -31,6 +47,11 @@ class Transaction < ApplicationRecord
 
     event :capture do
       transitions from: :authorized, to: :processing
+    end
+
+    # Cash methods skip authorization; guarded so card can't bypass capture.
+    event :confirm do
+      transitions from: :pending, to: :processing, guard: :cash_based?
     end
 
     event :complete do
@@ -55,6 +76,10 @@ class Transaction < ApplicationRecord
     super({ except: %i[id merchant_id customer_id] }.merge(options || {}))
   end
 
+  def cash_based?
+    konbini? || bank_transfer?
+  end
+
   def refundable_amount
     captured_amount - self.refunds.where(status: [ :pending, :succeeded ]).sum(:amount)
   end
@@ -67,7 +92,8 @@ class Transaction < ApplicationRecord
 
   private def setup_transaction
     self.uid = "tr_#{SecureRandom.uuid}"
-    self.expires_at ||= EXPIRY_WINDOW.from_now
+    self.expires_at ||= EXPIRY_WINDOWS.fetch(payment_method).from_now
+    self.provider_reference ||= "#{PROVIDER_REFERENCE_PREFIXES.fetch(payment_method)}-#{SecureRandom.hex(8).upcase}"
     if customer
       self.customer_name = customer.name
       self.customer_email = customer.email

@@ -69,6 +69,12 @@ RSpec.configure do |config|
           bearer_auth: {
             type: :http,
             scheme: :bearer
+          },
+          network_secret: {
+            type: :apiKey,
+            name: 'X-Network-Secret',
+            in: :header,
+            description: 'Shared secret authenticating the simulated card network'
           }
         },
         schemas: {
@@ -117,11 +123,12 @@ RSpec.configure do |config|
               amount: { type: :integer, description: 'Amount in smallest currency unit', example: 1000 },
               currency: { type: :string, description: 'ISO 4217 code', example: 'JPY' },
               status: { type: :string, enum: %w[pending authorized processing succeeded declined cancelled expired] },
+              payment_method: { type: :string, enum: %w[card konbini bank_transfer], description: 'Cash methods (konbini, bank_transfer) skip authorization and settle when the network confirms payment' },
               captured_amount: { type: :integer, nullable: true, description: 'Set on capture; may be less than amount' },
               idempotency_key: { type: :string, example: 'order_abc_123' },
               customer_name: { type: :string, nullable: true, description: 'Snapshot taken at creation' },
               customer_email: { type: :string, nullable: true, description: 'Snapshot taken at creation' },
-              provider_reference: { type: :string, nullable: true },
+              provider_reference: { type: :string, nullable: true, description: "The upstream network's reference for this payment; inbound network webhooks identify payments by it" },
               metadata: { type: :object, nullable: true, description: 'Free-form merchant-supplied context' },
               customer: { '$ref' => '#/components/schemas/payment_customer' },
               dispute: { '$ref' => '#/components/schemas/dispute_summary' },
@@ -202,6 +209,7 @@ RSpec.configure do |config|
               currency: { type: :string, example: 'JPY' },
               reason: { type: :string, enum: Dispute::REASONS },
               status: { type: :string, enum: %w[open merchant_responded won lost] },
+              provider_reference: { type: :string, nullable: true, description: "The network's case number" },
               respond_by: { type: :string, format: 'date-time', description: 'Evidence deadline' },
               resolved_at: { type: :string, format: 'date-time', nullable: true },
               dispute_responses: { type: :array, items: { '$ref' => '#/components/schemas/dispute_response' }, description: 'Present on the dispute detail payload' },
