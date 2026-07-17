@@ -843,6 +843,47 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/error"
+  "/api/v1/payments/{uid}/simulate_confirmation":
+    parameters:
+    - name: uid
+      in: path
+      description: Payment UID
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Simulate the customer completing a cash payment (test helper)
+      tags:
+      - Payment Transitions
+      security:
+      - bearer_auth: []
+      description: Stands in for the network confirming a konbini or bank transfer
+        payment. Card payments are rejected.
+      responses:
+        '200':
+          description: payment confirmed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/payment"
+        '422':
+          description: not a confirmable payment
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+        '404':
+          description: payment not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
   "/api/v1/payments/{uid}/webhook-events":
     parameters:
     - name: uid

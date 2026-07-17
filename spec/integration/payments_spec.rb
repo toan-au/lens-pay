@@ -189,6 +189,42 @@ RSpec.describe 'Payments API', type: :request do
     end
   end
 
+  path '/api/v1/payments/{uid}/simulate_confirmation' do
+    parameter name: :uid, in: :path, type: :string, description: 'Payment UID'
+
+    post 'Simulate the customer completing a cash payment (test helper)' do
+      tags 'Payment Transitions'
+      produces 'application/json'
+      security [ { bearer_auth: [] } ]
+      description 'Stands in for the network confirming a konbini or bank transfer payment. Card payments are rejected.'
+
+      response '200', 'payment confirmed' do
+        schema '$ref' => '#/components/schemas/payment'
+        let(:uid) { create(:transaction, :konbini, merchant: merchant).uid }
+        run_test!
+      end
+
+      response '422', 'not a confirmable payment' do
+        schema '$ref' => '#/components/schemas/error'
+        let(:uid) { create(:transaction, merchant: merchant).uid }
+        run_test!
+      end
+
+      response '404', 'payment not found' do
+        schema '$ref' => '#/components/schemas/error'
+        let(:uid) { 'tr_nonexistent' }
+        run_test!
+      end
+
+      response '401', 'unauthorized' do
+        schema '$ref' => '#/components/schemas/error'
+        let(:Authorization) { 'Bearer invalid' }
+        let(:uid) { 'tr_any' }
+        run_test!
+      end
+    end
+  end
+
   path '/api/v1/payments/{uid}/webhook-events' do
     parameter name: :uid, in: :path, type: :string, description: 'Payment UID'
 
