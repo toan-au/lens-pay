@@ -17,7 +17,8 @@ RSpec.describe 'Payments API', type: :request do
           amount: { type: :integer, example: 1000, description: 'Amount in smallest currency unit (e.g. yen, cents)' },
           currency: { type: :string, example: 'JPY', description: 'ISO 4217 currency code' },
           idempotency_key: { type: :string, example: 'order_abc_123', description: 'Unique key to prevent duplicate payments' },
-          customer_uid: { type: :string, example: 'cus_abc123', description: 'UID of an existing customer to attach to this payment' }
+          customer_uid: { type: :string, example: 'cus_abc123', description: 'UID of an existing customer to attach to this payment' },
+          payment_method: { type: :string, enum: %w[card konbini bank_transfer], description: 'Defaults to card' }
         },
         required: %w[amount currency idempotency_key]
       }

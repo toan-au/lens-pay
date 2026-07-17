@@ -107,6 +107,7 @@ RSpec.describe 'Disputes API', type: :request do
       tags 'Network'
       consumes 'application/json'
       produces 'application/json'
+      security [ { network_secret: [] } ]
 
       parameter name: :'X-Network-Secret', in: :header, type: :string, required: true,
                 description: 'Shared secret authenticating the card network'
@@ -114,12 +115,13 @@ RSpec.describe 'Disputes API', type: :request do
       parameter name: :body, in: :body, schema: {
         type: :object,
         properties: {
-          payment_uid: { type: :string, example: 'tr_abc123' },
-          reason:      { type: :string, enum: %w[fraudulent unrecognized duplicate product_not_received product_unacceptable] },
-          amount:      { type: :integer, example: 5000 },
-          currency:    { type: :string, example: 'JPY' }
+          payment_reference: { type: :string, example: 'CRD-1A2B3C4D5E6F7788', description: "The network's reference for the payment (transaction provider_reference)" },
+          case_reference:    { type: :string, example: 'CASE-2026-0001', description: "The network's case number; retries with the same case return the existing dispute" },
+          reason:            { type: :string, enum: %w[fraudulent unrecognized duplicate product_not_received product_unacceptable] },
+          amount:            { type: :integer, example: 5000 },
+          currency:          { type: :string, example: 'JPY' }
         },
-        required: %w[payment_uid reason amount currency]
+        required: %w[payment_reference case_reference reason amount currency]
       }
 
       around { |ex| ClimateControl.modify(NETWORK_SECRET: 'test-secret') { ex.run } }
@@ -127,7 +129,7 @@ RSpec.describe 'Disputes API', type: :request do
       response '201', 'dispute opened' do
         schema '$ref' => '#/components/schemas/dispute'
         let(:payment) { create(:transaction, :succeeded, amount: 5000, currency: 'JPY') }
-        let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
+        let(:body) { { payment_reference: payment.provider_reference, case_reference: 'CASE-0100', reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
         let(:'X-Network-Secret') { 'test-secret' }
         run_test!
       end
@@ -135,7 +137,7 @@ RSpec.describe 'Disputes API', type: :request do
       response '401', 'invalid network secret' do
         schema '$ref' => '#/components/schemas/error'
         let(:payment) { create(:transaction, :succeeded, amount: 5000, currency: 'JPY') }
-        let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
+        let(:body) { { payment_reference: payment.provider_reference, case_reference: 'CASE-0100', reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
         let(:'X-Network-Secret') { 'wrong-secret' }
         run_test!
       end
@@ -143,20 +145,19 @@ RSpec.describe 'Disputes API', type: :request do
       response '422', 'invalid dispute' do
         schema '$ref' => '#/components/schemas/error'
         let(:payment) { create(:transaction, amount: 5000, currency: 'JPY') }
-        let(:body) { { payment_uid: payment.uid, reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
+        let(:body) { { payment_reference: payment.provider_reference, case_reference: 'CASE-0100', reason: 'fraudulent', amount: 5000, currency: 'JPY' } }
         let(:'X-Network-Secret') { 'test-secret' }
         run_test!
       end
     end
   end
 
-  path '/api/v1/webhooks/network/disputes/{uid}/resolve' do
-    parameter name: :uid, in: :path, type: :string, description: 'Dispute UID'
-
+  path '/api/v1/webhooks/network/disputes/resolve' do
     post 'Resolve a dispute (card network)' do
       tags 'Network'
       consumes 'application/json'
       produces 'application/json'
+      security [ { network_secret: [] } ]
 
       parameter name: :'X-Network-Secret', in: :header, type: :string, required: true,
                 description: 'Shared secret authenticating the card network'
@@ -164,33 +165,31 @@ RSpec.describe 'Disputes API', type: :request do
       parameter name: :body, in: :body, schema: {
         type: :object,
         properties: {
+          case_reference: { type: :string, example: 'CASE-2026-0001', description: "The network's case number from dispute opening" },
           outcome: { type: :string, enum: %w[won lost], example: 'won' }
         },
-        required: %w[outcome]
+        required: %w[case_reference outcome]
       }
 
       around { |ex| ClimateControl.modify(NETWORK_SECRET: 'test-secret') { ex.run } }
 
       response '200', 'dispute resolved' do
         schema '$ref' => '#/components/schemas/dispute'
-        let(:uid) { create(:dispute, merchant: merchant).uid }
-        let(:body) { { outcome: 'won' } }
+        let(:body) { { case_reference: create(:dispute, merchant: merchant).provider_reference, outcome: 'won' } }
         let(:'X-Network-Secret') { 'test-secret' }
         run_test!
       end
 
       response '401', 'invalid network secret' do
         schema '$ref' => '#/components/schemas/error'
-        let(:uid) { create(:dispute, merchant: merchant).uid }
-        let(:body) { { outcome: 'won' } }
+        let(:body) { { case_reference: create(:dispute, merchant: merchant).provider_reference, outcome: 'won' } }
         let(:'X-Network-Secret') { 'wrong-secret' }
         run_test!
       end
 
       response '422', 'already resolved' do
         schema '$ref' => '#/components/schemas/error'
-        let(:uid) { create(:dispute, :won, merchant: merchant).uid }
-        let(:body) { { outcome: 'lost' } }
+        let(:body) { { case_reference: create(:dispute, :won, merchant: merchant).provider_reference, outcome: 'lost' } }
         let(:'X-Network-Secret') { 'test-secret' }
         run_test!
       end

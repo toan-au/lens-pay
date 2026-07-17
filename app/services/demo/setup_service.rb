@@ -102,6 +102,7 @@ module Demo
     def seed_disputes
       # Won dispute — fraudulent chargeback, merchant provided evidence, bank sided with merchant
       won_dispute = @succeeded_with_refund.disputes.create!(
+        provider_reference: "CASE-#{SecureRandom.hex(6).upcase}",
         merchant:   @merchant,
         reason:     "fraudulent",
         amount:     15000,
@@ -117,6 +118,7 @@ module Demo
 
       # Merchant responded — unrecognized charge, evidence submitted, awaiting bank decision
       responded_dispute = @succeeded_partial.disputes.create!(
+        provider_reference: "CASE-#{SecureRandom.hex(6).upcase}",
         merchant:   @merchant,
         reason:     "unrecognized",
         amount:     8999,
@@ -143,6 +145,7 @@ module Demo
       emit_event("payment.authorized", open_payment, created_at: 2.days.ago)
       emit_event("payment.captured",   open_payment, created_at: 2.days.ago + 2.seconds)
       open_dispute = open_payment.disputes.create!(
+        provider_reference: "CASE-#{SecureRandom.hex(6).upcase}",
         merchant:   @merchant,
         reason:     "product_not_received",
         amount:     12000,
@@ -164,6 +167,7 @@ module Demo
       emit_event("payment.authorized", lost_payment, created_at: 10.days.ago)
       emit_event("payment.captured",   lost_payment, created_at: 10.days.ago + 2.seconds)
       lost_dispute = lost_payment.disputes.create!(
+        provider_reference: "CASE-#{SecureRandom.hex(6).upcase}",
         merchant:   @merchant,
         reason:     "duplicate",
         amount:     6500,

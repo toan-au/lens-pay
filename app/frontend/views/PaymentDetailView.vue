@@ -25,6 +25,12 @@
         <DetailRow label="Currency">
           <span class="text-sm font-medium">{{ payment.currency }}</span>
         </DetailRow>
+        <DetailRow label="Method">
+          <span class="text-sm font-medium">{{ METHOD_LABELS[payment.payment_method] ?? payment.payment_method }}</span>
+        </DetailRow>
+        <DetailRow v-if="payment.provider_reference" label="Network reference">
+          <span class="text-xs font-mono text-gray-600">{{ payment.provider_reference }}</span>
+        </DetailRow>
         <DetailRow label="Idempotency key">
           <span class="text-xs font-mono text-gray-600">{{ payment.idempotency_key }}</span>
         </DetailRow>
@@ -79,6 +85,20 @@
         <span class="animate-pulse">●</span> {{ pollingMessage }}
       </div>
 
+      <div v-if="isAwaitingCustomerPayment" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
+        <h2 class="font-semibold">Awaiting customer payment</h2>
+        <p class="text-sm text-gray-500">
+          {{ payment.payment_method === 'konbini'
+            ? 'The customer has until the expiry date to pay at a convenience store.'
+            : 'The customer has until the expiry date to complete the bank transfer.' }}
+          In a real integration the network notifies LensPay when payment arrives — use the button to simulate that.
+        </p>
+        <p v-if="simulateError" class="text-sm text-red-500">{{ simulateError }}</p>
+        <button @click="handleSimulate" :disabled="simulating" class="btn-primary w-fit">
+          {{ simulating ? 'Confirming...' : 'Simulate customer paying' }}
+        </button>
+      </div>
+
       <CaptureForm
         v-if="payment.status === 'authorized'"
         :amount="payment.amount"
@@ -124,6 +144,12 @@ import WebhookEventsPanel from '../components/features/WebhookEventsPanel.vue'
 
 const POLL_STATUSES = ['pending', 'processing']
 
+const METHOD_LABELS: Record<string, string> = {
+  card: 'Card',
+  konbini: 'Konbini',
+  bank_transfer: 'Bank Transfer',
+}
+
 const DISPUTE_REASON_LABELS: Record<string, string> = {
   fraudulent: 'Fraudulent',
   unrecognized: 'Unrecognized',
@@ -142,15 +168,25 @@ const isDisputeOverdue = computed(() =>
 )
 
 const { loading: cancelling, error: cancelError, run: runCancel } = useAsyncAction()
+const { loading: simulating, error: simulateError, run: runSimulate } = useAsyncAction()
+
+const isCashMethod = computed(() =>
+  payment.value?.payment_method === 'konbini' || payment.value?.payment_method === 'bank_transfer'
+)
+const isAwaitingCustomerPayment = computed(() =>
+  isCashMethod.value && payment.value?.status === 'pending'
+)
 
 const pollingMessage = computed(() => {
   if (payment.value?.status === 'pending') return 'Simulating card network authorization...'
-  if (payment.value?.status === 'processing') return 'Simulating card network settlement...'
+  if (payment.value?.status === 'processing') return 'Simulating network settlement...'
   if (paymentStore.currentRefunds.some(r => r.status === 'pending')) return 'Processing refund...'
   return 'Waiting...'
 })
 
 function needsPolling() {
+  // Pending cash payments wait for the customer, not a background job.
+  if (isAwaitingCustomerPayment.value) return paymentStore.currentRefunds.some(r => r.status === 'pending')
   return POLL_STATUSES.includes(payment.value?.status ?? '') ||
     paymentStore.currentRefunds.some(r => r.status === 'pending')
 }
@@ -164,6 +200,13 @@ const { active: isPolling, start: startPolling, stop: stopPolling } = usePolling
 async function handleCapture(amount?: number) {
   await paymentStore.capture(uid, amount)
   if (needsPolling()) startPolling()
+}
+
+async function handleSimulate() {
+  await runSimulate(async () => {
+    await paymentStore.simulateCashPayment(uid)
+    if (needsPolling()) startPolling()
+  })
 }
 
 async function handleCancel() {

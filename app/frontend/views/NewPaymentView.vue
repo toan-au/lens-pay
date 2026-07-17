@@ -36,6 +36,25 @@
         </div>
 
         <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium">Payment Method</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button
+              v-for="m in PAYMENT_METHODS"
+              :key="m.value"
+              type="button"
+              @click="form.payment_method = m.value"
+              class="rounded-lg border px-3 py-2 text-sm cursor-pointer transition-colors"
+              :class="form.payment_method === m.value
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-medium'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'"
+            >
+              {{ m.label }}
+            </button>
+          </div>
+          <p class="text-xs text-gray-400">{{ methodHint }}</p>
+        </div>
+
+        <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Idempotency Key</label>
           <div class="flex gap-2">
             <input v-model="form.idempotency_key" type="text" required class="input flex-1 font-mono text-xs" />
@@ -83,6 +102,7 @@ import { usePaymentStore } from '../stores/payments'
 import { ZERO_DECIMAL_CURRENCIES, formatAmount, toMinorUnits } from '../utils/format'
 import CustomerPicker from '../components/features/CustomerPicker.vue'
 import AmountButton from '../components/ui/AmountButton.vue'
+import type { PaymentMethod } from '../api/types'
 
 const router = useRouter()
 const merchantStore = useMerchantStore()
@@ -100,10 +120,23 @@ const currencyHint = computed(() =>
     : `Enter the natural amount (e.g. 10.00 = $10.00)`
 )
 
+const PAYMENT_METHODS = [
+  { value: 'card', label: 'Card' },
+  { value: 'konbini', label: 'Konbini' },
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+] as const
+
 const form = reactive({
   amount: null as number | null,
   idempotency_key: crypto.randomUUID(),
+  payment_method: 'card' as PaymentMethod,
 })
+
+const methodHint = computed(() => ({
+  card: 'Authorized by the card network, then captured by you.',
+  konbini: 'Customer pays cash at a convenience store within 3 days. No card authorization.',
+  bank_transfer: 'Customer wires funds within 7 days. No card authorization.',
+}[form.payment_method]))
 
 const metadataRows = reactive<{ key: string; value: string }[]>([
   { key: 'order_id', value: 'order_demo_001' },
@@ -130,6 +163,7 @@ async function handleSubmit() {
       amount: toMinorUnits(form.amount!, currency.value),
       currency: currency.value,
       idempotency_key: form.idempotency_key,
+      payment_method: form.payment_method,
       ...(customer_uid && { customer_uid }),
       ...(Object.keys(metadata).length > 0 && { metadata }),
     })

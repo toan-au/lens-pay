@@ -21,11 +21,15 @@ export interface PaymentCustomer {
   email: string
 }
 
+export type PaymentMethod = 'card' | 'konbini' | 'bank_transfer'
+
 export interface Payment {
   uid: string
   amount: number
   currency: string
   status: 'pending' | 'authorized' | 'processing' | 'succeeded' | 'declined' | 'cancelled' | 'expired'
+  payment_method: PaymentMethod
+  provider_reference: string | null
   captured_amount: number | null
   idempotency_key: string
   merchant_uid: string

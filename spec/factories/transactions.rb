@@ -2,8 +2,17 @@ FactoryBot.define do
   factory :transaction do
     amount { 1000 }
     currency { "JPY" }
+    payment_method { :card }
     sequence(:idempotency_key) { |n| "test_key_#{n}" }
     association :merchant
+
+    trait :konbini do
+      payment_method { :konbini }
+    end
+
+    trait :bank_transfer do
+      payment_method { :bank_transfer }
+    end
 
     trait :authorized do
       status { :authorized }

@@ -12,7 +12,8 @@ RSpec.describe "Network Disputes API", type: :request do
       payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 5000,
         currency: "JPY"
@@ -26,7 +27,8 @@ RSpec.describe "Network Disputes API", type: :request do
       payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 5000,
         currency: "JPY"
@@ -40,11 +42,43 @@ RSpec.describe "Network Disputes API", type: :request do
       expect(body["respond_by"]).to be_present
     end
 
+    it "stores the network's case reference on the dispute" do
+      payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
+
+      post "/api/v1/webhooks/network/disputes", params: {
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
+        reason: "fraudulent",
+        amount: 5000,
+        currency: "JPY"
+      }, headers: network_headers
+
+      expect(Dispute.last.provider_reference).to eq("CASE-001")
+    end
+
+    it "returns the existing dispute when the network retries the same case" do
+      payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
+      params = {
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
+        reason: "fraudulent",
+        amount: 5000,
+        currency: "JPY"
+      }
+
+      post "/api/v1/webhooks/network/disputes", params: params, headers: network_headers
+      post "/api/v1/webhooks/network/disputes", params: params, headers: network_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(Dispute.count).to eq(1)
+    end
+
     it "returns 401 when the network secret is missing" do
       payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 5000,
         currency: "JPY"
@@ -57,7 +91,8 @@ RSpec.describe "Network Disputes API", type: :request do
       payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 5000,
         currency: "JPY"
@@ -68,7 +103,8 @@ RSpec.describe "Network Disputes API", type: :request do
 
     it "returns 404 when the payment does not exist" do
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: "tr_nonexistent",
+        payment_reference: "CRD-NOPE",
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 5000,
         currency: "JPY"
@@ -81,7 +117,8 @@ RSpec.describe "Network Disputes API", type: :request do
       payment = create(:transaction)
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 1000,
         currency: "JPY"
@@ -94,7 +131,8 @@ RSpec.describe "Network Disputes API", type: :request do
       payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 99999,
         currency: "JPY"
@@ -107,7 +145,8 @@ RSpec.describe "Network Disputes API", type: :request do
       payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 5000,
         currency: "USD"
@@ -120,7 +159,8 @@ RSpec.describe "Network Disputes API", type: :request do
       payment = create(:transaction, :succeeded, amount: 5000, currency: "JPY")
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "not_a_reason",
         amount: 5000,
         currency: "JPY"
@@ -134,7 +174,8 @@ RSpec.describe "Network Disputes API", type: :request do
       create(:dispute, payment: payment, merchant: payment.merchant)
 
       post "/api/v1/webhooks/network/disputes", params: {
-        payment_uid: payment.uid,
+        payment_reference: payment.provider_reference,
+        case_reference: "CASE-001",
         reason: "fraudulent",
         amount: 5000,
         currency: "JPY"

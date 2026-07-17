@@ -1,11 +1,12 @@
 import { api } from './client'
-import type { Payment, PaymentListResponse, Refund, RefundListResponse } from './types'
+import type { Payment, PaymentListResponse, PaymentMethod, Refund, RefundListResponse } from './types'
 
 export function createPayment(params: {
   amount: number
   currency: string
   idempotency_key: string
   customer_uid?: string
+  payment_method?: PaymentMethod
   metadata?: Record<string, string>
 }): Promise<Payment> {
   return api.post<Payment>('/payments', params)
@@ -34,6 +35,10 @@ export function capturePayment(uid: string, capturedAmount?: number): Promise<Pa
 
 export function cancelPayment(uid: string): Promise<Payment> {
   return api.post<Payment>(`/payments/${uid}/cancel`, {})
+}
+
+export function simulateConfirmation(uid: string): Promise<Payment> {
+  return api.post<Payment>(`/payments/${uid}/simulate_confirmation`, {})
 }
 
 export function createRefund(paymentUid: string, params: {

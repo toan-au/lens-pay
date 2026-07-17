@@ -30,7 +30,9 @@ module Payments
         return Result.new(transaction: find_existing, status: :ok)
       end
 
-      AuthorizePaymentJob.perform_later(@transaction.id, request_id: Current.request_id)
+      # Only card payments have an authorization step. Konbini and bank
+      # transfer stay pending until the network confirms the customer paid.
+      AuthorizePaymentJob.perform_later(@transaction.id, request_id: Current.request_id) if @transaction.card?
 
       Result.new(transaction: @transaction, status: :created)
     end
