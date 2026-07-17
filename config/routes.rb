@@ -19,6 +19,7 @@ Rails.application.routes.draw do
         member do
           post :capture
           post :cancel
+          post :simulate_confirmation
           get "webhook-events", to: "webhooks#payment_events"
         end
         resources :refunds, only: [ :index, :create ], controller: "payment_refunds"

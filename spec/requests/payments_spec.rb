@@ -178,6 +178,33 @@ RSpec.describe "Payments API", type: :request do
     end
   end
 
+  describe "POST /api/v1/payments/:uid/simulate_confirmation" do
+    it "confirms the merchant's own pending konbini payment" do
+      payment = create(:transaction, :konbini, merchant: merchant)
+
+      post "/api/v1/payments/#{payment.uid}/simulate_confirmation", headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(payment.reload.status).to eq("processing")
+    end
+
+    it "rejects simulation on a card payment" do
+      payment = create(:transaction, merchant: merchant)
+
+      post "/api/v1/payments/#{payment.uid}/simulate_confirmation", headers: auth_headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "returns 404 for another merchant's payment" do
+      payment = create(:transaction, :konbini, merchant: other_merchant)
+
+      post "/api/v1/payments/#{payment.uid}/simulate_confirmation", headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe "GET /api/v1/payments/:payment_uid" do
     it "should respond with a Not Found when the payment does not exist" do
       get "/api/v1/payments/nonexistent_uid", headers: auth_headers
