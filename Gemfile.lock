@@ -186,7 +186,7 @@ GEM
     minitest (6.0.6)
       drb (~> 2.0)
       prism (~> 1.5)
-    money (7.0.2)
+    money (7.1.0)
       bigdecimal
       i18n (~> 1.9)
     msgpack (1.8.3)
@@ -438,7 +438,7 @@ DEPENDENCIES
   kamal
   lograge (~> 0.14.0)
   logtail-rails (~> 0.2.12)
-  money (~> 7.0)
+  money (~> 7.1)
   pg (~> 1.1)
   puma (>= 5.0)
   rack-attack
@@ -522,7 +522,7 @@ CHECKSUMS
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
-  money (7.0.2) sha256=615c27c1fd1d190dceda5c5f4dd5af5f4d20f790ff3b62ea2fe2d96eb22e2c60
+  money (7.1.0) sha256=c5b55ef5d2e5a79c672cae352f849c093ad5eb206eef0b7b3d26e61735245479
   msgpack (1.8.3) sha256=8bda4a6428d3244e50d6bd55854d354edbada88a4e1f4f5731a39a0f86bee6a1
   mutex_m (0.3.0) sha256=cfcb04ac16b69c4813777022fdceda24e9f798e48092a2b817eb4c0a782b0751
   net-imap (0.6.4.1) sha256=29f0360d75a7efd3539f16ac1957dea5c0a51ddeceb348db4553c3120914ea0d
