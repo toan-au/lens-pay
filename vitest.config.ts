@@ -13,10 +13,8 @@ export default defineConfig({
     setupFiles: ['app/frontend/test/setup.ts'],
     include: ['app/frontend/**/*.spec.ts'],
     css: false,
-    env: { TZ: 'UTC' }, // pins ICU output for utils/format.ts
+    env: { TZ: 'UTC' }, // machine TZ is JST; pins formatDate output
     clearMocks: true,
-    restoreMocks: true,
-    unstubGlobals: true,
     coverage: {
       provider: 'v8',
       reportsDirectory: 'coverage',

@@ -19,8 +19,8 @@ describe("DetailRow", () => {
     expect(wrapper.get("span").classes()).toContain("text-red-500");
   });
 
-  it("defaults labelClass to empty", () => {
+  it("carries only its base classes when labelClass is omitted", () => {
     const wrapper = mount(DetailRow, { props: { label: "Status" } });
-    expect(wrapper.get("span").classes()).not.toContain("undefined");
+    expect(wrapper.get("span").classes()).toEqual(["text-sm", "text-gray-500"]);
   });
 });

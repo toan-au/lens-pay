@@ -24,13 +24,8 @@ describe("AmountButton", () => {
     expect(wrapper.get("button").attributes("disabled")).toBeUndefined();
   });
 
-  it("shows only the label when amount is null", () => {
-    const wrapper = mount(AmountButton, { props: { ...base, amount: null } });
-    expect(wrapper.text()).toBe("Capture");
-  });
-
-  it("shows only the label when amount is undefined", () => {
-    const wrapper = mount(AmountButton, { props: { ...base, amount: undefined } });
+  it.each([null, undefined])("shows only the label when amount is %s", (amount) => {
+    const wrapper = mount(AmountButton, { props: { ...base, amount } });
     expect(wrapper.text()).toBe("Capture");
   });
 });

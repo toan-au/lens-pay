@@ -3,6 +3,7 @@ import { setActivePinia, createPinia } from "pinia";
 import { useDisputeStore } from "./disputes";
 import * as disputesApi from "../api/disputes";
 import { buildDispute, buildDisputeResponse } from "../test/fixtures";
+import type { Dispute } from "../api/types";
 
 vi.mock("../api/disputes");
 
@@ -73,7 +74,9 @@ describe("useDisputeStore", () => {
     it("tolerates dispute_responses missing from the payload", async () => {
       const store = useDisputeStore();
       const { dispute_responses: _omit, ...withoutResponses } = buildDispute();
-      vi.mocked(disputesApi.getDispute).mockResolvedValue(withoutResponses as never);
+      vi.mocked(disputesApi.getDispute).mockResolvedValue(
+        withoutResponses as unknown as Dispute,
+      );
 
       await store.fetchDispute("dp_1");
 
@@ -85,15 +88,25 @@ describe("useDisputeStore", () => {
     it("prepends the response, re-fetches the dispute, and returns the response", async () => {
       const store = useDisputeStore();
       store.currentResponses = [buildDisputeResponse({ id: 1 })];
-      const created = buildDisputeResponse({ id: 2, evidence: { note: "tracking #123" } });
+      const created = buildDisputeResponse({
+        id: 2,
+        evidence: { note: "tracking #123" },
+      });
       vi.mocked(disputesApi.respondToDispute).mockResolvedValue(created);
       vi.mocked(disputesApi.getDispute).mockResolvedValue(
-        buildDispute({ uid: "dp_1", dispute_responses: [created, buildDisputeResponse({ id: 1 })] }),
+        buildDispute({
+          uid: "dp_1",
+          dispute_responses: [created, buildDisputeResponse({ id: 1 })],
+        }),
       );
 
-      const result = await store.submitResponse("dp_1", { note: "tracking #123" });
+      const result = await store.submitResponse("dp_1", {
+        note: "tracking #123",
+      });
 
-      expect(disputesApi.respondToDispute).toHaveBeenCalledWith("dp_1", { note: "tracking #123" });
+      expect(disputesApi.respondToDispute).toHaveBeenCalledWith("dp_1", {
+        note: "tracking #123",
+      });
       expect(disputesApi.getDispute).toHaveBeenCalledWith("dp_1");
       expect(result).toBe(created);
       expect(store.currentResponses.map((r) => r.id)).toEqual([2, 1]);
