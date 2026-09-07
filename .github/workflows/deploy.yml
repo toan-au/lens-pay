@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'dev' && 'production' || github.ref_name }}
 
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,7 +31,7 @@ jobs:
 
       - name: Deploy with Kamal
         env:
-          KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           LENS_PAY_DATABASE_PASSWORD: ${{ secrets.LENS_PAY_DATABASE_PASSWORD }}
           BETTER_STACK_SOURCE_TOKEN: ${{ secrets.BETTER_STACK_SOURCE_TOKEN }}

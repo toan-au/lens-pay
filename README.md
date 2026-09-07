@@ -29,7 +29,7 @@ Demo accounts are ephemeral — they expire after 24 hours and are cleaned up by
 
 ## Getting Started
 
-**Prerequisites:** Ruby 4.0, PostgreSQL (or Docker)
+**Prerequisites:** Ruby 4.0, PostgreSQL (or Docker), libvips (`brew install vips` / `apt install libvips`)
 
 ```bash
 git clone https://github.com/toan-au/lens-pay

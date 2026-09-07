@@ -34,6 +34,11 @@ gem "aasm"
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.0"
+# libvips bindings for Active Storage's default :vips variant processor, loaded at
+# boot since Rails 8.1.3.1. require: false — Active Storage requires it on demand.
+# Needs the libvips system library (in the Docker image and the CI test job; local
+# dev: brew/apt install vips).
+gem "ruby-vips", "~> 2.2", require: false
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
@@ -65,7 +70,7 @@ end
 
 gem "vite_rails", "~> 3.10"
 
-gem "lograge", "~> 0.14.0"
+gem "lograge", "~> 0.15.0"
 gem "logtail-rails", "~> 0.2.12"
 
 gem "dotenv-rails", "~> 3.2", group: :development
