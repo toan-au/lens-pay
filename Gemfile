@@ -33,7 +33,7 @@ gem "money", "~> 7.0"
 gem "aasm"
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 2.0"
+gem "image_processing", "~> 2.1"
 # libvips bindings for Active Storage's default :vips variant processor, loaded at
 # boot since Rails 8.1.3.1. require: false — Active Storage requires it on demand.
 # Needs the libvips system library (in the Docker image and the CI test job; local
