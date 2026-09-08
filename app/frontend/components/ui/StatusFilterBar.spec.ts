@@ -24,6 +24,16 @@ describe("StatusFilterBar", () => {
     expect(all.classes()).not.toContain("bg-gray-100");
   });
 
+  it("exposes the active tab via aria-pressed and labels the group", () => {
+    const wrapper = mount(StatusFilterBar, {
+      props: { tabs, modelValue: "succeeded", label: "Filter payments" },
+    });
+    const [all, succeeded] = wrapper.findAll("button");
+    expect(succeeded.attributes("aria-pressed")).toBe("true");
+    expect(all.attributes("aria-pressed")).toBe("false");
+    expect(wrapper.get("[role=group]").attributes("aria-label")).toBe("Filter payments");
+  });
+
   it("emits update:modelValue with the clicked tab's value", async () => {
     const wrapper = mount(StatusFilterBar, { props: { tabs, modelValue: "" } });
 

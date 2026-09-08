@@ -44,4 +44,21 @@ describe("ResourceTable", () => {
     expect(wrapper.text()).toContain("Alice");
     expect(wrapper.text()).not.toContain("Loading...");
   });
+
+  it("reflects loading via aria-busy and renders an sr-only caption", () => {
+    const busy = mount(ResourceTable, {
+      props: { loading: true, isEmpty: false, cols: 3, caption: "Payments" },
+      slots,
+    });
+    expect(busy.get("table").attributes("aria-busy")).toBe("true");
+    expect(busy.get("caption").text()).toBe("Payments");
+    expect(busy.get("caption").classes()).toContain("sr-only");
+
+    const idle = mount(ResourceTable, {
+      props: { loading: false, isEmpty: false, cols: 3 },
+      slots,
+    });
+    expect(idle.get("table").attributes("aria-busy")).toBe("false");
+    expect(idle.find("caption").exists()).toBe(false);
+  });
 });

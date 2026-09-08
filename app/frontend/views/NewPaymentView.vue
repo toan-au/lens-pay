@@ -80,7 +80,7 @@
             <div v-for="(row, i) in metadataRows" :key="row.id" class="flex gap-2 items-center">
               <input v-model="row.key" type="text" placeholder="key" aria-label="Metadata field name" class="input flex-1 font-mono text-xs" />
               <input v-model="row.value" type="text" placeholder="value" aria-label="Metadata field value" class="input flex-1 font-mono text-xs" />
-              <button type="button" @click="removeMetadataRow(i)" aria-label="Remove metadata field" class="text-gray-400 hover:text-red-500 cursor-pointer text-lg leading-none">&times;</button>
+              <button type="button" @click="removeMetadataRow(i)" aria-label="Remove metadata field" class="text-gray-500 hover:text-red-500 cursor-pointer text-lg leading-none">&times;</button>
             </div>
           </div>
         </div>

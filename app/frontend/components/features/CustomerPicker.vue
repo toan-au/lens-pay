@@ -32,7 +32,7 @@
         type="button"
         @click="clear"
         aria-label="Remove selected customer"
-        class="text-gray-400 hover:text-red-500 cursor-pointer text-lg leading-none"
+        class="text-gray-500 hover:text-red-500 cursor-pointer text-lg leading-none"
       >
         &times;
       </button>

@@ -50,7 +50,16 @@ describe("CaptureForm", () => {
     await wrapper.get("form").trigger("submit");
     await flushPromises();
 
-    expect(wrapper.get("p.text-red-500").text()).toBe("Already captured");
+    const alert = wrapper.get("p.text-red-500");
+    expect(alert.text()).toBe("Already captured");
+    expect(alert.attributes("role")).toBe("alert");
+  });
+
+  it("associates the label with the amount input", () => {
+    const { wrapper } = mountForm();
+    const id = wrapper.get("input[type=number]").attributes("id");
+    expect(id).toBeTruthy();
+    expect(wrapper.get("label").attributes("for")).toBe(id);
   });
 
   it("disables the button while pending and clears the field on success", async () => {

@@ -20,7 +20,7 @@
             type="button"
             aria-label="Close"
             @click="close"
-            class="text-gray-400 hover:text-gray-600 text-xl leading-none cursor-pointer"
+            class="text-gray-500 hover:text-gray-700 text-xl leading-none cursor-pointer"
           >
             &times;
           </button>
@@ -140,7 +140,7 @@
             type="button"
             aria-label="Close"
             @click="close"
-            class="text-gray-400 hover:text-gray-600 text-xl leading-none cursor-pointer"
+            class="text-gray-500 hover:text-gray-700 text-xl leading-none cursor-pointer"
           >
             &times;
           </button>

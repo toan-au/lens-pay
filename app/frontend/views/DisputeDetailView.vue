@@ -60,7 +60,7 @@
           :key="resp.id"
           class="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2"
         >
-          <p class="text-xs text-gray-400">{{ formatDate(resp.created_at) }}</p>
+          <p class="text-xs text-gray-500">{{ formatDate(resp.created_at) }}</p>
           <div class="flex flex-col gap-1">
             <div v-for="(value, key) in resp.evidence" :key="key" class="flex gap-2 text-sm">
               <span class="font-mono text-gray-500 min-w-32">{{ key }}</span>
