@@ -20,7 +20,7 @@
     "@vitest/ui": "^4.1.11",
     "@vue/test-utils": "^2.5.0",
     "jsdom": "^30.0.1",
-    "tailwindcss": "^4.2.4",
+    "tailwindcss": "^4.3.3",
     "typescript": "~5.9.3",
     "vite": "^8.0.10",
     "vite-plugin-ruby": "^5.2.1",
