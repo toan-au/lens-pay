@@ -3,24 +3,26 @@
     <h2 class="font-semibold">Capture Payment</h2>
     <form @submit.prevent="handle" class="flex flex-col gap-3">
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium">
+        <label :for="amountId" class="text-sm font-medium">
           Amount
-          <span class="text-gray-400 font-normal">— leave blank to capture full amount</span>
+          <span class="text-gray-500 font-normal">— leave blank to capture full amount</span>
         </label>
         <div class="flex gap-2">
           <input
+            :id="amountId"
             v-model.number="naturalAmount"
             type="number"
             :min="isZeroDecimal ? 1 : 0.01"
             :step="isZeroDecimal ? 1 : 0.01"
             :max="naturalMax"
             :placeholder="String(naturalMax)"
+            :aria-describedby="currencyId"
             class="input flex-1"
           />
-          <span class="input bg-gray-50 text-gray-500 min-w-16 text-center">{{ currency }}</span>
+          <span :id="currencyId" class="input bg-gray-50 text-gray-500 min-w-16 text-center">{{ currency }}</span>
         </div>
       </div>
-      <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+      <p v-if="error" role="alert" class="text-sm text-red-500">{{ error }}</p>
       <AmountButton
         label="Capture"
         loading-label="Capturing..."
@@ -33,10 +35,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, useId } from 'vue'
 import { ZERO_DECIMAL_CURRENCIES, toMinorUnits, fromMinorUnits } from '../../utils/format'
 import { useAsyncAction } from '../../composables/useAsyncAction'
 import AmountButton from '../ui/AmountButton.vue'
+
+const amountId = useId()
+const currencyId = useId()
 
 const props = defineProps<{
   amount: number
