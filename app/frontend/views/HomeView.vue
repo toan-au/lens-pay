@@ -7,13 +7,13 @@
 
     <StatusFilterBar :tabs="STATUS_TABS" :model-value="activeFilter" @update:model-value="setFilter" />
 
-    <ResourceTable :loading="loading" :is-empty="paymentStore.payments.length === 0" :cols="5">
+    <ResourceTable :loading="loading" :is-empty="paymentStore.payments.length === 0" :cols="5" caption="Payments">
       <template #head>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Method</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Date</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Method</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Date</th>
       </template>
       <template #empty>
         No payments yet.
@@ -23,10 +23,14 @@
         <tr
           v-for="payment in paymentStore.payments"
           :key="payment.uid"
-          @click="router.push(`/payments/${payment.uid}`)"
+          @click="rowClick($event, `/payments/${payment.uid}`)"
           class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
         >
-          <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ payment.uid.slice(0, 12) }}</td>
+          <td class="px-4 py-3 font-mono text-xs text-gray-500">
+            <RouterLink :to="`/payments/${payment.uid}`" class="hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+              {{ payment.uid.slice(0, 12) }}
+            </RouterLink>
+          </td>
           <td class="px-4 py-3 font-medium">{{ formatAmount(payment.amount, payment.currency) }}</td>
           <td class="px-4 py-3 text-xs text-gray-500">{{ METHOD_LABELS[payment.payment_method] ?? payment.payment_method }}</td>
           <td class="px-4 py-3">
@@ -52,9 +56,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
 import { formatAmount, formatDate } from '../utils/format'
+import { useRowNavigation } from '../composables/useRowNavigation'
 import ResourceTable from '../components/ui/ResourceTable.vue'
 import StatusBadge from '../components/ui/StatusBadge.vue'
 import StatusFilterBar from '../components/ui/StatusFilterBar.vue'
@@ -86,7 +90,7 @@ const DISPUTE_CLASSES: Record<string, string> = {
   merchant_responded: 'status-badge status-processing',
 }
 
-const router = useRouter()
+const rowClick = useRowNavigation()
 const paymentStore = usePaymentStore()
 const loading = ref(false)
 const activeFilter = ref('')
