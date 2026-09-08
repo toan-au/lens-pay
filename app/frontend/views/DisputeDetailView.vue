@@ -1,14 +1,14 @@
 <template>
   <div class="flex flex-col gap-6 max-w-2xl">
-    <button @click="router.back()" class="btn-ghost text-xs w-fit cursor-pointer">← Back</button>
+    <button @click="router.back()" class="btn-ghost text-xs w-fit cursor-pointer"><span aria-hidden="true">←</span> Back</button>
 
-    <div v-if="!dispute" class="text-gray-400 text-sm">Loading...</div>
+    <p v-if="!dispute" role="status" class="text-gray-500 text-sm">Loading...</p>
 
     <template v-else>
       <div class="flex items-start justify-between">
         <div class="flex flex-col gap-1">
           <h1 class="text-xl font-bold font-mono">{{ dispute.uid }}</h1>
-          <p class="text-xs text-gray-400">Opened {{ formatDate(dispute.created_at) }}</p>
+          <p class="text-xs text-gray-500">Opened {{ formatDate(dispute.created_at) }}</p>
         </div>
         <StatusBadge :status="dispute.status" />
       </div>
@@ -37,16 +37,16 @@
         <h2 class="font-semibold">Submit Evidence</h2>
 
         <div v-if="rows.length > 0" class="flex flex-col gap-2">
-          <div v-for="(row, i) in rows" :key="i" class="flex gap-2">
-            <input v-model="row.key" placeholder="Key" class="input flex-1 font-mono text-sm" />
-            <input v-model="row.value" placeholder="Value" class="input flex-1 text-sm" />
-            <button @click="removeRow(i)" class="text-gray-400 hover:text-red-400 px-1 text-lg leading-none">×</button>
+          <div v-for="(row, i) in rows" :key="row.id" class="flex gap-2">
+            <input v-model="row.key" placeholder="Key" aria-label="Evidence field name" class="input flex-1 font-mono text-sm" />
+            <input v-model="row.value" placeholder="Value" aria-label="Evidence field value" class="input flex-1 text-sm" />
+            <button type="button" @click="removeRow(i)" aria-label="Remove evidence field" class="text-gray-500 hover:text-red-500 px-1 text-lg leading-none">×</button>
           </div>
         </div>
 
-        <button @click="addRow" class="btn-ghost text-xs w-fit">+ Add field</button>
+        <button type="button" @click="addRow" class="btn-ghost text-xs w-fit">+ Add field</button>
 
-        <p v-if="respondError" class="text-sm text-red-500">{{ respondError }}</p>
+        <p v-if="respondError" role="alert" class="text-sm text-red-500">{{ respondError }}</p>
 
         <button @click="handleRespond" :disabled="responding || rows.length === 0" class="btn-primary w-fit">
           {{ responding ? 'Submitting...' : 'Submit evidence' }}
@@ -60,7 +60,7 @@
           :key="resp.id"
           class="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2"
         >
-          <p class="text-xs text-gray-400">{{ formatDate(resp.created_at) }}</p>
+          <p class="text-xs text-gray-500">{{ formatDate(resp.created_at) }}</p>
           <div class="flex flex-col gap-1">
             <div v-for="(value, key) in resp.evidence" :key="key" class="flex gap-2 text-sm">
               <span class="font-mono text-gray-500 min-w-32">{{ key }}</span>
@@ -107,9 +107,9 @@ const canRespond = computed(() => {
   return (dispute.value.status === 'open' || dispute.value.status === 'merchant_responded') && !isOverdue.value
 })
 
-const rows = ref<{ key: string; value: string }[]>([])
+const rows = ref<{ id: string; key: string; value: string }[]>([])
 
-function addRow() { rows.value.push({ key: '', value: '' }) }
+function addRow() { rows.value.push({ id: crypto.randomUUID(), key: '', value: '' }) }
 function removeRow(i: number) { rows.value.splice(i, 1) }
 
 const { loading: responding, error: respondError, run: runRespond } = useAsyncAction()

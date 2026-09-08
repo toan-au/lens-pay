@@ -4,22 +4,26 @@
 
     <StatusFilterBar :tabs="STATUS_TABS" :model-value="activeFilter" @update:model-value="setFilter" />
 
-    <ResourceTable :loading="loading" :is-empty="disputeStore.disputes.length === 0" :cols="5" empty-text="No disputes yet.">
+    <ResourceTable :loading="loading" :is-empty="disputeStore.disputes.length === 0" :cols="5" empty-text="No disputes yet." caption="Disputes">
       <template #head>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Reason</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Respond by</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Reason</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Respond by</th>
       </template>
       <template #body>
         <tr
           v-for="dispute in disputeStore.disputes"
           :key="dispute.uid"
-          @click="router.push(`/disputes/${dispute.uid}`)"
+          @click="rowClick($event, `/disputes/${dispute.uid}`)"
           class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
         >
-          <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ dispute.uid.slice(0, 16) }}</td>
+          <td class="px-4 py-3 font-mono text-xs text-gray-500">
+            <RouterLink :to="`/disputes/${dispute.uid}`" class="hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+              {{ dispute.uid.slice(0, 16) }}
+            </RouterLink>
+          </td>
           <td class="px-4 py-3 text-sm">{{ formatReason(dispute.reason) }}</td>
           <td class="px-4 py-3 font-medium">{{ formatAmount(dispute.amount, dispute.currency) }}</td>
           <td class="px-4 py-3"><StatusBadge :status="dispute.status" /></td>
@@ -38,9 +42,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useDisputeStore } from '../stores/disputes'
 import { formatAmount, formatDate } from '../utils/format'
+import { useRowNavigation } from '../composables/useRowNavigation'
 import ResourceTable from '../components/ui/ResourceTable.vue'
 import StatusBadge from '../components/ui/StatusBadge.vue'
 import StatusFilterBar from '../components/ui/StatusFilterBar.vue'
@@ -65,7 +69,7 @@ function formatReason(reason: string): string {
   return REASON_LABELS[reason] ?? reason
 }
 
-const router = useRouter()
+const rowClick = useRowNavigation()
 const disputeStore = useDisputeStore()
 const loading = ref(false)
 const activeFilter = ref('')

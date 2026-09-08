@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col gap-6 max-w-2xl">
-    <button @click="router.back()" class="btn-ghost text-xs w-fit cursor-pointer">← Back</button>
+    <button @click="router.back()" class="btn-ghost text-xs w-fit cursor-pointer"><span aria-hidden="true">←</span> Back</button>
 
-    <div v-if="!customer" class="text-gray-400 text-sm">Loading...</div>
+    <div v-if="!customer" class="text-gray-500 text-sm">Loading...</div>
 
     <template v-else>
       <div class="flex items-start justify-between">
@@ -38,22 +38,22 @@
       <div v-if="!customer.deleted_at" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-4">
         <div class="flex items-center justify-between">
           <h2 class="font-semibold">Edit</h2>
-          <button @click="showEdit = !showEdit" class="btn-ghost text-xs">
+          <button @click="showEdit = !showEdit" :aria-expanded="showEdit" class="btn-ghost text-xs">
             {{ showEdit ? 'Cancel' : 'Edit' }}
           </button>
         </div>
         <form v-if="showEdit" @submit.prevent="handleUpdate" class="flex flex-col gap-3">
           <div class="flex gap-4">
             <div class="flex flex-col gap-1 flex-1">
-              <label class="text-sm font-medium">Name</label>
-              <input v-model="editForm.name" type="text" required class="input" />
+              <label :for="nameId" class="text-sm font-medium">Name</label>
+              <input :id="nameId" v-model="editForm.name" type="text" required class="input" />
             </div>
             <div class="flex flex-col gap-1 flex-1">
-              <label class="text-sm font-medium">Email</label>
-              <input v-model="editForm.email" type="email" required class="input" />
+              <label :for="emailId" class="text-sm font-medium">Email</label>
+              <input :id="emailId" v-model="editForm.email" type="email" required class="input" />
             </div>
           </div>
-          <p v-if="updateError" class="text-sm text-red-500">{{ updateError }}</p>
+          <p v-if="updateError" role="alert" class="text-sm text-red-500">{{ updateError }}</p>
           <div class="flex justify-end">
             <button type="submit" :disabled="updating" class="btn-primary">
               {{ updating ? 'Saving...' : 'Save Changes' }}
@@ -65,7 +65,7 @@
       <div v-if="!customer.deleted_at" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
         <h2 class="font-semibold">Delete Customer</h2>
         <p class="text-sm text-gray-500">Soft-deletes the customer. Existing payment records are preserved.</p>
-        <p v-if="deleteError" class="text-sm text-red-500">{{ deleteError }}</p>
+        <p v-if="deleteError" role="alert" class="text-sm text-red-500">{{ deleteError }}</p>
         <button @click="handleDelete" :disabled="deleting" class="btn-danger w-fit">
           {{ deleting ? 'Deleting...' : 'Delete Customer' }}
         </button>
@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, useId } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCustomer, updateCustomer, deleteCustomer } from '../api/customers'
 import { formatDate } from '../utils/format'
@@ -87,6 +87,8 @@ import type { Customer } from '../api/types'
 const route = useRoute()
 const router = useRouter()
 const uid = route.params.uid as string
+const nameId = useId()
+const emailId = useId()
 
 const customer = ref<Customer | null>(null)
 const showEdit = ref(false)
