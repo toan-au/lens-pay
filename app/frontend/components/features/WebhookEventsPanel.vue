@@ -5,22 +5,25 @@
     <div v-if="events.length > 0" class="flex flex-col gap-3">
       <div v-for="event in events" :key="event.id" class="bg-white rounded-xl border border-gray-200">
         <button
-          class="w-full px-5 py-4 flex items-center justify-between cursor-pointer"
+          type="button"
+          class="w-full px-5 py-4 flex items-center justify-between cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          :aria-expanded="expanded.has(event.id)"
+          :aria-controls="`webhook-payload-${event.id}`"
           @click="toggle(event.id)"
         >
           <span class="text-sm font-mono font-medium">{{ event.event_type }}</span>
           <div class="flex items-center gap-3">
-            <span class="text-xs text-gray-400">{{ formatDate(event.created_at) }}</span>
-            <span class="text-gray-400 text-xs">{{ expanded.has(event.id) ? '▲' : '▼' }}</span>
+            <span class="text-xs text-gray-500">{{ formatDate(event.created_at) }}</span>
+            <span aria-hidden="true" class="text-gray-500 text-xs">{{ expanded.has(event.id) ? '▲' : '▼' }}</span>
           </div>
         </button>
-        <div v-if="expanded.has(event.id)" class="px-5 pb-4">
+        <div v-if="expanded.has(event.id)" :id="`webhook-payload-${event.id}`" class="px-5 pb-4">
           <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto text-gray-600">{{ JSON.stringify(event.payload, null, 2) }}</pre>
         </div>
       </div>
     </div>
 
-    <p v-else class="text-sm text-gray-400">No webhook events yet — fire a capture or refund to see events here.</p>
+    <p v-else class="text-sm text-gray-500">No webhook events yet — fire a capture or refund to see events here.</p>
   </div>
 </template>
 

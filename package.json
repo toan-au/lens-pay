@@ -1,12 +1,31 @@
 {
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage",
+    "typecheck": "vue-tsc --noEmit"
+  },
   "devDependencies": {
+    "@pinia/testing": "^1.0.3",
     "@tailwindcss/vite": "^4.2.4",
+    "@types/node": "^22.20.1",
     "@vitejs/plugin-vue": "^6.0.6",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/ui": "^4.1.11",
+    "@vue/test-utils": "^2.5.0",
+    "jsdom": "^30.0.1",
     "tailwindcss": "^4.2.4",
+    "typescript": "~5.9.3",
     "vite": "^8.0.10",
-    "vite-plugin-ruby": "^5.2.1"
+    "vite-plugin-ruby": "^5.2.1",
+    "vitest": "^4.1.11",
+    "vue-tsc": "^3.3.11"
   },
   "dependencies": {
     "@vueuse/core": "^14.2.1",

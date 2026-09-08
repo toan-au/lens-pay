@@ -4,25 +4,35 @@
 
     <StatusFilterBar :tabs="STATUS_TABS" :model-value="activeFilter" @update:model-value="setFilter" />
 
-    <ResourceTable :loading="loading" :is-empty="paymentStore.allRefunds.length === 0" :cols="5" empty-text="No refunds yet.">
+    <ResourceTable :loading="loading" :is-empty="paymentStore.allRefunds.length === 0" :cols="5" empty-text="No refunds yet." caption="Refunds">
       <template #head>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Payment</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-500">Date</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">ID</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Payment</th>
+        <th scope="col" class="text-left px-4 py-3 font-medium text-gray-500">Date</th>
       </template>
       <template #body>
         <tr
           v-for="refund in paymentStore.allRefunds"
           :key="refund.uid"
-          @click="refund.payment_uid && router.push(`/payments/${refund.payment_uid}`)"
-          class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+          @click="refund.payment_uid && rowClick($event, `/payments/${refund.payment_uid}`)"
+          class="border-t border-gray-100 hover:bg-gray-50 transition-colors"
+          :class="refund.payment_uid ? 'cursor-pointer' : ''"
         >
           <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ refund.uid.slice(0, 12) }}</td>
           <td class="px-4 py-3 font-medium">{{ formatAmount(refund.amount, refund.currency ?? 'JPY') }}</td>
           <td class="px-4 py-3"><StatusBadge :status="refund.status" /></td>
-          <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ refund.payment_uid?.slice(0, 12) ?? '—' }}</td>
+          <td class="px-4 py-3 font-mono text-xs text-gray-500">
+            <RouterLink
+              v-if="refund.payment_uid"
+              :to="`/payments/${refund.payment_uid}`"
+              class="hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            >
+              {{ refund.payment_uid.slice(0, 12) }}
+            </RouterLink>
+            <span v-else>—</span>
+          </td>
           <td class="px-4 py-3 text-gray-500 text-xs">{{ formatDate(refund.created_at) }}</td>
         </tr>
       </template>
@@ -38,9 +48,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePaymentStore } from '../stores/payments'
 import { formatAmount, formatDate } from '../utils/format'
+import { useRowNavigation } from '../composables/useRowNavigation'
 import ResourceTable from '../components/ui/ResourceTable.vue'
 import StatusBadge from '../components/ui/StatusBadge.vue'
 import StatusFilterBar from '../components/ui/StatusFilterBar.vue'
@@ -52,7 +62,7 @@ const STATUS_TABS = [
   { label: 'Failed', value: 'failed' },
 ]
 
-const router = useRouter()
+const rowClick = useRowNavigation()
 const paymentStore = usePaymentStore()
 const loading = ref(false)
 const activeFilter = ref('')
