@@ -12,7 +12,7 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "devDependencies": {
-    "@pinia/testing": "^1.0.3",
+    "@pinia/testing": "^2.0.1",
     "@tailwindcss/vite": "^4.2.4",
     "@types/node": "^22.20.1",
     "@vitejs/plugin-vue": "^6.0.6",
