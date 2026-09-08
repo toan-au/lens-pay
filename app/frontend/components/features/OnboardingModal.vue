@@ -2,14 +2,24 @@
   <div
     v-if="modelValue"
     class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+    @keydown.esc="close"
   >
-    <div class="bg-white rounded-xl p-8 w-full max-w-md flex flex-col gap-4">
+    <div
+      ref="panel"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="titleId"
+      class="bg-white rounded-xl p-8 w-full max-w-md flex flex-col gap-4"
+      @keydown.tab="trapTab"
+    >
       <!-- Step 1: Registration form -->
       <template v-if="step === 1">
         <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold">Create your merchant account</h2>
+          <h2 :id="titleId" class="text-xl font-bold">Create your merchant account</h2>
           <button
-            @click="emit('update:modelValue', false)"
+            type="button"
+            aria-label="Close"
+            @click="close"
             class="text-gray-400 hover:text-gray-600 text-xl leading-none cursor-pointer"
           >
             &times;
@@ -21,58 +31,59 @@
 
         <form @submit.prevent="handleRegister" class="flex flex-col gap-3">
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Name</label>
-            <input v-model="form.name" type="text" required class="input" />
+            <label :for="nameId" class="text-sm font-medium">Name</label>
+            <input :id="nameId" v-model="form.name" type="text" required class="input" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Email</label>
-            <input v-model="form.email" type="email" required class="input" />
+            <label :for="emailId" class="text-sm font-medium">Email</label>
+            <input :id="emailId" v-model="form.email" type="email" required class="input" />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Country</label>
-            <select v-model="form.country" required class="input">
+            <label :for="countryId" class="text-sm font-medium">Country</label>
+            <select :id="countryId" v-model="form.country" required class="input">
               <option value="" disabled>Select a country</option>
               <option value="JP">Japan</option>
-              <option disabled>──────────</option>
-              <option value="AU">Australia</option>
-              <option value="AT">Austria</option>
-              <option value="BE">Belgium</option>
-              <option value="BR">Brazil</option>
-              <option value="CA">Canada</option>
-              <option value="CN">China</option>
-              <option value="DK">Denmark</option>
-              <option value="FI">Finland</option>
-              <option value="FR">France</option>
-              <option value="DE">Germany</option>
-              <option value="HK">Hong Kong</option>
-              <option value="IN">India</option>
-              <option value="ID">Indonesia</option>
-              <option value="IE">Ireland</option>
-              <option value="IT">Italy</option>
-              <option value="MY">Malaysia</option>
-              <option value="MX">Mexico</option>
-              <option value="NL">Netherlands</option>
-              <option value="NZ">New Zealand</option>
-              <option value="NO">Norway</option>
-              <option value="PH">Philippines</option>
-              <option value="PL">Poland</option>
-              <option value="PT">Portugal</option>
-              <option value="SG">Singapore</option>
-              <option value="ZA">South Africa</option>
-              <option value="KR">South Korea</option>
-              <option value="ES">Spain</option>
-              <option value="SE">Sweden</option>
-              <option value="CH">Switzerland</option>
-              <option value="TW">Taiwan</option>
-              <option value="TH">Thailand</option>
-              <option value="GB">United Kingdom</option>
-              <option value="US">United States</option>
-              <option value="VN">Vietnam</option>
+              <optgroup label="Other countries">
+                <option value="AU">Australia</option>
+                <option value="AT">Austria</option>
+                <option value="BE">Belgium</option>
+                <option value="BR">Brazil</option>
+                <option value="CA">Canada</option>
+                <option value="CN">China</option>
+                <option value="DK">Denmark</option>
+                <option value="FI">Finland</option>
+                <option value="FR">France</option>
+                <option value="DE">Germany</option>
+                <option value="HK">Hong Kong</option>
+                <option value="IN">India</option>
+                <option value="ID">Indonesia</option>
+                <option value="IE">Ireland</option>
+                <option value="IT">Italy</option>
+                <option value="MY">Malaysia</option>
+                <option value="MX">Mexico</option>
+                <option value="NL">Netherlands</option>
+                <option value="NZ">New Zealand</option>
+                <option value="NO">Norway</option>
+                <option value="PH">Philippines</option>
+                <option value="PL">Poland</option>
+                <option value="PT">Portugal</option>
+                <option value="SG">Singapore</option>
+                <option value="ZA">South Africa</option>
+                <option value="KR">South Korea</option>
+                <option value="ES">Spain</option>
+                <option value="SE">Sweden</option>
+                <option value="CH">Switzerland</option>
+                <option value="TW">Taiwan</option>
+                <option value="TH">Thailand</option>
+                <option value="GB">United Kingdom</option>
+                <option value="US">United States</option>
+                <option value="VN">Vietnam</option>
+              </optgroup>
             </select>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Currency</label>
-            <select v-model="form.currency" required class="input">
+            <label :for="currencyId" class="text-sm font-medium">Currency</label>
+            <select :id="currencyId" v-model="form.currency" required class="input">
               <option value="JPY">JPY — Japanese Yen</option>
               <option value="USD">USD — US Dollar</option>
               <option value="EUR">EUR — Euro</option>
@@ -102,7 +113,7 @@
             </select>
           </div>
 
-          <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+          <p v-if="error" role="alert" class="text-sm text-red-500">{{ error }}</p>
 
           <button type="submit" :disabled="loading" class="btn-primary">
             {{ loading ? "Creating..." : "Create Account" }}
@@ -110,6 +121,7 @@
         </form>
 
         <button
+          type="button"
           @click="
             step = 'signin';
             error = '';
@@ -123,9 +135,11 @@
       <!-- Step signin: API key input -->
       <template v-else-if="step === 'signin'">
         <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold">Sign in</h2>
+          <h2 :id="titleId" class="text-xl font-bold">Sign in</h2>
           <button
-            @click="emit('update:modelValue', false)"
+            type="button"
+            aria-label="Close"
+            @click="close"
             class="text-gray-400 hover:text-gray-600 text-xl leading-none cursor-pointer"
           >
             &times;
@@ -137,8 +151,9 @@
 
         <form @submit.prevent="handleSignIn" class="flex flex-col gap-3">
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">API Key</label>
+            <label :for="signinKeyId" class="text-sm font-medium">API Key</label>
             <input
+              :id="signinKeyId"
               v-model="signinKey"
               type="text"
               required
@@ -146,26 +161,27 @@
               class="input font-mono text-xs"
             />
           </div>
-          <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+          <p v-if="error" role="alert" class="text-sm text-red-500">{{ error }}</p>
           <button type="submit" :disabled="loading" class="btn-primary">
             {{ loading ? "Signing in..." : "Sign in" }}
           </button>
         </form>
 
         <button
+          type="button"
           @click="
             step = 1;
             error = '';
           "
           class="btn-ghost w-full"
         >
-          ← Back to registration
+          <span aria-hidden="true">←</span> Back to registration
         </button>
       </template>
 
       <!-- Step 2: API key reveal -->
       <template v-else>
-        <h2 class="text-xl font-bold">Your API key</h2>
+        <h2 :id="titleId" class="text-xl font-bold">Your API key</h2>
         <p class="text-sm text-gray-500">
           Save this now — it won't be shown again.
         </p>
@@ -178,6 +194,7 @@
         >
           <code class="text-xs break-all text-gray-700">{{ apiKey }}</code>
           <button
+            type="button"
             @click="copy"
             class="btn-ghost whitespace-nowrap cursor-pointer"
           >
@@ -185,7 +202,7 @@
           </button>
         </div>
 
-        <button @click="handleClose" class="btn-primary cursor-pointer">
+        <button type="button" @click="handleClose" class="btn-primary cursor-pointer">
           Continue to dashboard
         </button>
       </template>
@@ -194,13 +211,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, watch, nextTick, useId } from "vue";
 import { useMerchantStore } from "../../stores/merchant";
 
-defineProps<{ modelValue: boolean }>();
+const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean] }>();
 
 const merchantStore = useMerchantStore();
+
+const titleId = useId();
+const nameId = useId();
+const emailId = useId();
+const countryId = useId();
+const currencyId = useId();
+const signinKeyId = useId();
 
 const step = ref<1 | 2 | "signin">(1);
 const apiKey = ref("");
@@ -208,6 +232,8 @@ const signinKey = ref("");
 const copied = ref(false);
 const loading = ref(false);
 const error = ref("");
+const panel = ref<HTMLElement | null>(null);
+let opener: HTMLElement | null = null;
 
 const form = reactive({
   name: "",
@@ -216,6 +242,48 @@ const form = reactive({
   currency: "JPY",
 });
 
+function focusables(): HTMLElement[] {
+  if (!panel.value) return [];
+  return Array.from(
+    panel.value.querySelectorAll<HTMLElement>(
+      'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+    ),
+  );
+}
+
+function trapTab(e: KeyboardEvent) {
+  const items = focusables();
+  if (items.length === 0) return;
+  const first = items[0];
+  const last = items[items.length - 1];
+  const active = document.activeElement;
+  if (e.shiftKey && active === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && active === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+function close() {
+  emit("update:modelValue", false);
+}
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) {
+      opener = document.activeElement as HTMLElement | null;
+      nextTick(() => focusables()[0]?.focus());
+    } else {
+      step.value = 1;
+      error.value = "";
+      opener?.focus();
+    }
+  },
+);
+
 async function handleRegister() {
   loading.value = true;
   error.value = "";
@@ -223,6 +291,7 @@ async function handleRegister() {
     const result = await merchantStore.register(form);
     apiKey.value = result.api_key;
     step.value = 2;
+    nextTick(() => focusables()[0]?.focus());
   } catch (e: any) {
     error.value = e.error ?? "Something went wrong";
   } finally {

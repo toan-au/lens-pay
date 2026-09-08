@@ -1,14 +1,14 @@
 <template>
   <div class="flex flex-col gap-6 max-w-2xl">
-    <button @click="router.back()" class="btn-ghost text-xs w-fit cursor-pointer">← Back</button>
+    <button @click="router.back()" class="btn-ghost text-xs w-fit cursor-pointer"><span aria-hidden="true">←</span> Back</button>
 
-    <div v-if="!payment" class="text-gray-400 text-sm">Loading...</div>
+    <p v-if="!payment" role="status" class="text-gray-500 text-sm">Loading...</p>
 
     <template v-else>
       <div class="flex items-start justify-between">
         <div class="flex flex-col gap-1">
           <h1 class="text-xl font-bold font-mono">{{ payment.uid }}</h1>
-          <p class="text-xs text-gray-400">{{ formatDate(payment.created_at) }}</p>
+          <p class="text-xs text-gray-500">{{ formatDate(payment.created_at) }}</p>
         </div>
         <StatusBadge :status="payment.status" />
       </div>
@@ -77,12 +77,12 @@
           </div>
         </div>
         <RouterLink :to="`/disputes/${payment.dispute.uid}`" class="text-sm text-indigo-600 hover:underline w-fit">
-          View dispute →
+          View dispute <span aria-hidden="true">→</span>
         </RouterLink>
       </div>
 
-      <div v-if="isPolling" class="flex items-center gap-2 text-sm text-amber-600">
-        <span class="animate-pulse">●</span> {{ pollingMessage }}
+      <div v-if="isPolling" role="status" class="flex items-center gap-2 text-sm text-amber-600">
+        <span aria-hidden="true" class="animate-pulse">●</span> {{ pollingMessage }}
       </div>
 
       <div v-if="isAwaitingCustomerPayment" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
@@ -93,7 +93,7 @@
             : 'The customer has until the expiry date to complete the bank transfer.' }}
           In a real integration the network notifies LensPay when payment arrives — use the button to simulate that.
         </p>
-        <p v-if="simulateError" class="text-sm text-red-500">{{ simulateError }}</p>
+        <p v-if="simulateError" role="alert" class="text-sm text-red-500">{{ simulateError }}</p>
         <button @click="handleSimulate" :disabled="simulating" class="btn-primary w-fit">
           {{ simulating ? 'Confirming...' : 'Simulate customer paying' }}
         </button>
@@ -109,7 +109,7 @@
       <div v-if="payment.status === 'pending' || payment.status === 'authorized'" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
         <h2 class="font-semibold">Cancel Payment</h2>
         <p class="text-sm text-gray-500">Void this payment and release any reserved funds. This cannot be undone.</p>
-        <p v-if="cancelError" class="text-sm text-red-500">{{ cancelError }}</p>
+        <p v-if="cancelError" role="alert" class="text-sm text-red-500">{{ cancelError }}</p>
         <button @click="handleCancel" :disabled="cancelling" class="btn-danger w-fit">
           {{ cancelling ? 'Cancelling...' : 'Cancel Payment' }}
         </button>

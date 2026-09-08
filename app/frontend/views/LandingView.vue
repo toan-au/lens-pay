@@ -2,20 +2,21 @@
   <div class="min-h-screen bg-white flex flex-col">
 
     <!-- Nav -->
-    <nav class="px-8 h-14 flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-10">
+    <nav aria-label="Primary" class="px-8 h-14 flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-10">
       <span class="font-bold text-lg tracking-tight">LensPay</span>
       <div class="flex items-center gap-3">
-        <a href="https://github.com/toan-au/lens-pay" target="_blank" class="text-sm text-gray-500 hover:text-gray-800">GitHub</a>
-        <a href="/api-docs" target="_blank" class="text-sm text-gray-500 hover:text-gray-800">API Docs</a>
+        <a href="https://github.com/toan-au/lens-pay" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-gray-800">GitHub<span class="sr-only"> (opens in a new tab)</span></a>
+        <a href="/api-docs" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-gray-800">API Docs<span class="sr-only"> (opens in a new tab)</span></a>
         <button @click="emit('getStarted')" class="btn-primary text-sm">Get started</button>
       </div>
     </nav>
 
+    <main>
     <!-- Hero -->
     <section class="flex flex-col items-center justify-center px-8 text-center gap-8 py-28 bg-gradient-to-b from-white to-gray-50">
       <div class="flex flex-col gap-5 max-w-2xl">
         <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-xs font-medium px-3 py-1.5 rounded-full mx-auto">
-          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+          <span aria-hidden="true" class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
           Production-ready payment patterns
         </div>
         <h1 class="text-5xl font-bold tracking-tight text-gray-900 leading-tight">
@@ -35,7 +36,7 @@
           Create your account
         </button>
       </div>
-      <p class="text-xs text-gray-400">Demo accounts are ephemeral — pre-seeded with data and reset daily.</p>
+      <p class="text-xs text-gray-500">Demo accounts are ephemeral — pre-seeded with data and reset daily.</p>
     </section>
 
     <!-- Payment lifecycle -->
@@ -52,9 +53,9 @@
               <div :class="['text-xs font-mono px-3 py-1.5 rounded-lg border font-medium', step.class]">
                 {{ step.label }}
               </div>
-              <span class="text-xs text-gray-400">{{ step.event }}</span>
+              <span class="text-xs text-gray-500">{{ step.event }}</span>
             </div>
-            <span v-if="i < LIFECYCLE.length - 1" class="text-gray-300 text-sm mb-4">→</span>
+            <span v-if="i < LIFECYCLE.length - 1" aria-hidden="true" class="text-gray-300 text-sm mb-4">→</span>
           </div>
         </div>
 
@@ -83,7 +84,7 @@
         </div>
         <div class="grid grid-cols-2 gap-5 sm:grid-cols-3">
           <div v-for="feature in FEATURES" :key="feature.title" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-2">
-            <span class="text-xl">{{ feature.icon }}</span>
+            <span aria-hidden="true" class="text-xl">{{ feature.icon }}</span>
             <h3 class="font-semibold text-gray-900 text-sm">{{ feature.title }}</h3>
             <p class="text-xs text-gray-500 leading-relaxed">{{ feature.description }}</p>
           </div>
@@ -101,10 +102,10 @@
             pass an idempotency key to safely retry, and get consistent JSON back.
           </p>
           <ul class="text-sm text-gray-600 flex flex-col gap-2">
-            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Idempotency keys on payments and refunds</li>
-            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Cursor-based pagination on all list endpoints</li>
-            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Rate limiting per merchant and per IP</li>
-            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> <a href="/api-docs" target="_blank" class="text-indigo-600 hover:underline">Interactive OpenAPI documentation</a></li>
+            <li class="flex items-center gap-2"><span aria-hidden="true" class="text-green-500">✓</span> Idempotency keys on payments and refunds</li>
+            <li class="flex items-center gap-2"><span aria-hidden="true" class="text-green-500">✓</span> Cursor-based pagination on all list endpoints</li>
+            <li class="flex items-center gap-2"><span aria-hidden="true" class="text-green-500">✓</span> Rate limiting per merchant and per IP</li>
+            <li class="flex items-center gap-2"><span aria-hidden="true" class="text-green-500">✓</span> <a href="/api-docs" target="_blank" rel="noopener" class="text-indigo-600 hover:underline">Interactive OpenAPI documentation<span class="sr-only"> (opens in a new tab)</span></a></li>
           </ul>
         </div>
         <div class="lg:w-1/2 bg-gray-900 rounded-xl p-5 text-xs font-mono text-gray-300 leading-relaxed overflow-x-auto">
@@ -138,12 +139,14 @@
       </div>
     </section>
 
+    </main>
+
     <!-- Footer -->
-    <footer class="border-t border-gray-100 px-8 py-8 text-center text-xs text-gray-400 flex flex-col gap-2">
+    <footer class="border-t border-gray-100 px-8 py-8 text-center text-xs text-gray-500 flex flex-col gap-2">
       <div class="flex justify-center gap-6">
-        <a href="https://github.com/toan-au/lens-pay" target="_blank" class="hover:text-gray-600">GitHub</a>
-        <a href="/api-docs" target="_blank" class="hover:text-gray-600">API Docs</a>
-        <button @click="emit('tryDemo')" class="hover:text-gray-600">Try the demo</button>
+        <a href="https://github.com/toan-au/lens-pay" target="_blank" rel="noopener" class="hover:text-gray-700">GitHub<span class="sr-only"> (opens in a new tab)</span></a>
+        <a href="/api-docs" target="_blank" rel="noopener" class="hover:text-gray-700">API Docs<span class="sr-only"> (opens in a new tab)</span></a>
+        <button @click="emit('tryDemo')" class="hover:text-gray-700">Try the demo</button>
       </div>
       <p>LensPay — built as a portfolio project. Not a real payment processor.</p>
     </footer>
