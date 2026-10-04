@@ -71,7 +71,7 @@ end
 gem "vite_rails", "~> 3.11"
 
 gem "lograge", "~> 0.15.0"
-gem "logtail-rails", "~> 0.2.12"
+gem "logtail-rails", "~> 0.2.14"
 
 gem "dotenv-rails", "~> 3.2", group: :development
 gem "bullet", group: :development
